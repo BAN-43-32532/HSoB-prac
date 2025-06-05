@@ -1,0 +1,87 @@
+task BackGroundLite(pracChapter)
+{
+	let flg = false;
+	let world07_path = LoadingImageFile_StgWorld(7);
+
+	if (pracChapter <= 1)
+	{
+		flg = _BackGroundLite(world07_path[0], 60*2, 0);
+		if (!flg) { return; }
+	}
+	if (pracChapter <= 2)
+	{
+		flg = _BackGroundLite(world07_path[1], 60*2, 1);
+		if (!flg) { return; }
+	}
+	if (pracChapter <= 3)
+	{
+		flg = _BackGroundLite(world07_path[2], 60*2, 2);
+		if (!flg) { return; }
+	}
+	if (pracChapter <= 4)
+	{
+		flg = _BackGroundLite(world07_path[4], 60*2, 3);
+		if (!flg) { return; }
+	}
+	if (pracChapter <= 5)
+	{
+		flg = _BackGroundLite(world07_path[3], 60*5, 4);
+		if (!flg) { return; }
+	}
+	if (pracChapter <= 6)
+	{
+		flg = _BackGroundLite(world07_path[5], 60*12, 5);
+		if (!flg) { return; }
+		flg = _BackGroundLite(world07_path[6], 60*2, 6);
+		if (!flg) { return; }
+	}
+	local
+	{
+		flg = _BackGroundLite(world07_path[7], 60*2, 7);
+		if (!flg) { return; }
+	}
+}
+
+function _BackGroundLite(file_name, del_delay, index)
+{
+	let obj = -1;
+	if (IsDrawBackground() >= 1)
+	{
+		obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, world_layer);
+		ObjRender_SetColor(obj, 255,255,255);
+		ObjPrim_SetTexture(obj, file_name);
+		ObjSprite2D_SetSourceRect(obj , 0,0,384,448);
+		ObjSprite2D_SetDestRect(obj, 0,0,384,448);
+		ObjRender_SetPosition(obj, MinX,MinY,0);
+	}
+
+	let alpha = 0;
+	while(alpha < 255)
+	{
+		alpha += 5;
+		if (IsDrawBackground() >= 1) { ObjRender_SetAlpha(obj,alpha); }
+		yield;
+	}
+	while(!flagEnd && IsEndBG(index))
+	{
+		yield;
+	}
+	waitEx(del_delay);
+	if (IsDrawBackground() >= 1) { DeleleMotion(obj, 180); }
+	if (!IsEndBG(index)) { return(true); }
+	return(false);
+	
+	task DeleleMotion(obj, delay)
+	{
+		let alpha = 255;
+		waitEx(delay);
+		while(alpha > 0)
+		{
+			alpha -= 5;
+			ObjRender_SetAlpha(obj,alpha);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}

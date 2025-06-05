@@ -1,0 +1,188 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["魔理沙エンディング-Good"]
+#Text["魔理沙エンディング-Good"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdGood[1][0], 120);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 255, 108];
+	let COL2 = [192, 108, 255];
+	let COL3 = [108, 255, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]魔法の森。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]魔法の森。[r]熱しやすく冷めやすい、もとい、感受性の強い魔理沙は、またも変な宗教に入門していた。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「では、本日の説法はここまでぞい。皆、宿題として忘れず念仏を致すように。」", COL2);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "鳥たち[r]「は～～～い！」", COL0);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「はい上人、拙僧質問があるぞい」", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「質問を許可するぞい。あと私の口調を真似するな、だぜ。」", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「念仏を唱えれば浄土に行けると言うから試しに入門したのに、一体いつ私は人間を超越するんだ。」", COL1);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「早く服も髪も綺麗なままで、身体も腋もフローラルな香りで包まれた不老不死になりたいぜ。」", COL1);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「なにやら念仏を勘違い致しておるな。仕方ない、人間のそなたには特別に教えてやるぞい。[r]…念仏しただけで直ちにそんな都合よくなると思うたか？", COL2);
+		}
+		case(9)
+		{
+			TEndingImage(imgEdGood[1][1], 30);
+			SetTalkEx(cutinDescri, "魔理沙[r]「な、なんだってー！？」", COL1);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]そもそも念仏も、古今東西の多くの宗教のモデルに漏れず、死後、来世での救済に繋がるものだ。本質を知っているからこそ、紫鸞もそのような言い方はしない。", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]何かと現世での生き辛さを抱える魔理沙のような衆生が、勝手に勘違いをして話を大きくしているに過ぎない。", COL0);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "[r]そして、その方が儲かるから紫鸞も敢えて訂正しない。", COL0);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「念仏を致したとて、来世で往生できるとも限らぬぞい。何しろ死なねば分からぬゆえにな。」", COL2);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「お前それでも坊主か。鬼、悪魔、お前の師匠大聖人。」", COL1);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「じゃが、念仏に隠された力はまだあるという事ぞい。」", COL2);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "[r]妖怪の特性。人間より遥かに長命で物理的にも頑強だが、反面で精神的な部分では弱さを抱える。", COL0);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r]これを無意識のうちに克服する為には、何より強力な心の拠り所を手に入れることだ。", COL0);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "[r]念仏に即時的な効果が無くとも、来世での救済の約束という（嘘の）安心を与えることで、辛い現世を生きて行く力となる。", COL0);
+		}
+		case(19)
+		{
+			SetTalkEx(cutinDescri, "[r]紫鸞はそうして、カジュアルに改変した念仏の教えにより、不安を抱える妖怪達を纏めようと試みているのだ。", COL0);
+		}
+		case(20)
+		{
+			TEndingImage(imgEdGood[1][2], 30);
+			SetTalkEx(cutinDescri, "[r]秘密を聞いた魔理沙は、早速真似をして妖怪達の信仰を得ようとするが、案の定サエズッターで危険人物として拡散され、鳥たちに追い回される羽目になった。", COL0);
+		}
+		case(21)
+		{
+			SetTalkEx(cutinDescri, "[r]南無阿弥陀仏、古今東西、宗教者とは迫害される物である。", COL0);
+		}
+		case(22)
+		{
+			SetTalkEx(cutinDescri, "[r]生きろ魔理沙！　逃げろ魔理沙！[r]次はエキストラを切り抜けろ！", COL0);
+		}
+		case(23)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.02　　後日談の弾幕マリノジャクはありません", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

@@ -1,0 +1,178 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["乱々道中スペカ1"]
+#Text["乱々道中スペカ1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ranran.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(175);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(25);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 1;
+	let SPELL_NAME = 0;
+	
+	//ダメージ透過率
+	dIni_Shot = 10;
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_RANRAN);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 180, 60);
+
+	let wt = [240, 180, 180, 150][Difficult];
+	let wt_min = [180, 120, 105, 90][Difficult];
+	let way = [1, 1, 3, 5][Difficult];
+
+	RanranActSet(objEnemy, 60, 60*60);
+	SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 160, 0-70, 1);
+	SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 160, 180-70, 1);
+	CallSound(sndBoon);
+	waitObj(objEnemy, 30);
+	if (Difficult >= D_LUNA)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 140, 0+70, -1);
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 140, 180+70, -1);
+		CallSound(sndBoon);
+	}
+	waitObj(objEnemy, 30);
+
+	CallSpellCard(true);	//スペカ起動
+
+	waitObj(objEnemy, 120);
+	if (!eAlive) { return }
+}
+// 筆ショット
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	let iniMuki = iniValue;
+	let baseAngle = iniAngle;
+	let add_a = 2*iniMuki;
+	let add_a_add = add_a/900;
+	
+	let eSize = ENEMY_SS;
+	let eColor = EFF_RED;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 999999, eSize);
+	SetEnemyVisible(objFamilier, false);
+	DrawRanranOption(objFamilier);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			let tmp = 1;
+			if (t < 120) { tmp = GetCurve((t+1)/120); }
+			let r = tmp*iniSpeed;
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objEnemy)+r*cos(baseAngle), ObjMove_GetY(objEnemy)+r*sin(baseAngle));
+			baseAngle += add_a;
+			add_a += add_a_add;
+			t++;
+			waitObj(objFamilier, 1);
+		}
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, 120);
+		
+		let shot_speed = [1, 1, 2.5, 3][Difficult];
+		let graphic = BGW_SCALE_RED;
+		
+		let wt = 1;
+		
+		let st = 0;
+		let mt = 0;
+		let muki = (sin(baseAngle-add_a*15)>0);
+		let flgShot = 0;
+		let flgShotAngle = 0;
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (Obj_IsDeleted(objFamilier)) { break; }
+			if (t%wt == 0)
+			{
+				RedRedShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), shot_speed, baseAngle, graphic, 15, st%4>0);
+				CallSound(sndShot2);
+
+				let new_muki = (sin(baseAngle-add_a*15)>0);
+				if (muki != new_muki)
+				{
+					muki = new_muki;
+					flgShot++;
+					flgShotAngle = 90+[-10,20,-20,0,10][mt%5];
+					CallSound(sndShot4);
+					mt++;
+				}
+				st++;
+			}
+			t++;
+			waitObj(objFamilier, 1);
+		}
+
+		task RedRedShot(x, y, speed, angle, graphic, delay, isShot)
+		{
+			let obj = My_CreateShotA1(x, y, 0, 90, ADD_BGW_BALL_S_RED, 15);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+			wait(15);
+			let flg = flgShot;
+			while(!Obj_IsDeleted(obj))
+			{
+				if (flg != flgShot)
+				{
+					let to_muki = [1, -1][sin(angle)>0];
+					let sa = flgShotAngle + 90-90*to_muki - 45*cos(angle)*to_muki;
+					if (isShot)
+					{
+						let to_obj = My_CreateShotA2(x, y, 4, sa, -4/30, 0.2, graphic, 0);
+						ObjMove_AddPatternA2(to_obj, 60, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+					}
+					ObjMove_AddPatternA2(obj, 0, 4, sa, -4/30, 0, 0.2);
+					ObjShot_FadeDelete(obj);
+					break;
+				}
+				wait(1);
+			}
+		}
+	}
+}

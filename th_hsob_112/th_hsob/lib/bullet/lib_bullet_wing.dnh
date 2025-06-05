@@ -1,0 +1,9 @@
+//Å@âHíe
+let BGW_WING_RED		= 545;
+let BGW_WING_GREEN		= 546;
+let BGW_WING_BLUE		= 547;
+let BGW_WING_YELLOW		= 548;
+let BGW_WING_PURPLE		= 549;
+let BGW_WING_SKY		= 550;
+let BGW_WING_ORANGE		= 551;
+let BGW_WING_WHITE		= 552;

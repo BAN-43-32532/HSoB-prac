@@ -1,0 +1,216 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["霊夢エンディング-Good"]
+#Text["霊夢エンディング-Good"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdGood[0][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 108, 108];
+	let COL2 = [255, 255, 108];
+	let COL3 = [108, 255, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]博麗神社。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]博麗神社。[r]以前にもキリスト教会風に改築された神社は、またも砂漠の神々に異様な姿にされていた。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "[r]「トトです」「ホルスです」[r]「イシスです」「オシリスです」[r]", COL0);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "[r]「トトです」「ホルスです」[r]「イシスです」「オシリスです」[r]「「「「このたびはご迷惑をおかけしました」」」」", COL0);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「こっちの方がよっぽど迷惑ー！」", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "[r]神社を辛うじて元の形に戻させ、用途不明の数々のお詫びの品は全て魔理沙に払い下げ、ようやく一息ついた頃には半日程経過していた。", COL0);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "[r]いつもならば解決祝いの酒宴が自然と始まる頃合いだが、疲労困憊してそんな気は起きない。", COL0);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "[r]実際、時間の歪みに強引に対抗していた事で、彼女たちは通常の異変解決よりも多くの体力を消耗していた。", COL0);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]一方で、術者によって効果範囲から外されていた妖怪たちは元気そのものだ。", COL0);
+		}
+		case(9)
+		{
+			TEndingImage(imgEdGood[0][1], 30);
+			SetTalkEx(cutinDescri, "珠烏[r]「（私にとって）良い知らせと（貴方達にとって）悪い知らせを持って来たわ！この幻想郷にも私の仲間が居たっぽい！　サエズッターで見つかったのよ！」", COL3);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「良かったな、外の世界まで探しに行かなくて。多分だけど探せばもっと居るぞ」", COL2);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「という事は、悪い知らせってまさか」", COL1);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "珠烏[r]「この子の本を暴力巫女が奪った事は調査済みよ！　仲間の為に私が代理決闘を申し込む！」", COL2);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「子供の喧嘩に親が口を出すのは野暮だぜ。霊夢、自分の尻は自分で拭くんだぜ」", COL2);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「まだそのネタ引っ張るのかい」", COL1);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "珠烏[r]「トトの書は持ってかれてしまったけど、今の私にはこれがある！」", COL3);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "珠烏[r]「某所から借りて来た悪魔召喚の魔法書（レメゲトン）！　トトの書を使えた私ならきっと使いこなせるわ！」", COL3);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r]珠烏がトトの書で大それた術を行使出来たのは、トト神と珠烏が同じ朱鷺という種族だからだ。", COL0);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "[r]当然、それ以外はただの妖怪である彼女に、その他の著名なグリモワールを行使する魔力は無い。", COL0);
+		}
+		case(19)
+		{
+			SetTalkEx(cutinDescri, "[r]幻想郷の空に珠烏の悲鳴と、激しい弾幕によって神社が倒壊する音と土煙、遅れて霊夢の悲鳴が舞った。", COL0);
+		}
+		case(20)
+		{
+			TEndingImage(imgEdGood[0][2], 30);
+			SetTalkEx(cutinDescri, "魔理沙[r]「まったく危ない所だったぜ。仕方ない、トトだのホルスだのを呼び戻して来てやるか。」", COL2);
+		}
+		case(21)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「それにしても…ふふふ、レア物を手に入れてしまったぜ」", COL2);
+		}
+		case(22)
+		{
+			SetTalkEx(cutinDescri, "[r]どさくさに紛れて飛び去った魔理沙の手には、辛うじて持ち出せたお詫びのレガリアが一つ。", COL0);
+		}
+		case(23)
+		{
+			SetTalkEx(cutinDescri, "[r]用途や秘めている力は全くの不明だが、外来のマジックアイテムは、好奇心の強い彼女にとって大金にも代えがたい物だ。", COL0);
+		}
+		case(24)
+		{
+			SetTalkEx(cutinDescri, "[r]どれだけお金を積んでも、魔理沙の望む「魔法による不老不死の実現」は、常人には手が届かないのだから。", COL0);
+		}
+		case(25)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「もっと外の世界の物が見たいぜ。結界を飛び越えて、さあまた来い、次もきっと来い、ぐふふだぜ…」", COL2);
+		}
+		case(26)
+		{
+			SetTalkEx(cutinDescri, "[r]幻想郷を守ろうとする霊夢と、幻想郷の外に興味を示す魔理沙。", COL0);
+		}
+		case(27)
+		{
+			SetTalkEx(cutinDescri, "[r]互いに正反対の気質の持ち主であるが、もし再び外来の侵略者が来れば、またも息の合った戦いぶりを見せることだろう。", COL0);
+		}
+		case(28)
+		{
+			SetTalkEx(cutinDescri, "[r]相反する者も不思議と仲良く共存する、幻想郷はそんな地上の楽園である。昨日も、今日も、そしてこれからも。", COL0);
+		}
+		case(29)
+		{
+			SetTalkEx(cutinDescri, "[r]負けるな霊夢！[r]恥知らずな妖怪達にエキストラで復讐せよ！", COL0);
+		}
+		case(30)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.01　　なお千年パズルは解けませんでした", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

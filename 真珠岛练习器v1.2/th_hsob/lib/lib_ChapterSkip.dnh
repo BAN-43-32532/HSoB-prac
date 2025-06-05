@@ -1,0 +1,461 @@
+//todo:maybe all should start from 0,stages and chapters
+let chapter_max=[10,9,12,13,20,18];
+let chapter_boss=[7,5,6,7,12,7];
+let chapter_name=[[],[],[],[],[],[]];
+chapter_name[0]=["stage1-1","stage1-2","1midboss nonspell","1midboss spell","stage1-3","stage1-4","1boss nonspell 1","1boss spell 1","1boss nonspell 2","1boss spell 2"];
+chapter_name[1]=["stage2-1","stage2-2","stage2-3","stage2-4","2boss nonspell 1","2boss spell 1","2boss nonspell 2","2boss spell 2","2boss spell 3"];
+chapter_name[2]=["stage3-1","stage3-2","3midboss nonspell","3midboss spell","stage3-3","3boss nonspell 1","3boss spell 1","3boss nonspell 2","3boss spell 2","3boss nonspell 3","3boss spell 3","3boss spell 4"];
+chapter_name[3]=["stage4-1","stage4-2","stage4-3","4midboss spell","stage4-4","stage4-5","4boss nonspell 1","4boss spell 1","4boss nonspell 2","4boss spell 2","4boss nonspell 3","4boss spell 3","4boss spell 4"];
+chapter_name[4]=["stage5-1","stage5-2","stage5-3","5midboss1 spell","stage5-4","stage5-5","stage5-6","5midboss2 nonspell","5midboss2 spell","stage5-7","stage5-8","5boss nonspell 1","5boss spell 1","5boss nonspell 2","5boss spell 2","5boss nonspell 3","5boss spell 3","5boss nonspell 4","5boss spell 4","5boss spell 5"];
+chapter_name[5]=["stage6-1","stage6-2","stage6-3","stage6-4","stage6-5","stage6-6","6boss nonspell 1","6boss spell 1","6boss nonspell 2","6boss spell 2","6boss nonspell 3","6boss spell 3","6boss nonspell 4","6boss spell 4","6boss nonspell 5","6boss spell 5","6boss spell 6","6boss spell 7"];
+let st6_name=["left","right","mid"];
+/*
+carea_title will not be saved after exiting the game
+while carea_save will be
+*/
+
+//unused
+function InitAllSkipData(){
+    SetStartChapter(1);
+    SetRawdel(false);
+    SetDivLoad(false);
+}
+
+//get current stage
+function GetStage(){
+    //1-6
+    let st=GetAreaCommonData(CAREA_STAGE, "StageIndex",1);
+    return st;
+}
+/////
+//get start chapter
+//if =1,means it doesn't skip
+function GetStartChapter(stage){
+    if(GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_SPELL){
+        return 1;
+    }
+    if(IsReplay()){
+        return GetReplayChapter();
+    }
+    SetPracticed();
+    
+    let ch=GetAreaCommonData(CAREA_SAVE,"CHAPTER_SKIP",1);
+    if(!IsReplay()){
+        SetReplayChapter(ch);
+    }
+    return ch;
+}
+function SetStartChapter(stc){
+    SetAreaCommonData(CAREA_SAVE,"CHAPTER_SKIP",stc);
+}
+/////
+//choose the road in stage6
+function SetStage6Road(rnum){
+    SetAreaCommonData(CAREA_SAVE,"STAGE6_ROAD",rnum);
+}
+function GetStage6Road(){
+    return GetAreaCommonData(CAREA_SAVE,"STAGE6_ROAD",0);
+}
+/////
+//use a faster way to load boss
+function SetDivLoad(set){
+    SetAreaCommonData(CAREA_SAVE,"DIV_LOAD",set);
+}
+function GetDivLoad(){
+    return GetAreaCommonData(CAREA_SAVE,"DIV_LOAD",true);
+}
+function GetDivLoadEnabled(stage){
+    //promised,in each stage,set is called first
+    return GetAreaCommonData(CAREA_TITLE,"DIV_LOAD_PRE",false);
+}
+function SetDivLoadEnabledPre(stage){
+    //because boss will setscriptstate at the beginning,
+    //for the rest of the stage,getscriptstate(stage)=d
+    //so i had to save this
+    let ans=false;
+    if(stage>6 || stage<1 ){
+        ans=false;
+    }
+    else{
+        let d=GetStartChapter(stage);
+        stage=stage-1;
+        ans=(GetDivLoad() && GetScriptState(stage)>d && d<chapter_max[stage] && d>=chapter_boss[stage]);
+        //divload enabled,script not loaded,not last one,skip to boss
+    }
+    SetAreaCommonData(CAREA_TITLE,"DIV_LOAD_PRE",ans);
+}
+/////
+//if true, boss explode will not trigger
+//used in divload
+function SetRawdel(s){
+    SetAreaCommonData(CAREA_TITLE,"RAWDEL",s);
+}
+function GetRawdel(){
+    let cstage=GetStage();
+    if(!GetDivLoadEnabled(cstage)){
+        return false;
+        //in some situation boss explode may disappear
+        //maybe exit without finishing the first spell when using divload
+    }
+    return GetAreaCommonData(CAREA_TITLE,"RAWDEL",false);
+}
+/////
+//set the first script that is loaded
+//if skip after this,divload will not trigger
+function SetScriptState(stage,spell){
+    stage=stage-1;
+    let stable=GetAllScriptState();
+    stable[stage]=min(stable[stage],spell);
+    SetAreaCommonData(CAREA_TITLE,"SCRIPT_STATE",stable);
+}
+function GetAllScriptState(){
+    return GetAreaCommonData(CAREA_TITLE,"SCRIPT_STATE",chapter_max);
+}
+function GetScriptState(stage){
+    let stable=GetAllScriptState();
+    return stable[stage];
+}
+/////
+//if practiced,when return to main,cursor will be set to "practice start"
+function SetPracticed(){
+    SetAreaCommonData(CAREA_TITLE,"PRACTICED",true);
+}
+function GetPracticed(){
+    return GetAreaCommonData(CAREA_TITLE,"PRACTICED",false);
+}
+/////
+function GetReplayChapter(){
+    return GetAreaCommonData(CAREA_REPLAY,"StartChapter",1);
+}
+function SetReplayChapter(st){
+    SetAreaCommonData(CAREA_REPLAY,"StartChapter",st);
+}
+/////
+//(for some spell)select phase
+function GetEmptyTableEX(num){
+    let ret=[];
+    ascent(i in 0..6){
+        let res=[];
+        ascent(j in 0..chapter_max[i]){
+            res=res ~ [num];
+        }
+        ret=ret ~ [res];
+    }
+    return ret;
+}
+let phasetable=GetEmptyTableEX(1);
+function SetPhase(st){
+    SetAreaCommonData(CAREA_SAVE,"PHASE",st);
+}
+function GetPhase(mode){
+    //if true,use in stage
+    //else,use in menu
+    if(mode && GetStartChapter(GetStage())==1){
+        return 1;
+    }
+    if(IsReplay()){
+        return GetReplayphase();
+    }
+    let ret=GetAreaCommonData(CAREA_SAVE,"PHASE",1);
+    ret=max(1,ret);
+    if(!IsReplay()){
+        SetReplayPhase(ret);
+    }
+    return ret;
+    
+}
+function SetReplayPhase(st){
+    SetAreaCommonData(CAREA_REPLAY,"StartPhase",st);
+}
+function GetReplayphase(){
+    return GetAreaCommonData(CAREA_REPLAY,"StartPhase",1);
+}
+function SetPhaseTable(stage,chapter,maxphase){
+    stage=stage-1;
+    chapter=chapter-1;
+    let tb=phasetable[stage];
+    tb[chapter]=maxphase;
+    phasetable[stage]=tb;
+}
+SetPhaseTable(6,18,2);
+/////
+//the ui of chapterskip
+function ChangeChapter(stage){
+    let current=GetStartChapter(stage);
+    current=min(current,chapter_max[stage]);
+    SetStartChapter(current);
+    let route6=GetStage6Road();
+    let stphase=GetPhase(false);
+    let objt=ObjText_Create();
+    Obj_SetRenderPriorityI(objt, 79);
+    ObjText_SetFontType(objt, "ÇlÇr ÇoÉSÉVÉbÉN");
+    ObjText_SetFontSize(objt, 16);
+    ObjText_SetFontBold(objt, true);
+    ObjText_SetFontBorderType(objt, BORDER_SHADOW);
+    ObjText_SetFontBorderWidth(objt, 1);
+    ObjText_SetFontBorderColor(objt, 16, 16, 16);
+    ObjRender_SetPosition(objt,260,220,0);
+    loop{
+        let str="Chapter:" ~ IntToString(current) ~ "[r]" ~ chapter_name[stage][current-1];
+        if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH){
+            current=current+1;
+            if(current>chapter_max[stage]){
+                current=1;
+            }
+        }
+        if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH){
+            current=current-1;
+            if(current<1){
+                current=chapter_max[stage];
+            }
+        }
+        SetStartChapter(current);
+        if(stage==5&&(current==2 || current==3)){
+            str=str ~ "[r]route:" ~ st6_name[route6];
+            //st6 route
+            route6=min(route6,current-1);
+            if(GetVirtualKeyState(VK_UP) == KEY_PUSH){
+                route6=route6+1;
+                if(route6>current-1){
+                    route6=0;
+                }
+            }
+            if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH){
+                route6=route6-1;
+                if(route6<0){
+                    route6=current-1;
+                }
+            }
+            SetStage6Road(route6);
+        }
+        else if(current>=chapter_boss[stage]){
+            //set phase
+            let mphase=phasetable[stage][current-1];
+            stphase=min(stphase,mphase);
+            if(mphase>1){
+                //if =1,unable to skip phase
+               str=str ~ "[r]phase:" ~IntToString(stphase); 
+            }
+            
+            if(GetVirtualKeyState(VK_UP) == KEY_PUSH){
+                stphase=stphase+1;
+                if(stphase>mphase){
+                    stphase=1;
+                }
+            }
+            if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH){
+                stphase=stphase-1;
+                if(stphase<1){
+                    stphase=mphase;
+                }
+            }
+            SetPhase(stphase);
+        }
+        else{
+        
+        }
+        if(current>=chapter_boss[stage]){
+            if(GetDivLoad()){
+                str=str ~ "[r]fastload enabled";
+            }
+            else{
+                str=str ~ "[r]fastload disabled";
+            }
+        }
+        
+        if(GetVirtualKeyState(VK_USER2) == KEY_PUSH){
+            SetDivLoad(!GetDivLoad());
+        }
+        if(GetVirtualKeyState(VK_OK) == KEY_PUSH){
+            Obj_Delete(objt);
+            return current;
+        }
+        if(GetVirtualKeyState(VK_CANCEL) == KEY_PUSH){
+            Obj_Delete(objt);
+            return -1;
+        }
+        if(GetVirtualKeyState(VK_USER1) == KEY_PUSH){
+            if(current>=chapter_boss[stage]){
+                current=1;
+            }
+            else{
+                current=chapter_boss[stage];
+            }
+            SetStartChapter(current);
+        }
+        ObjText_SetText(objt,str);
+        wait(1);
+    }
+}
+/*
+chapters:
+st1
+ëOîº 1-2
+ìπíÜboss 3-4
+ç@îº 5-6
+boss 7-10
+
+st2
+ëOîº 1-4
+boss 5-9
+
+st3
+ëOîº 1-2
+ìπíÜboss 3-4
+ç@îº 5
+boss 6-12
+
+st4
+ëOîº 1-3
+ìπíÜboss 4
+ìπíÜ˙ùâá 5
+ç@îº 6
+boss 7-13
+
+st5
+ìπíÜa 1-3
+ìπíÜbossa 4
+ìπíÜb 5-7
+ìπíÜbossb 8-9
+ìπíÜc 10-11
+boss 12-20
+
+st6
+ìπíÜ 1-6
+boss 7-18
+*/
+/////
+//get current chapter to show miss point
+function GetCurrentChapter(){
+    return GetAreaCommonData(CAREA_TITLE,"CurrentChapter",-1);
+}
+function SetCurrentChapter(num){
+    SetAreaCommonData(CAREA_TITLE,"CurrentChapter",num);
+}
+function IntoNextchapter(){
+    let cc=GetCurrentChapter();
+    SetCurrentChapter(cc+1);
+}
+function GetEmptyTable(){
+    let ret=[];
+    ascent(i in 0..6){
+        let res=[];
+        ascent(j in 0..chapter_max[i]){
+            res=res ~ [0];
+        }
+        ret=ret ~ [res];
+    }
+    return ret;
+}
+function SetChapterMiss(stage,chapter){
+    if(stage<1 || stage>6){
+        return;
+    }
+    //there,stage and chapter starts from 1
+    stage=stage-1;
+    chapter=chapter-1;
+    if(chapter>=chapter_max[stage]){
+        return;
+        //miss on lsc,usually
+    }
+    let tb=GetChapterMiss();
+    let tstage=tb[stage];
+    tstage[chapter]=tstage[chapter]+1;
+    tb[stage]=tstage;
+    SetAreaCommonData(CAREA_TITLE,"ChapterMiss",tb);
+    SetMissCount(1);
+}
+function ResetChapterMiss(){
+    SetAreaCommonData(CAREA_TITLE,"ChapterMiss",GetEmptyTable());
+    SetMissCount(0);
+}
+function GetChapterMiss(){
+    return GetAreaCommonData(CAREA_TITLE,"ChapterMiss",GetEmptyTable());
+}
+function SetMissCount(count){
+    if(count==0){
+        SetAreaCommonData(CAREA_TITLE,"ChapterMissCount",0);
+    }
+    else{
+        SetAreaCommonData(CAREA_TITLE,"ChapterMissCount",GetMissCount()+1);
+    }
+}
+function GetMissCount(){
+    return GetAreaCommonData(CAREA_TITLE,"ChapterMissCount",0);
+}
+function SetShowMiss(st){
+    SetAreaCommonData(CAREA_SAVE,"ShowMiss",st);
+}
+function GetShowMiss(){
+    return GetAreaCommonData(CAREA_SAVE,"ShowMiss",false);
+}
+function InItDisplayChapterMiss(){
+    ResetChapterMiss();
+}
+//display in lib_chapterskip_ingame
+/////
+/////
+
+//sad,dmf dosen't have an api to play music from the middle
+/*
+function SetSkipMusic(ti){
+    SetAreaCommonData(CAREA_TITLE,"SKIP_MUSIC",ti);
+}
+function GetSkipMusic(){
+    return GetAreaCommonData(CAREA_TITLE,"SKIP_MUSIC",false);
+}
+function StartTimer(){
+    SetAreaCommonData(CAREA_TITLE,"TIMER",0);
+    SetAreaCommonData(CAREA_TITLE,"TIMER_STOP",false);
+    ctimer();
+    task ctimer(){
+        loop{
+            if(GetAreaCommonData(CAREA_TITLE,"TIMER_STOP",false)){
+                break;
+            }
+            let cur=GetAreaCommonData(CAREA_TITLE,"timer",0);
+            SetAreaCommonData(CAREA_TITLE,"TIMER",cur+1);
+            wait(1);
+        }
+    }
+}
+function GetTimer(){
+    return GetAreaCommonData(CAREA_TITLE,"TIMER",0);
+}
+function StopTimer(){
+    SetAreaCommonData(CAREA_TITLE,"TIMER_STOP",true);
+}
+function SaveMusicChapter(stage,chapter,time){
+    let mc=LoadAllMusicChapter();
+    //mc[stage][chapter]=time;
+    //let mc2=Index(mc,stage);
+    //index!(index!(mc,stage),chapter)=time;
+    let mc2=mc[stage];
+    mc2[chapter]=time;
+    mc[stage]=mc2;
+}
+function LoadMusicChapter(stage,chapter){
+    let mc=LoadAllMusicChapter();
+    return mc[stage][chapter];
+}
+function InitMusicChapter(){
+    let mc=[];
+    ascent(i in 0 .. 5){
+        let mch=[];
+
+        ascent(j in 0 .. chapter_max[i]){
+            //mch=mch ~ [0];
+        }
+        mc=mc ~ [mch];
+    }
+    SetAreaCommonData(CAREA_SAVE,"MUSIC_CHAPTER",mc);
+}
+function LoadAllMusicChapter(){
+    let mc=GetAreaCommonData(CAREA_SAVE,"MUSIC_CHAPTER",[]);
+    if(length(mc)==0){
+        InitMusicChapter();
+    }
+    //todo: save in another area
+    return mc;
+}
+*/

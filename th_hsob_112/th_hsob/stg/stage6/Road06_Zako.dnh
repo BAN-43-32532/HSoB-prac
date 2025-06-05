@@ -1,0 +1,2439 @@
+// -------------- 敵単体の処理 -------------- //
+
+// 画面奥座標
+let BPOS = [CenX+24, 135];
+
+// 画面奥からの敵出現用
+function GetInnerPositionVector(angle, pos)
+{
+	let to_x = cos(angle);
+	let to_y = sin(angle);
+	let vx = (CenX+(MaxX-MinX)/2*to_x - pos[0]);
+	let vy = (CenY+(MaxY-MinY)/2*to_y - pos[1]);
+	return([vx,vy]);
+}
+
+// 時間停止中の妖精が動き出すモーション
+task Stage06_FadeIN(objEnemy, timer)
+{
+	let objImg = GetEnemyImageID(objEnemy);
+	
+	SetEnemyVisible(objEnemy, false);
+	Obj_SetRenderPriorityI(objImg, priorityZakoBack);
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+		let tmp = (t+1)/timer;
+		let tmp_c = min(1, tmp*3) * 96;
+		let tmp_a = min(1, tmp*3) * 255;
+		let tmp_s = 0.5 + tmp*0.5;
+		if (t > timer-10) { tmp_c += (t-timer+10)/10*(255-96); }
+		ObjRender_SetAlpha(objImg, tmp_a);
+		ObjRender_SetColor(objImg, tmp_c, tmp_c, tmp_c);
+		ObjRender_SetScaleXYZ(objImg, tmp_s, tmp_s, tmp_s);
+		wait(1);
+	}
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjRender_SetAlpha(objImg, 255);
+	ObjRender_SetColor(objImg, 255, 255, 255);
+	ObjRender_SetScaleXYZ(objImg, 1, 1, 1);
+	SetEnemyVisible(objEnemy, true);
+}
+
+// 妖精さんの画像取得
+function GetFairyImageFile(color)
+{
+	alternative(color%8)
+	case(EFF_RED) { return(imgZakoFairyRed); }
+	case(EFF_ORANGE) { return(imgZakoFairyYellow); }
+	case(EFF_YELLOW) { return(imgZakoFairyYellow); }
+	case(EFF_GREEN) { return(imgZakoFairyGreen); }
+	case(EFF_SKY) { return(imgZakoFairyEx2); }
+	case(EFF_BLUE) { return(imgZakoFairyBlue); }
+	case(EFF_PURPLE) { return(imgZakoFairyEx); }
+	others { return(imgZakoFairyDark); }
+}
+function GetScrabColor(color)
+{
+	alternative(color%8)
+	case(EFF_RED) { return(2); }
+	case(EFF_ORANGE) { return(3); }
+	case(EFF_YELLOW) { return(3); }
+	case(EFF_GREEN) { return(0); }
+	case(EFF_SKY) { return(1); }
+	case(EFF_BLUE) { return(1); }
+	case(EFF_PURPLE) { return(2); }
+	others { return(0); }
+}
+
+// 奥から来るタイプ
+task SetEnemyF01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	DrawFairy(objEnemy, emnImage, FAIRY_SMALL);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let timer = 120;
+		let tpos = GetInnerPositionVector(iniAngle, [iniX, iniY]);
+		
+		Stage06_FadeIN(objEnemy, timer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < 180)
+		{
+			let vx = tpos[0]/240 * 2;
+			let vy = tpos[1]/240;
+			if (t > 60)
+			{
+				let tmp = max(0, 1-(t-60)/120);
+				vx *= tmp;
+				vy *= tmp;
+				vy -= (1-tmp)*sin((1-tmp)*180)*2;
+			}
+			Enemy_SetPatternB1(objEnemy, 0, vx, vy);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (CanShotBullet(objEnemy))
+		{
+			let to_a = GetAngleToPlayer(objEnemy);
+			Enemy_SetPatternA2(objEnemy, 0, 0, to_a, iniSpeed/120, 0, iniSpeed);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, 120);
+		
+		
+		if (!e_type && CanShotBullet(objEnemy))
+		{
+			// 四角形
+			let speed = [1.5, 2, 2, 3.5][Difficult];
+			let way = [2, 3, 4, 4][Difficult];
+			let size = [0.75, 1.33, 1.5, 2][Difficult];
+			let count = [1, 1, 1, 2][Difficult];
+			let pos = [[-1,-1],[-1,1],[1,1],[1,-1]];
+			let to_angle = [-90, 90][GetPlayerY > ObjMove_GetY(objEnemy)];
+			
+			
+			ascent(t in 0 .. 2)
+			{
+				let ta = to_angle + [0, 180][t];
+				let graphic = [BGB_BILL_YELLOW, ADD_BGB_BILL_YELLOW][t];
+				ascent(k in 0 .. count)
+				{
+					let tmp_size = size * (1-k*0.5);
+					let tmp_way = way - k*1;
+					let ss = speed * (1-k*0.5);
+					ascent(i in 0 .. 4)
+					{
+						let p1 = pos[i];
+						let p2 = pos[(i+1)%4];
+						ascent(j in 0 .. tmp_way)
+						{
+							let tmp = j/tmp_way;
+							let vx = (p1[0]*(1-tmp) + p2[0]*tmp)*tmp_size;
+							let vy = (p1[1]*(1-tmp) + p2[1]*tmp)*tmp_size;
+							let obj = My_CreateShotB2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+								vx, vy, -vx/30, -vy/30, 0, 0, graphic, 30);
+							ObjMove_AddPatternA2(obj, 30, 0, ta, ss/120, 0, ss);
+							Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI-1);
+						}
+					}
+				}
+			}
+		}
+		waitObj(objEnemy, 60);
+		if (!CanShotBullet(objEnemy)) { return; }
+		local
+		{
+			let way = [3, 5, 5, 5][Difficult];
+			let way2 = [1, 1, 3, 3][Difficult];
+			let way2_angle = [1, 1, 24, 24][Difficult];
+			let graphic = BGW_RICE_S_RED + SHOT_COLOR[iniColor];
+			if (!e_type) { way2 = 1; }
+			
+			let to_a = GetAngleToPlayer(objEnemy);
+			ascent(i in 0 .. way2)
+			{
+				let tmp = i-(way2-1)/2;
+				let ss = iniSpeed * (1 - absolute(tmp)*0.15);
+				let sa = to_a + tmp*way2_angle;
+				let sw = way - trunc(absolute(tmp*2));
+				CreateShotArrowA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/105, ss, graphic, 15, sw, 1, 0.025);
+			}
+			CallSound(sndShot2);
+		}
+	}
+}
+
+// 連なる陰陽玉
+task SetEnemyI02(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniMuki = [1, -1][iniX < CenX];
+	let iniTimer = 90;
+	
+	let eSize = ENEMY_L;
+	let eColor = iniColor;
+
+	let objEnemy = MakeEnemy(iniX, iniY, 75, eSize);
+	SetEnemyDropItem(objEnemy, [MY_ITEM_TIME_3], [MY_ITEM_TIME_1, 5]);
+	DrawOnmyou( objEnemy, eColor );
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let to_pos = toPos;
+		let timer2 = iniTimer + iniWait;
+		
+		let bx = iniX;
+		let by = iniY;
+		let to_br = iniValue;
+		let base_angle = iniAngle;
+		let add_ba = 360*([1, -1][iniAngle < 0])*iniMuki;
+		
+		TMoveBase();
+		ZakoEnterEffect_Onmyou(objEnemy, iniTimer+30);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t <= timer2)
+		{
+			let tmp = GetCurve_d(t/timer2);
+			let br = to_br*tmp;
+			let ba = base_angle + add_ba*tmp;
+			let ex = bx + br*cos(ba);
+			let ey = by + br*sin(ba);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (CanShotBullet(objEnemy))
+		{
+			let sa = iniAngle + 180*iniMuki;
+			ObjMove_AddPatternA2(objEnemy, 0, 0, sa, iniSpeed/120, 0, iniSpeed);
+		}
+		
+		task TMoveBase()
+		{
+			let t = 0;
+			while(CanShotBullet(objEnemy) && t <= timer2)
+			{
+				if (t <= iniTimer)
+				{
+					let tmp = GetCurve_d(t/iniTimer);
+					bx = iniX + (to_pos[0]-iniX)*tmp;
+					by = iniY + (to_pos[1]-iniY)*tmp;
+				}
+				else
+				{
+					bx = to_pos[0];
+					by = to_pos[1];
+				}
+				if (t <= timer2)
+				{
+					let tmp = GetCurve_d(t/timer2);
+					by += 128*tmp;
+				}
+				t++;
+				waitObj(objEnemy, 1);
+			}
+		}
+	}
+
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer+iniWait);
+		
+		let speed = [0.8, 1, 1, 1][Difficult];
+		let way = [3, 3, 4, 3][Difficult];
+		let timer = [75, 105, 105, 105][Difficult];
+		let wt = [5, 5, 5, 5][Difficult];
+		let graphic = BGW_CHRYSTAL_S_RED + SHOT_COLOR[iniColor];
+		let base_angle = iniAngle + 180*iniMuki;
+		
+		let t = 0;
+		while(t < timer)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			let sa = base_angle + 180;
+			let ss = speed * (1+t/timer);
+			let wa = 10 * trunc(t/wt/3+1);
+			CreateShotWayA2_I02(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				ss+4, sa, -4/15, ss, graphic, 15, way, wa, 0);
+			if (Difficult >= D_LUNA)
+			{
+				CreateShotWayA2_I02(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					ss*0.5+2, sa, -2/15, ss*0.5, graphic, 15, way, wa, 0);
+			}
+			
+			t += wt;
+			waitObj(objEnemy, wt);
+		}
+	}
+
+	function CreateShotWayA2_I02(x, y, speed, angle, add_speed, max_speed, graphic, delay, way, way_angle, r)
+	{
+		let delay_type = DELAY_DEFAULT;
+		let w_cen = 0;
+		if (way > 1) { w_cen = (way-1)/2; }
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + (i-w_cen)*way_angle;
+			let sx = x + cos(sa)*r;
+			let sy = y + sin(sa)*r;
+		//	EffShot_I02(sx, sy, speed, sa, add_speed, max_speed, graphic, delay);
+			My_CreateShotA2Ex(sx, sy, speed, sa, add_speed, max_speed, graphic, delay, delay_type);
+		}
+	}
+	
+	task EffShot_I02(sx, sy, speed, sa, add_speed, max_speed, graphic, delay)
+	{
+		let objEff = CreateShotA2(sx, sy, speed, sa, add_speed, max_speed, graphic, 0);
+		Obj_SetRenderPriorityI(objEff, GetShotRenderPriorityI-1);
+		ObjRender_SetBlendType(objEff, BLEND_SUBTRACT);
+		ObjRender_SetScaleXYZ(objEff, 1.25, 1.25, 1);
+		ObjRender_SetColor(objEff, 128, 128, 255);
+		ObjShot_SetIntersectionEnable(objEff, false);
+		ascent(t in 0 .. delay)
+		{
+			ObjRender_SetAlpha(objEff, 0);
+			yield;
+		}
+		ObjShot_SetIntersectionEnable(objEff, false);
+		ObjRender_SetAlpha(objEff, 255);
+	}
+}
+
+// 奥から来るタイプ
+task SetEnemyF03(iniX, iniY, iniSpeed, iniAngle, iniValue, iniValue2, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let eAngle = 0;
+	let iniMuki = [1, -1][cos(iniAngle) < 0];
+	let iniTimer = 120;
+	
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	DrawFairy(objEnemy, emnImage, FAIRY_SMALL);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let tpos = GetInnerPositionVector(iniAngle, [iniX, iniY]);
+		let bx = iniX;
+		let by = iniY;
+		let br = 1/240 * iniValue2;	// 登場速度
+		let muki = [1, -1][tpos[0] > 0];
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy))
+		{
+			let vx = tpos[0]*br * 2;
+			let vy = tpos[1]*br;
+			let ex = bx;
+			let ey = by;
+			if (t > 90)
+			{
+				let tmp = max(-2, 1-(t-90)/60);
+				vx *= tmp;
+			}
+			else
+			{
+				let tmp = GetCurve_d(t/90);
+				vx *= tmp^2;
+				vy *= tmp^2;
+				ex -= (1-tmp)*iniValue*muki;
+			}
+			eAngle = atan2(ey-ObjMove_GetY(objEnemy), ex-ObjMove_GetX(objEnemy));	// ショット角度用
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			bx += vx; by += vy;
+			t++;
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, 120+iniWait);
+		
+		let speed = [2, 3, 4, 5][Difficult];
+		let way = [3, 5, 5, 5][Difficult];
+		let way2 = [1, 1, 3, 3][Difficult];
+		let way2_angle = [1, 1, 24, 24][Difficult];
+		let timer = [105, 105, 105, 150][Difficult];
+		let wt = [90, 90, 60, 45][Difficult];
+		let graphic = BGW_RICE_S_RED + SHOT_COLOR[iniColor];
+
+		let t = 0;
+		while(t < timer)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			
+			let to_a = GetAngleToPlayer(objEnemy);
+			ascent(i in 0 .. way2)
+			{
+				let tmp = i-(way2-1)/2;
+				let ss = speed * (1 - absolute(tmp)*0.15);
+				let sa = to_a + tmp*way2_angle;
+				let sw = way - trunc(absolute(tmp*2));
+				CreateShotArrowA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/105, ss, graphic, 15, sw, 1, 0.025);
+			}
+			CallSound(sndShot2);
+			
+			t += wt;
+			waitObj(objEnemy, wt);
+		}
+	}
+}
+
+// 奥から来るタイプ　中妖精
+task SetEnemyF04(iniX, iniY, iniSpeed, iniAngle, iniValue, iniValue2, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 90;
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_L;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 150, eSize);
+	DrawFairy(objEnemy, emnImage, FAIRY_LARGE);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let tpos = GetInnerPositionVector(iniAngle, [iniX, iniY]);
+		let bx = iniX;
+		let by = iniY;
+		let br = 1/240 * iniValue2;	// 登場速度
+		let muki = [1, -1][tpos[0] > 0];
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let ex = bx;
+			let ey = by;
+			let tmp = GetCurve_d(t/iniTimer);
+			ex -= (1-tmp)*iniValue*muki;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (!CanShotBullet(objEnemy)) { return; }
+		local
+		{
+			let to_a = 90;
+			Enemy_SetPatternA2(objEnemy, 0, 0, to_a, 0.75/15, 0, 0.75);
+			Enemy_SetPatternA2(objEnemy, 15, NO_CHANGE, NO_CHANGE, -1.75/75, 0, -1);
+			Enemy_SetPatternA2(objEnemy, 90, NO_CHANGE, NO_CHANGE, 1/30, 0, 0);
+		}
+		waitObj(objEnemy, 120);
+		if (!CanShotBullet(objEnemy)) { return; }
+		local
+		{
+			let to_a = GetAngleToPlayer(objEnemy);
+			Enemy_SetPatternA2(objEnemy, 0, NO_CHANGE, to_a, 3/180, 0, 3);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		ShotLaser(0, 32, 90, 180);
+		ShotLaser(0, -32, -90, 180);
+		CallSound(sndLaser1);
+	}
+	
+	task ShotLaser(offset_x, offset_y, angle, timer)
+	{
+		let obj = My_CreateStraightLaserA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), angle, 0, 16, timer, BGW_BEAM_WHITE, 0, true);
+		
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			if (Obj_IsDeleted(objEnemy))
+			{
+				Obj_Delete(obj);
+				break;
+			}
+			let l_len = 300 * GetCurve_d(min(1, (t+1)/timer));
+			ObjMove_SetPosition(obj, ObjMove_GetX(objEnemy)+offset_x, ObjMove_GetY(objEnemy)+offset_y);
+			ObjLaser_SetLength(obj, l_len);
+			t++;
+			yield;
+		}
+	}
+}
+
+// ピラミッド陰陽玉
+function SetEnemyI05(iniX, iniY, iniSpeed, iniAngle, iniValue, iniType, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniMuki = [1, -1][toPos[0] < 0];
+	let iniTimer = 90;
+	
+	let eSize = ENEMY_L;
+	let eColor = iniColor;
+
+	let objEnemy = MakeEnemy(iniX, iniY, 75, eSize);
+	DrawOnmyou( objEnemy, eColor );
+	TAct();
+	return(objEnemy);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+		
+		// オブジェクトを返すので継続処理はこっちに
+		WaitForKilled(objEnemy);
+		ZakoFinalize(objEnemy, eColor);
+	}
+	
+	task TMove()
+	{
+		let to_pos = toPos;
+		let timer2 = iniTimer + iniWait;
+		
+		let bx = iniX;
+		let by = iniY;
+		let to_br = iniValue;
+		let base_angle = iniAngle;
+		let add_ba = 360*iniMuki;
+		let add_angle = 0.75*iniMuki;
+		
+		TMoveBase();
+		ZakoEnterEffect_Onmyou(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy))
+		{
+			let tmp = GetCurve_d(min(1, t/timer2));
+			let br = to_br*tmp;
+			let ba = base_angle + add_ba*tmp + add_angle*t;
+			let ex = bx + br*cos(ba);
+			let ey = by + br*sin(ba);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			Obj_SetValue(objEnemy, "EA", ba);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		
+		task TMoveBase()
+		{
+			let vx = iniSpeed*cos(toPos[2]);
+			let vy = iniSpeed*sin(toPos[2]);
+			let ox = 0;
+			let oy = 0;
+			
+			let t = 0;
+			while(CanShotBullet(objEnemy))
+			{
+				if (t <= iniTimer)
+				{
+					let tmp = GetCurve_d(t/iniTimer);
+					bx = iniX + (to_pos[0]-iniX)*tmp + ox;
+					by = iniY + (to_pos[1]-iniY)*tmp + oy;
+				}
+				else
+				{
+					bx = to_pos[0] + ox;
+					by = to_pos[1] + oy;
+				}
+				local
+				{
+					let tmp = GetCurve_d(min(1, t/timer2));
+					ox += vx*tmp; oy += vy*tmp;
+				}
+				t++;
+				waitObj(objEnemy, 1);
+			}
+		}
+	}
+
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		
+		if (iniType == 0)
+		{
+			let speed = [2, 2, 3, 4][Difficult];
+			let way = [2, 2, 2, 2][Difficult];
+			let way_angle = [3, 3, 3, 3][Difficult];
+			let count = [1, 2, 2, 3][Difficult];
+			let wt = [8, 10, 7, 7][Difficult];
+			let timer = 180;
+			let graphic = BGB_SCALE_RED + SHOT_COLOR[(iniColor+1)%8];
+			
+			ascent(i in 0 .. count)
+			{
+				TShot_sub(speed*(1-i*0.25));
+				waitObj(objEnemy, wt/count);
+			}
+			
+			task TShot_sub(speed)
+			{
+				let t = 0;
+				while(t < timer)
+				{
+					if (!CanShotBullet(objEnemy)) { return; }
+
+					ascent(i in 0 .. count)
+					{
+						let sa = Obj_GetValueD(objEnemy, "EA", 0);
+						let ss = speed;
+						CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+							-ss/2, sa, ss/120, ss, graphic, 15, way, way_angle, 0);
+					}
+					
+					t += wt;
+					waitObj(objEnemy, wt);
+				}
+			}
+		}
+		else
+		{
+			let speed = [2.25, 2.5, 2.5, 2.5][Difficult];
+			let way = [6, 6, 6, 6][Difficult];
+			let way2 = [5, 5, 6, 6][Difficult];
+			let way2_angle = [0.075, 0.075, 0.075, 0.075][Difficult];
+			let wt = [133, 133, 133, 66][Difficult];
+			let timer = [60, 180, 180, 120][Difficult];
+			let graphic = BGB_ICE_RED + SHOT_COLOR[(iniColor+1)%8];
+			
+			TShot_sub(speed);
+			
+			task TShot_sub(speed)
+			{
+				let t = 0;
+				while(t < timer)
+				{
+					if (!CanShotBullet(objEnemy)) { return; }
+
+					let sa = Obj_GetValueD(objEnemy, "EA", 0);
+					CreateShotTri_I05(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+						speed, sa, graphic, 15, way, way2, way2_angle, 0);
+					CallSound(sndShot5);
+					t += wt;
+					waitObj(objEnemy, wt);
+				}
+			}
+		}
+	}
+
+	// □弾
+	function CreateShotTri_I05(x, y, speed, angle, graphic, delay, way, way2, way2_angle, r)
+	{
+		ascent(j in 0 .. 3)
+		{
+			let vpos = [
+				[cos(angle+j*120), sin(angle+j*120)],
+				[cos(angle+(j+1)*120), sin(angle+(j+1)*120)]
+			];
+			
+			ascent(i in 0 .. way)
+			{
+				let oway = (way2-1)/2*way2_angle/way;
+				ascent(k in 0 .. way2)
+				{
+					let tmp2 = (k-(way2-1)/2)*way2_angle;
+					let tmp = oway + (i+tmp2)/(way-1)*(1-oway*2);
+					let vx = vpos[0][0]*(1-tmp) + vpos[1][0]*tmp;
+					let vy = vpos[0][1]*(1-tmp) + vpos[1][1]*tmp;
+					let sa = atan2(vy, vx);
+					let ss = speed * (vx^2+vy^2)^0.5;
+					let sx = x + vx*r;
+					let sy = y + vy*r;
+					let obj = My_CreateShotA2(sx, sy, ss, sa, -ss/30, ss/8, graphic, delay);
+					ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, ss/120, 0, ss);
+				}
+			}
+		}
+	}
+}
+
+// 三角ショット
+task I05_PyramidShot(objs, iniType, iniColor)
+{
+	let ALL_COUNT = length(objs);
+	let iniTimer = 105;
+	
+	let speed_rate = 1/30;
+	let graphic = BGW_BALL_BS_RED + SHOT_COLOR[iniColor];
+	let way = 6;
+	let way2 = 3;
+	if (iniType == 1)
+	{
+		way = 14;
+		way2= 1;
+	}
+	
+	let baseX = 0;
+	let baseY = 0;
+	let flgDel = false;
+	
+	ascent(i in 0 .. ALL_COUNT)
+	{
+		ascent(j in 0 .. way)
+		{
+			ascent(k in 0 .. way2)
+			{
+				ShotSingle(i, j/way+k*0.025, speed_rate, graphic, iniTimer);
+			}
+		}
+	}
+	
+	while(!flgDel)
+	{
+		let ct = 0;
+		let bx = 0;
+		let by = 0;
+		ascent(i in 0 .. ALL_COUNT)
+		{
+			if (!Obj_IsDeleted(objs[i]))
+			{
+				bx += ObjMove_GetX(objs[i]);
+				by += ObjMove_GetY(objs[i]);
+				ct++;
+			}
+		}
+		// 1体でも倒されたら終了
+		if (ct < ALL_COUNT) { flgDel = true; break; }
+
+		// ついでに中心点計算
+		baseX = bx / ALL_COUNT;
+		baseY = by / ALL_COUNT;
+		
+		wait(1);
+	}
+	wait(15);
+	
+	task ShotSingle(idx, pos, speed_rate, graphic, timer)
+	{
+		let obj = CreateShotA1(0, 0, 0, 0, graphic, 0);
+		ObjShot_SetAutoDelete(obj, false);
+		ObjShot_SetIntersectionEnable(obj, false);
+		Obj_SetRenderPriorityI(obj, priorityZakoBack-1);
+		
+		let idx2 = (idx+1)%ALL_COUNT;
+		
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			if (t <= timer)
+			{
+				let tmp = GetCurve_a(t/timer);
+				let tmp_s = 0.5 + tmp*0.5;
+				ObjRender_SetColor(obj, tmp*255, tmp*255, tmp*255);
+				ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, 1);
+				if (t == timer)
+				{
+					ObjShot_SetIntersectionEnable(obj, true);
+					Obj_SetRenderPriorityI(obj, priorityZako-1);
+				}
+			}
+			if (flgDel)
+			{
+				let sx = ObjMove_GetX(obj);
+				let sy = ObjMove_GetY(obj);
+				let sa = atan2(sy-baseY, sx-baseX);
+				let ss = ((sy-baseY)^2+(sx-baseX)^2)^0.5 * speed_rate;
+				My_CreateShotA2(sx, sy, -ss, sa, ss/120, ss, graphic, 5);
+				CallSound(sndShot2);
+				Obj_Delete(obj);
+				break;
+			}
+			if (!Obj_IsDeleted(objs[idx]) && !Obj_IsDeleted(objs[idx2]))
+			{
+				let sx = ObjMove_GetX(objs[idx])*(1-pos) + ObjMove_GetX(objs[idx2])*pos;
+				let sy = ObjMove_GetY(objs[idx])*(1-pos) + ObjMove_GetY(objs[idx2])*pos;
+				let sa = atan2(sy-baseY, sx-baseX);
+				ObjMove_SetPosition(obj, sx, sy);
+				ObjMove_SetAngle(obj, sa);
+			}
+			t++;
+			yield;
+		}
+	}
+}
+
+// イライラ棒
+task SetEnemyF06(iniX, iniY, iniSpeed, iniAngle, iniValue, iniValue2, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 120;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_M;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 240, eSize);
+	DrawFairy(objEnemy, emnImage, FAIRY_MIDDLE);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let bx = iniX;
+		let by = iniY;
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			let ex = bx*(1-tmp) + toPos[0]*tmp;
+			let ey = by*(1-tmp) + toPos[1]*tmp + 64*(1-(tmp*2-1)^2);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		/*
+		waitObj(objEnemy, iniWait);
+		if (CanShotBullet(objEnemy))
+		{
+			let to_a = iniAngle + sin(iniValue2/7*360)*5;
+			let add_a = -1 * iniMuki;
+			Enemy_SetPatternA2(objEnemy, 0, 0, to_a, iniSpeed/120, 0, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, 60, NO_CHANGE, NO_CHANGE, iniSpeed/120, add_a, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, 120, NO_CHANGE, NO_CHANGE, iniSpeed/120, add_a/2, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, 180, NO_CHANGE, NO_CHANGE, iniSpeed/120, -add_a, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, 315, NO_CHANGE, NO_CHANGE, iniSpeed/120, 0, iniSpeed);
+		}
+		*/
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let sa = 90 - 90*iniMuki;
+		let max_l = 140;
+		let speed = [2.5, 2.5, 3, 3][Difficult];
+		let count = [1, 3, 5, 7][Difficult];
+
+		ascent(i in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { break; }
+			let graphic = [BGW_BEAM_RED, BGW_BEAM_ORANGE, BGW_BEAM_YELLOW, BGW_BEAM_GREEN, BGW_BEAM_SKY, BGW_BEAM_BLUE, BGW_BEAM_PURPLE][i];
+			let offset_a = (i+iniValue2)*360/6;
+			IrairaLaser(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), speed, sa, max_l, offset_a, graphic, 60);
+			waitObj(objEnemy, 19);
+		}
+		
+		waitObj(objEnemy, iniWait);
+		
+		if (CanShotBullet(objEnemy))
+		{
+			// 動き出したらやわっこくする
+			ObjEnemy_SetDamageRate(objEnemy,
+				ObjEnemy_GetInfo(objEnemy, INFO_DAMAGE_RATE_SHOT)*5,
+				ObjEnemy_GetInfo(objEnemy, INFO_DAMAGE_RATE_SPELL));
+			
+			let to_a = iniAngle + sin(iniValue2/7*360)*5;
+			let add_a = -1.5 * iniMuki;
+			Enemy_SetPatternA2(objEnemy, 0, 0, to_a, iniSpeed/90, 0, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, 45, NO_CHANGE, NO_CHANGE, iniSpeed/90, add_a, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, 90, NO_CHANGE, NO_CHANGE, -iniSpeed/60, add_a/2, 0);
+			Enemy_SetPatternA4(objEnemy, 150, NO_CHANGE, 0, iniSpeed/120, 0, iniSpeed*2, objPlayer);
+		}
+	}
+	
+	task IrairaLaser(x, y, speed, angle, max_l, pos_state, graphic, delay)
+	{
+		let obj = My_CreateStraightLaserA1(x, y, angle, 0, 16, 99999, graphic, delay, true);
+		
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			let len = max_l * (1 + sin(t+pos_state)/2*iniMuki);
+			if (t < delay)
+			{
+				let tmp = GetCurve_d((t+1)/60);
+				len *= tmp;
+			}
+			ObjLaser_SetLength(obj, len);
+			if (t == delay)
+			{
+				let sa = [90, -90][y > GetPlayerY];
+				ObjMove_AddPatternA2(obj, 0, 0, sa, speed/120, 0, speed);
+				CallSound(sndLaser1);
+			}
+			t++;
+			yield;
+		}
+	}
+}
+// 隊列妖精
+task SetEnemyF07(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 90;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_M;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 50, eSize);
+	DrawFairy(objEnemy, emnImage, FAIRY_MIDDLE);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let bx = iniX;
+		let by = iniY;
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			let ex = bx*(1-tmp) + toPos[0]*tmp;
+			let ey = by*(1-tmp) + toPos[1]*tmp;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		waitObj(objEnemy, iniWait);
+		if (CanShotBullet(objEnemy))
+		{
+			TCheckDispINOut(objEnemy, 16);
+			Enemy_SetPatternA2(objEnemy, 0, -iniSpeed/2, GetAngleToPlayer(objEnemy), iniSpeed/60, 0, iniSpeed);
+			TShot2(GetAngleToPlayer(objEnemy));
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let speed = [0.75, 0.75, 0.7, 0.66][Difficult];
+		let way = [2, 3, 3, 3][Difficult];
+		let count = [5, 7, 9, 12][Difficult];
+		let graphic = BGW_CHRYSTAL_S_RED + SHOT_COLOR[(iniColor+1)%7];
+		
+		ascent(t in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+			
+			let sa = 90;
+			let ss = speed * (1 + t*0.75);
+			let way_angle = (t+5)*0.1;
+			CreateShotArrowA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed*3, sa, -speed/15, ss, graphic, 15, way, way_angle, 0.025);
+			CreateShotArrowA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed*3, sa+180, -speed/15, ss, graphic, 15, way, way_angle, 0.025);
+			if (t < 3) { CallSound(sndShot3); }
+			waitObj(objEnemy, 5);
+		}
+	}
+	
+	task TShot2(angle)
+	{
+		waitObj(objEnemy, 30);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let to_a = angle;
+
+		local
+		{
+			let way = [3, 5, 5, 5][Difficult];
+			let way2 = [1, 1, 3, 3][Difficult];
+			let way2_angle = [1, 1, 24, 24][Difficult];
+			let graphic = BGW_RICE_S_RED + SHOT_COLOR[iniColor];
+
+			ascent(i in 0 .. way2)
+			{
+				let tmp = i-(way2-1)/2;
+				let ss = iniSpeed * (1 - absolute(tmp)*0.15);
+				let sa = to_a + tmp*way2_angle;
+				let sw = way - trunc(absolute(tmp*2));
+				CreateShotArrowA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/45, ss, graphic, 15, sw, 1, 0.025);
+			}
+		}
+		
+		local
+		{
+			let speed2 = [1.5, 1.5, 1.75, 2][Difficult];
+			let way2 = [15, 18, 15, 21][Difficult];
+			let way2_angle = [315, 330, 360, 360][Difficult];
+			let count2 = [1, 1, 2, 3][Difficult];
+			way2 = round(way2*iniValue);
+			way2_angle = round(way2_angle*iniValue);
+			
+			let graphic2 = BGW_BALL_BS_RED + SHOT_COLOR[(iniColor+1)%7];
+			
+			
+			ascent(i in 0 .. 3)
+			{
+				let oa = (i-1)*3;
+				descent(j in 0 .. count2)
+				{
+					let ss = speed2 * (1 - j*0.25);
+					let sa = to_a + oa + 180;
+					CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+						ss*2, sa, -ss/30, ss, graphic2, 15, way2-j, way2_angle/way2, 0);
+				}
+			}
+		}
+		CallSound(sndShot2);
+	}
+}
+
+// 逃亡妖精
+task SetEnemyF08(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 60;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 10, eSize);
+	DrawFairy(objEnemy, emnImage, FAIRY_SMALL);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	task TMove()
+	{
+		let bx = BPOS[0];
+		let by = BPOS[1];
+		let vx = cos(iniAngle);
+		let vy = sin(iniAngle);
+		let vs = 0;
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			vs = tmp*iniSpeed/2;
+			let ex = iniX*(1-tmp) + bx*tmp;
+			let ey = iniY*(1-tmp) + by*tmp;
+			bx += vx*vs;
+			by += vy*vs;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		while(CanShotBullet(objEnemy))
+		{
+			let ex = bx;
+			let ey = by;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			bx += vs*vx;
+			by += vs*vy;
+			vs = min(iniSpeed, vs+iniSpeed/120);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+	}
+}
+
+// 落下妖精
+task SetEnemyF09(iniX, iniY, iniSpeed, iniAngle, iniValue, iniValue2, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 30;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+	let baseAngle = 0;
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 10, eSize);
+	SetEnemyEeathFlag(objEnemy);
+	DrawFairy(objEnemy, emnImage, FAIRY_SMALL);
+	TAct();
+	WaitForKilled(objEnemy);
+	if (iniValue2 && CheckKillType(objEnemy) == 2)
+	{
+		// 撃ち返し
+		TUchikaeshi();
+	}
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let bx = iniX;
+		let by = iniY;
+		let br = 0;
+		let ba = iniValue;
+		let vx = iniSpeed*cos(iniAngle);
+		let vy = iniSpeed*sin(iniAngle);
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy))
+		{
+			let ex = bx + br*cos(ba);
+			let ey = by + br*sin(ba);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			
+			let tmp = 1;
+			if (t > iniTimer) { tmp += min(2,(t-iniTimer)/60); }
+			let tmp2 = max(1, (180-t)/180*3);
+
+			br += 2*tmp;
+			ba += 0.25*tmp2;
+			bx += vx;
+			by += vy;
+			baseAngle = ba;
+			t++;
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let speed = [1.33, 1.5, 1.66, 1.66][Difficult];
+		let way = [2, 2, 2, 2][Difficult];
+		let count = [5, 5, 5, 8][Difficult];
+		let way_angle = [30, 30, 30, 30][Difficult];
+		let way_angle2 = [30, 30, 75, 75][Difficult];
+		let graphic = BGB_SCALE_RED + SHOT_COLOR[iniColor];
+		let graphic2 = ADD_BGB_BALL_BS_RED + SHOT_COLOR[iniColor];
+
+		let to_x = GetPlayerX;
+		let to_y = GetPlayerY;
+		ascent(t in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			let sa = baseAngle+30;
+			let ss = speed * (1+(count-t)*0.1);
+			CreateShotWay(sx, sy, ss, sa-15, graphic, 15, way, way_angle, 0);
+			if (Difficult >= D_HARD) { CreateShotWay(sx, sy, ss*0.66, sa-15, graphic, 15, way, way_angle2, 0); }
+
+			if (CheckInPlayer(iniX, iniY, 108))
+			{
+				My_CreateShotA2(sx, sy, 0, GetAngleToPlayer(objEnemy), speed/120, speed/2, graphic2, 15);
+			}
+			CallSound(sndShot2);
+			waitObj(objEnemy, 3);
+		}
+	}
+
+	task TUchikaeshi()
+	{
+		let speed = [3, 3.5, 4, 4][Difficult];
+		let fs = [0, 1.5, 1.5, 1.5][Difficult];
+		let way = [0, 10, 10, 10][Difficult];
+		let graphic = ADD_BGB_BALL_BS_RED + SHOT_COLOR[(iniColor+1)%7];
+
+		if (way <= 0 || !CheckUchikaeshi(objEnemy, 64)) { return; }
+		
+		let ba = rand(0,360);
+		ascent(i in 0 .. way)
+		{
+			let va = ba + i*360/way;
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			let sa = GetAngleToPlayer(objEnemy);
+			UchiShot(sx, sy, speed, va, graphic, 5, fs, sa);
+		}
+		CallSound(sndShot5);
+		
+		task UchiShot(x, y, speed, angle, graphic, delay, fs, to_angle)
+		{
+			let obj = My_CreateShotA2(x, y, fs, angle, -fs/30, 0, graphic, delay);
+			wait(30);
+			if (!Obj_IsDeleted(obj))
+			{
+				let r = 116;
+				let to_x = x + r*cos(to_angle);
+				let to_y = y + r*sin(to_angle);
+				let to_r = ((to_y-ObjMove_GetY(obj))^2+(to_x-ObjMove_GetX(obj))^2)^0.5;
+				let to_a = atan2(to_y-ObjMove_GetY(obj), to_x-ObjMove_GetX(obj));
+				let to_s = speed * to_r/r;
+				ObjMove_AddPatternA2(obj, 0, 0, to_a, to_s/240, 0, to_s);
+			}
+		}
+	}
+}
+
+// 自機狙いｽｶﾗﾍﾞ氏
+task SetEnemySc01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 120;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 10, eSize);
+	SetEnemyEeathFlag(objEnemy);
+	DrawScarab(objEnemy, GetScrabColor(iniColor));
+	SetScarabMotion(objEnemy, 3);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let to_x = GetPlayerX;
+		let to_y = MinY-16;
+		let bx = iniX;
+		let by = iniY;
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			let ex = bx*(1-tmp) + toPos[0]*tmp;
+			let ey = by*(1-tmp) + toPos[1]*tmp;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		Enemy_SetPatternA2(objEnemy, 0, 0, -90, 0.25/30, 0, 0.25);
+		waitObj(objEnemy, iniWait);
+		if (CanShotBullet(objEnemy))
+		{
+			let to_a = iniAngle;
+			Enemy_SetPatternA2(objEnemy, 0, NO_CHANGE, NO_CHANGE, -0.25/30, 0, 0);
+			Enemy_SetPatternA4(objEnemy, 30, 0, 0, iniSpeed/120, 0, iniSpeed, objPlayer);
+			TCheckDispINOut(objEnemy, 16);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer+iniWait);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let speed = [1.75, 1.75, 2, 2][Difficult];
+		let way = [1, 1, 3, 3][Difficult];
+		let count = [2, 2, 2, 2][Difficult];
+		let way_angle = 45;
+		let graphic = BGB_VIRUS_RED + SHOT_COLOR[iniColor];
+
+		let to_x = GetPlayerX;
+		let to_y = GetPlayerY;
+		ascent(t in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			ascent(i in 0 .. way)
+			{
+				let oa = (i-(way-1)/2)*way_angle;
+				let fs = rand(2,4);
+				let fa = rand(0, 360);
+				CreateShotScrab01(sx, sy, speed, oa, graphic, 15, to_x, to_y, fs, fa, 30)
+			}
+			CallSound(sndShot3);
+			waitObj(objEnemy, 2);
+		}
+	}
+	
+	task CreateShotScrab01(x, y, speed, angle, graphic, delay, to_x, to_y, fs, fa, ft)
+	{
+		let obj = My_CreateShotA1(x, y, 0, 0, graphic, delay);
+		
+		let vx = fs*cos(fa);
+		let vy = fs*sin(fa);
+		ascent(t in 0 .. ft)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = 1-GetCurve_d((t+1)/ft);
+			x += tmp*vx;
+			y += tmp*vy;
+			let sa = atan2(to_y-y, to_x-x) + angle;
+			ObjMove_SetPosition(obj, x, y);
+			ObjMove_SetAngle(obj, sa);
+			yield;
+		}
+		if (Obj_IsDeleted(obj)) { return; }
+		ScrabAddShot(obj);
+		ObjMove_AddPatternA2(obj, 0, 0, NO_CHANGE, speed/60, 0, speed);
+	}
+	task ScrabAddShot(objBase)
+	{
+		let obj = My_CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, ADD_BGW_LIGHT_L_WHITE, 0);
+		ObjRender_SetColor(obj, 0, 48, 0);
+		ObjRender_SetScaleXYZ(obj, 0.5, 0.5, 1);
+		SetShotDisabled(obj);
+		let t = 0;
+		while(!Obj_IsDeleted(objBase))
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			if (t < 30)
+			{
+				let tmp = GetCurve((t+1)/30);
+				ObjRender_SetAlpha(obj, tmp*255);
+			}
+			ObjMove_SetPosition(obj, ObjMove_GetX(objBase), ObjMove_GetY(objBase));
+			ObjMove_SetAngle(obj, ObjMove_GetAngle(objBase));
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// 地面を這うｽｶﾗﾍﾞ氏
+task SetEnemySc02(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 120;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	
+	let objEnemy = MakeEnemy(iniX+84*cos(iniAngle), iniY+64*sin(iniAngle), 30, eSize);
+	DrawScarab(objEnemy, GetScrabColor(iniColor));
+	SetScarabMotion(objEnemy, 0);
+	SetEnemyEeathFlag(objEnemy);	// 地上敵
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	task TMove()
+	{
+		let vx = iniSpeed*cos(iniAngle);
+		let vy = iniSpeed*sin(iniAngle);
+		
+		Stage06_FadeIN(objEnemy, 30);
+		
+		let t = 0;
+		let flgMotion = false;
+		while(CanShotBullet(objEnemy))
+		{
+			if (t > 30 && ObjMove_GetY(objEnemy) > GetPlayerY-32) { flgMotion = true; break; }
+			ObjMove_SetPosition(objEnemy, ObjMove_GetX(objEnemy)+vx, ObjMove_GetY(objEnemy)+vy);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (flgMotion)
+		{
+			SetScarabMotion(objEnemy, 3);
+			Enemy_SetPatternA2(objEnemy, 0, 0, 270, 2/15, 0, 2);
+			Enemy_SetPatternA2(objEnemy, 30, NO_CHANGE, NO_CHANGE, -2/90, 0, 0);
+			Enemy_SetPatternA4(objEnemy, 120, NO_CHANGE, 0, 2/120, 0, 2, objPlayer);
+			TShot();
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, 120);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let speed = [2.25, 2.25, 2.75, 3.25][Difficult];
+		let way = [1, 1, 3, 3][Difficult];
+		let count = [3, 3, 3, 3][Difficult];
+		let way_angle = 45;
+		let graphic = BGB_ICE_RED + SHOT_COLOR[iniColor];
+
+		let to_x = GetPlayerX;
+		let to_y = GetPlayerY;
+		ascent(t in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			ascent(i in 0 .. 2)
+			{
+				let fs = 2 + t;
+				let fa = GetAngleToPlayer(objEnemy) + (i-0.5)*2*120;
+				ascent(j in 0 .. way)
+				{
+					let oa = (j-(way-1)/2)*way_angle;
+					CreateShotScrab01(sx, sy, speed, oa, graphic, 15, to_x, to_y, fs, fa, 30)
+				}
+			}
+			CallSound(sndShot3);
+			waitObj(objEnemy, 2);
+		}
+	}
+	
+	task CreateShotScrab01(x, y, speed, angle, graphic, delay, to_x, to_y, fs, fa, ft)
+	{
+		let obj = My_CreateShotA1(x, y, 0, 0, graphic, delay);
+		
+		let vx = fs*cos(fa);
+		let vy = fs*sin(fa);
+		ascent(t in 0 .. ft)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = 1-GetCurve_d((t+1)/ft);
+			x += tmp*vx;
+			y += tmp*vy;
+			let sa = atan2(to_y-y, to_x-x) + angle;
+			ObjMove_SetPosition(obj, x, y);
+			ObjMove_SetAngle(obj, sa);
+			yield;
+		}
+		ObjMove_AddPatternA2(obj, 0, 0, NO_CHANGE, speed/60, 0, speed);
+	}
+}
+
+// 自機狙いｽｶﾗﾍﾞ氏
+task SetEnemySc03(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 120;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 30, eSize);
+	SetEnemyEeathFlag(objEnemy);
+	DrawScarab(objEnemy, GetScrabColor(iniColor));
+	SetScarabMotion(objEnemy, 3);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let to_x = GetPlayerX;
+		let to_y = MinY-16;
+		let bx = iniX;
+		let by = iniY;
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			let ex = bx*(1-tmp) + toPos[0]*tmp;
+			let ey = by*(1-tmp) + toPos[1]*tmp;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		Enemy_SetPatternA2(objEnemy, 0, 0, -90, 0.5/30, 0, 0.25);
+		waitObj(objEnemy, iniWait);
+		if (CanShotBullet(objEnemy))
+		{
+			let to_a = iniAngle;
+			Enemy_SetPatternA2(objEnemy, 0, NO_CHANGE, NO_CHANGE, -0.5/30, 0, 0);
+			Enemy_SetPatternA4(objEnemy, 30, 0, 0, iniSpeed/120, 0, iniSpeed, objPlayer);
+			TCheckDispINOut(objEnemy, 16);
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer+iniWait);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let speed = [1.75, 1.75, 2, 2][Difficult];
+		let way = [1, 1, 3, 5][Difficult];
+		let count = [2, 2, 2, 2][Difficult];
+		let way_angle = 45;
+		let graphic = BGB_VIRUS_RED + SHOT_COLOR[iniColor];
+
+		let to_x = GetPlayerX;
+		let to_y = GetPlayerY;
+		ascent(t in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			ascent(i in 0 .. way)
+			{
+				let oa = (i-(way-1)/2)*way_angle;
+				let fs = rand(2,4);
+				let fa = rand(0, 360);
+				CreateShotScrab01(sx, sy, speed, oa, graphic, 15, to_x, to_y, fs, fa, 30)
+			}
+			CallSound(sndShot3);
+			waitObj(objEnemy, 2);
+		}
+	}
+	
+	task CreateShotScrab01(x, y, speed, angle, graphic, delay, to_x, to_y, fs, fa, ft)
+	{
+		let obj = My_CreateShotA1(x, y, 0, 0, graphic, delay);
+		
+		let vx = fs*cos(fa);
+		let vy = fs*sin(fa);
+		ascent(t in 0 .. ft)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = 1-GetCurve_d((t+1)/ft);
+			x += tmp*vx;
+			y += tmp*vy;
+			let sa = atan2(to_y-y, to_x-x) + angle;
+			ObjMove_SetPosition(obj, x, y);
+			ObjMove_SetAngle(obj, sa);
+			yield;
+		}
+		ObjMove_AddPatternA2(obj, 0, 0, NO_CHANGE, speed/60, 0, speed);
+	}
+}
+
+// 自機狙いｽｶﾗﾍﾞ氏
+task SetEnemySc04(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 120;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = iniColor;
+	
+	let objEnemy = MakeEnemy(iniX+84*cos(iniAngle), iniY+64*sin(iniAngle), 30, eSize);
+	DrawScarab(objEnemy, GetScrabColor(iniColor));
+	SetScarabMotion(objEnemy, 0);
+	SetEnemyEeathFlag(objEnemy);	// 地上敵
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	task TMove()
+	{
+		let vx = iniSpeed*cos(iniAngle);
+		let vy = iniSpeed*sin(iniAngle);
+		
+		Stage06_FadeIN(objEnemy, 90);
+		
+		let t = 0;
+		let flgMotion = false;
+		while(CanShotBullet(objEnemy))
+		{
+			if (ObjMove_GetY(objEnemy) > MaxY) { flgMotion = true; break; }
+			ObjMove_SetPosition(objEnemy, ObjMove_GetX(objEnemy)+vx, ObjMove_GetY(objEnemy)+vy);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (flgMotion)
+		{
+			SetScarabMotion(objEnemy, 3);
+			Enemy_SetPatternA2(objEnemy, 0, 0, 270, 3/1, 0, 3);
+			Enemy_SetPatternA2(objEnemy, 120, NO_CHANGE, NO_CHANGE, -3/45, 0, 0);
+			Enemy_SetPatternA4(objEnemy, 120+45, NO_CHANGE, 0, 2/120, 0, 2, objPlayer);
+			TShot();
+			TShot2();
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		let speed = [2, 4, 5, 6][Difficult];
+		let way = [2, 2, 2, 2][Difficult];
+		let way_angle = 15;
+		let graphic = BGB_ICE_RED + SHOT_COLOR[iniColor];
+		let wt = [7, 15, 15, 15][Difficult];
+		let timer = [15, 60, 105, 120][Difficult];
+		let ft = [5, 3, 0, 0][Difficult];
+
+		let to_x = GetPlayerX;
+		let to_y = GetPlayerY;
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			if (t >= ft && (t+iniWait)%wt == 0)
+			{
+				let sx = ObjMove_GetX(objEnemy);
+				let sy = ObjMove_GetY(objEnemy);
+				let sa = Enemy_GetAngle(objEnemy);
+				CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, speed/240, speed, graphic, 15, way, way_angle, 0);
+				CallSound(sndShot3);
+			}
+			waitObj(objEnemy, 1);
+		}
+	}
+
+	task TShot2()
+	{
+		let speed = [2.75, 3.25, 5, 7][Difficult];
+		let way = [3, 3, 3, 3][Difficult];
+		let count = [1, 1, 1, 3][Difficult];
+		let graphic = BGW_CHRYSTAL_S_RED + SHOT_COLOR[iniColor];
+		let wt = [1, 1, 1, 133][Difficult];
+
+		let delay_wt = 165;
+		
+		waitObj(objEnemy, delay_wt);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		let to_x = GetPlayerX;
+		let to_y = GetPlayerY;
+		ascent(t in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { return; }
+
+			if (CheckDispIN(objEnemy, 0))
+			{
+				let sx = ObjMove_GetX(objEnemy);
+				let sy = ObjMove_GetY(objEnemy);
+				let sa = GetAngleToPlayer(objEnemy);
+				CreateShotCrystalA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, speed/240, speed, graphic, 15, way, 1.5, 0.05);
+				CallSound(sndShot3);
+			}
+			waitObj(objEnemy, wt);
+		}
+	}
+}
+
+// ﾇｯっと出る人魂
+task SetEnemyH01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, iniColor, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 90;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+	let flgUchikaeshi = true;
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_M;
+	let eColor = iniColor;
+	let emnImage = GetFairyImageFile(eColor);
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	DrawHitodama2(objEnemy, eColor);
+	TAct();
+	WaitForKilled(objEnemy);
+	if (flgUchikaeshi && CheckKillType(objEnemy) == 2)
+	{
+		// 撃ち返し
+		TUchikaeshi(false);
+	}
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let bx = iniX;
+		let by = iniY;
+		
+		SetEnemyVisible(objEnemy, false);
+		SetHitodama2Size(objEnemy, 1, 64);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			let ex = bx*(1-tmp) + toPos[0]*tmp;
+			let ey = by*(1-tmp) + toPos[1]*tmp;
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			if (t > iniTimer-30)
+			{
+				let tmp = (t-(iniTimer-30)+1)/30;
+				SetHitodama2Size(objEnemy, 1, 64+192*tmp);
+			} else {
+				let tmp = (t+1)/(iniTimer-30);
+				SetHitodama2Size(objEnemy, 1, 64*tmp);
+			}
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (CanShotBullet(objEnemy))
+		{
+			TCheckDispINOut(objEnemy, 16);
+			SetEnemyVisible(objEnemy, true);
+			Enemy_SetPatternA2(objEnemy, 0, 0, iniAngle, iniSpeed/60, 0, iniSpeed);
+			Enemy_SetPatternA2(objEnemy, iniWait, NO_CHANGE, NO_CHANGE, -iniSpeed/30, 0, 0);
+			Enemy_SetPatternA4(objEnemy, iniWait+30, 0, 0, 3/120, 0, 3, objPlayer);
+
+			let r = 0;
+			while(CanShotBullet(objEnemy))
+			{
+				ObjMove_SetX(objEnemy, ObjMove_GetX(objEnemy)+r*sin(t+iniValue));
+				t++;
+				r = min(1, r+1/120);
+				waitObj(objEnemy, 1);
+			}
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer+iniWait);
+		if (!CanShotBullet(objEnemy)) { return; }
+		TUchikaeshi(true);
+		flgUchikaeshi = false;
+	}
+	
+	
+	task TUchikaeshi(flgWay)
+	{
+		let speed = [2, 3, 3, 4][Difficult];
+		let way = [8, 12, 16, 18][Difficult];
+		let graphic = BGW_FIRE_RED + SHOT_COLOR[iniColor];
+		let graphic2 = BGW_FIRE_RED + SHOT_COLOR[(iniColor+1)%8];
+
+		if (way <= 0 || !CheckUchikaeshi(objEnemy, 64)) { return; }
+		
+		let ba = rand(0,360);
+		if (flgWay)
+		{
+			way = round(way*0.66);
+			CreateShotCircleH02(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed*0.75, ba+180/way, -speed/30, speed/8, graphic2, 30, way, 0, 30);
+		}
+		CreateShotCircleH02(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, ba, -speed/30, speed/8, graphic, 30, way, 0, 120);
+		CallSound(sndShot3);
+	}
+	function CreateShotCircleH02(x, y, speed, angle, add_speed, max_speed, graphic, delay, way, r, timer)
+	{
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + i*360/way;
+			let sx = x + cos(sa)*r;
+			let sy = y + sin(sa)*r;
+			let obj = My_CreateShotA2Ex(sx, sy, speed, sa, add_speed, max_speed, graphic, delay, DELAY_ADD);
+			ObjMove_AddPatternA2(obj, timer, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+		}
+	}
+}
+
+// ぐるぐる陰陽玉
+task SetEnemyI06_Base(iniX, iniY, iniSpeed, iniAngle, iniValue, iniMuki, iniWait, iniColor, toPos)
+{
+	let iniTimer = 90;
+
+	let objEnemy = MakeEnemy(iniX, iniY, 1, ENEMY_FREE);
+	TAct();
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	
+	task TMove()
+	{
+		let to_pos = toPos;
+		let timer2 = iniTimer + iniWait;
+		
+		let bx = iniX;
+		let by = iniY;
+		let to_br = iniValue;
+		let base_angle = iniAngle;
+		let add_ba = 90*iniMuki;
+		let add_angle = 0.5*iniMuki;
+		
+		let vx = iniSpeed*cos(toPos[2]);
+		let vy = iniSpeed*sin(toPos[2]);
+		let ox = 0;
+		let oy = 0;
+
+		TCheckDispINOut(objEnemy, 256);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy))
+		{
+			if (t <= iniTimer)
+			{
+				let tmp = GetCurve_d(t/iniTimer);
+				bx = iniX + (to_pos[0]-iniX)*tmp + ox;
+				by = iniY + (to_pos[1]-iniY)*tmp + oy;
+			}
+			else
+			{
+				bx = to_pos[0] + ox;
+				by = to_pos[1] + oy;
+			}
+			local
+			{
+				let tmp = GetCurve_d(min(1, t/timer2));
+				ox += vx*tmp; oy += vy*tmp;
+			}
+
+			let tmp = GetCurve_d(min(1, t/timer2));
+			let br = to_br*tmp;
+			let ba = base_angle + add_ba*tmp + add_angle*t;
+			ObjMove_SetPosition(objEnemy, bx, by);
+			Obj_SetValue(objEnemy, "EA", ba);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	task TShot()
+	{
+		ascent(i in 0 .. 3)
+		{
+			TShot_sub(i*120);
+		}
+		
+		task TShot_sub(angle)
+		{
+			let count = 2;
+			let wt = ceil(19*2);
+			let r = 0;
+			let add_r = 48;
+			let beforeObj = -1;
+			
+			ascent(t in 0 .. count)
+			{
+				if (!CanShotBullet(objEnemy)) { return; }
+				let newObj = SetEnemyI06(objEnemy, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 2, angle, r, add_r, t, iniMuki, wt, iniColor);
+				
+				if (!Obj_IsDeleted(beforeObj) && !Obj_IsDeleted(newObj))
+				{
+					MB_PyramidLaser(newObj, beforeObj, 60*99, BGW_BEAM_RED+SHOT_COLOR[iniColor], wt);
+				} else if (t == 0) {
+					_MB_PyramidLaser(objEnemy, newObj, 0, 16, 60*99, BGW_BEAM_RED+SHOT_COLOR[iniColor], wt);
+				}
+				beforeObj = newObj;
+				r += add_r;
+				if (t == 0) { add_r *= 2; }
+				waitObj(objEnemy, wt);
+			}
+		}
+	}
+}
+function SetEnemyI06(objParent, iniX, iniY, iniSpeed, iniAngle, iniValue, iniValue2, iniValue3, iniMuki, iniWait, iniColor)
+{
+	if (flgStopSetZako) { return; }
+	
+	let eSize = ENEMY_L;
+	let eColor = iniColor;
+
+	let objEnemy = MakeEnemy(iniX, iniY, 100, eSize);
+	SetEnemyDropItem(objEnemy, [MY_ITEM_TIME_3], [MY_ITEM_TIME_1, 5]);
+	DrawOnmyou( objEnemy, eColor );
+	TAct();
+	return(objEnemy);
+	
+	task TAct()
+	{
+		TShot();
+		TMove();
+		
+		// オブジェクトを返すので継続処理はこっちに
+		WaitForKilled(objEnemy);
+		if (CheckKillType(objEnemy) == 2)
+		{
+			// 撃ち返し
+			TUchikaeshi();
+		}
+		ZakoFinalize(objEnemy, eColor);
+	}
+	
+	task TMove()
+	{
+		let timer = iniWait;
+
+		ZakoEnterEffect_Onmyou(objEnemy, timer);
+
+		let t = 0;
+		while(CanShotBullet(objEnemy) && !Obj_IsDeleted(objParent))
+		{
+			let tmp = GetCurve_ad(min(1, t/timer));
+			let br = iniValue + iniValue2*tmp;
+			let ba = Obj_GetValueD(objParent, "EA", 0) + iniAngle;
+			let ex = ObjMove_GetX(objParent) + br*cos(ba);
+			let ey = ObjMove_GetY(objParent) + br*sin(ba);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		EraseEnemy(objEnemy);
+	}
+	
+	task TShot()
+	{
+		waitObj(objEnemy, iniWait);
+		if (iniValue3 < 1) { return; }
+		
+		let wt = 3;
+		let timer = [30, 30, 120, 150][Difficult];
+		let graphic = ADD_BGW_BALL_BS_RED + SHOT_COLOR[iniColor];
+		
+		while(CanShotBullet(objEnemy))
+		{
+			let ba = Obj_GetValueD(objParent, "EA", 0) + iniAngle;
+			DelShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, ba, graphic, timer);
+			waitObj(objEnemy, wt);
+		}
+		
+		task DelShot(x, y, speed, angle, graphic, timer)
+		{
+			let obj = My_CreateShotA1(x, y, 0, angle, graphic, 15);
+			wait(timer);
+			ObjShot_FadeDelete(obj);
+		}
+	}
+
+	task TUchikaeshi()
+	{
+		let speed = [2.5, 2.5, 2.5, 2.5][Difficult];
+		let way = [0, 2, 2, 2][Difficult];
+		let way2 = [5, 5, 5, 5][Difficult];
+		let graphic = BGB_ICE_RED + SHOT_COLOR[iniColor];
+		
+		
+		if (way <= 1) { return; }
+		let sa = GetAngleToPlayer(objEnemy);
+		CreateShotTri_I05(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, sa, graphic, 15, way, way2, 0);
+		if (Difficult >= D_LUNA)
+		{
+			CreateShotTri_I05(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed/2, sa+180, graphic, 15, way, way2, 0);
+		}
+		CallSound(sndShot5);
+	}
+
+	// □弾
+	function CreateShotTri_I05(x, y, speed, angle, graphic, delay, way, way2, r)
+	{
+		ascent(j in 0 .. 3)
+		{
+			let vpos = [
+				[cos(angle+j*120), sin(angle+j*120)],
+				[cos(angle+(j+1)*120), sin(angle+(j+1)*120)]
+			];
+			
+			ascent(i in 0 .. way)
+			{
+				let oway = (way2+1.5)/2*0.05/way;
+				ascent(k in 0 .. way2)
+				{
+					let tmp2 = (k-(way2-1)/2)*0.05;
+					let tmp = oway + (i+tmp2)/(way-1)*(1-oway*2);
+					let vx = vpos[0][0]*(1-tmp) + vpos[1][0]*tmp;
+					let vy = vpos[0][1]*(1-tmp) + vpos[1][1]*tmp;
+					let sa = atan2(vy, vx);
+					let ss = speed * (vx^2+vy^2)^0.5;
+					let sx = x + vx*r;
+					let sy = y + vy*r;
+					let obj = My_CreateShotA2(sx, sy, 0, sa, ss/180, ss, graphic, delay);
+				}
+			}
+		}
+	}
+}
+
+
+// 中ボス氏
+task SetEnemyMBoss(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniTimer = 120;
+	let iniMuki = [1, -1][cos(iniAngle)<0];
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_LL;
+	let eColor = EFF_RED;
+	let emnImage = imgZakoFairyEgypt;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 2000, eSize);
+	SetEffectResist(objEnemy, 0.5);	// 状態異常耐性
+	SetTimeResist(objEnemy, 1);	// 停止無効
+	DrawFairy(objEnemy, emnImage, FAIRY_LARGE_FLOWER);
+	TAct();
+	WaitForKilled(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let bx = iniX;
+		let by = iniY;
+		
+		Stage06_FadeIN(objEnemy, iniTimer);
+		TCheckDispINOut(objEnemy, 16);
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < iniTimer)
+		{
+			let tmp = GetCurve_d(t/iniTimer);
+			let ex = bx*(1-tmp) + toPos[0]*tmp;
+			let ey = by*(1-tmp) + toPos[1]*tmp + 64*(1-(tmp*2-1)^2);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		if (CanShotBullet(objEnemy))
+		{
+			Enemy_SetPatternA2(objEnemy, 0, 0, 270, 0.1/120, 0, 0.1);
+			Enemy_SetPatternA2(objEnemy, 1200, NO_CHANGE, NO_CHANGE, 2/120, 0, 2);
+		}
+	}
+	
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		
+		let count = [4, 5, 7, 7][Difficult];
+		let max_r = [210, 240, 320, 320][Difficult];
+		let add_a = [27, 13, -44];
+		
+		let muki = 1;
+		let t = 0;
+		
+		ascent(i in 0 .. 3)
+		{
+			if (!CanShotBullet(objEnemy)) { break; }
+			EffectChargeSetA(objEnemy, EFF_WHITE, 90);
+			CallSound(sndPower2);
+			waitObj(objEnemy, 60);
+			
+			if (!CanShotBullet(objEnemy)) { break; }
+			PyramidSet(GetAngleToPlayer(objEnemy), add_a[t%length(add_a)], count, max_r, muki);
+			muki = -muki;
+			t++;
+			waitObj(objEnemy, 19*7*2-60);
+		}
+		// ショットを撃ち終えたらやわっこくする
+		ObjEnemy_SetDamageRate(objEnemy,
+			ObjEnemy_GetInfo(objEnemy, INFO_DAMAGE_RATE_SHOT)*5,
+			ObjEnemy_GetInfo(objEnemy, INFO_DAMAGE_RATE_SPELL));
+	}
+	
+	task PyramidSet(base_angle, add_angle, count, max_r, muki)
+	{
+		ascent(i in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { break; }
+			let sr = (1/4+(count-i-1)/(count-1)*3/4) * max_r;
+			let sa = base_angle - i*add_angle*muki;
+			let graphic = BGW_BEAM_RED + SHOT_COLOR[i%7];
+			Pyramid(sr, sa, muki, i, graphic);
+			CallSound(sndShot5);
+			waitObj(objEnemy, 9);
+		}
+	}
+
+	task Pyramid(r, base_angle, muki, color, graphic)
+	{
+		let count = 3;
+		let delay = 120;
+		let objs = [];
+		ascent(i in 0 .. count)
+		{
+			let ea = base_angle + i*360/count;
+			let tmp_obj = SetEnemyMBoss_sub(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), r, ea, muki, color, 90, [CenX, CenY]);
+			objs = objs ~ [tmp_obj];
+		}
+		// 三角形レーザー
+		ascent(i in 0 .. count)
+		{
+			MB_PyramidLaser(objs[i], objs[(i+1)%count], 30, graphic, delay);
+		}
+	}
+}
+
+// ピラミッド陰陽玉
+function SetEnemyMBoss_sub(iniX, iniY, iniSpeed, iniAngle, iniValue, iniColor, iniWait, toPos)
+{
+	if (flgStopSetZako) { return; }
+	
+	let iniMuki = [1, -1][toPos[0] < 0];
+	let iniTimer = 120;
+	
+	let eSize = ENEMY_S;
+	let eColor = EFF_WHITE;
+	let emnImage = imgZakoFairyRed;
+
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	DrawOnmyou( objEnemy, eColor );
+	TAct();
+	return(objEnemy);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+		
+		// オブジェクトを返すので継続処理はこっちに
+		WaitForKilled(objEnemy);
+		ZakoFinalize(objEnemy, eColor);
+	}
+	
+	task TMove()
+	{
+		ZakoEnterEffect_Onmyou(objEnemy, iniTimer);
+		
+		ascent(t in 0 .. iniTimer)
+		{
+			let tmp = GetCurve_d((t+1)/iniTimer);
+			
+			let br = iniSpeed*tmp;
+			let ba = iniAngle + 180*tmp*iniValue;
+			let bx = iniX*(1-tmp) + toPos[0]*tmp;
+			let by = iniY*(1-tmp) + toPos[1]*tmp;
+			
+			let ex = bx + br*cos(ba);
+			let ey = by + br*sin(ba);
+			ObjMove_SetPosition(objEnemy, ex, ey);
+			Obj_SetValue(objEnemy, "EA", ba);
+			t++;
+			waitObj(objEnemy, 1);
+		}
+		waitObj(objEnemy, iniWait);
+		if (CanShotBullet(objEnemy))
+		{
+			TCheckDispINOut(objEnemy, 16);
+			
+			let ba = Obj_GetValueD(objEnemy, "EA", 0);
+			Enemy_SetPatternA2(objEnemy, 0, 0, ba+90*iniValue, 2/120, -0.25*iniValue, 2);
+			Enemy_SetPatternA2(objEnemy, 240, NO_CHANGE, NO_CHANGE, 2/120, 0, 2);
+		}
+	}
+	
+	task TShot()
+	{
+		waitObj(objEnemy, iniTimer);
+		if (!CanShotBullet(objEnemy)) { return; }
+		
+		/*
+		let speed = 1;
+		let angle = Obj_GetValueD(objEnemy, "EA", 0)+180;
+		let way = 15;
+		let graphic = BGW_ICE_RED + SHOT_COLOR[iniColor%7];
+		let delay = 30;
+		
+		way -= 6*(6-iniColor);
+		if (way < 3) { return; }
+		
+		let way_max = 30;
+		let way_angle = 0.5/way_max*way;
+		let cway = (way-1)/2;
+		
+		ascent(i in 0 .. way)
+		{
+			let vx = speed;
+			let vy = (i-cway)/cway*way_angle*speed;
+			let pos = Rotate2D_XY(vx, vy, angle);
+			My_CreateShotB2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				pos[0]/10000, pos[1]/10000, pos[0]/120, pos[1]/120, pos[0], pos[1], graphic, delay);
+		}
+		*/
+
+		let speed = [1, 1, 1, 1][Difficult];
+		let angle = Obj_GetValueD(objEnemy, "EA", 0)+180;
+		let way = [3, 3, 3, 3][Difficult];
+		let way2 = [3, 3, 3, 3][Difficult];
+		let count = [1, 1, 1, 1][Difficult];
+		let way_angle = [24, 24, 24, 24][Difficult];
+		let graphic = BGW_BALL_BS_RED + SHOT_COLOR[iniColor%7];
+		let delay = 30;
+		
+	//	if (!CheckDispIN(objEnemy, 0)) { return; }
+		ascent(j in 0 .. count)
+		{
+			let tmp_way = way2-j;
+			let ss = speed * (1-j*0.25);
+			ascent(i in 0 .. tmp_way)
+			{
+				let sa = angle + (i-(tmp_way-1)/2)*way_angle;
+				CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/120, ss, graphic, delay, way, 1, 16);
+			}
+		}
+	}
+}
+
+// 三角ショット
+task MB_PyramidLaser(obj1, obj2, timer, graphic, delay)
+{
+	_MB_PyramidLaser(obj1, obj2, 16, 16, timer, graphic, delay);
+}
+task _MB_PyramidLaser(obj1, obj2, r1, r2, timer, graphic, delay)
+{
+	let obj = My_CreateStraightLaserA1(ObjMove_GetX(obj1), ObjMove_GetY(obj1),
+		0, 0, 12, timer, graphic, delay, true);
+	CallSoundDelay(sndShot2, delay, obj);
+	
+	while(!Obj_IsDeleted(obj))
+	{
+		if (Obj_IsDeleted(obj1) || Obj_IsDeleted(obj2)) { break; }
+		let r = max(0, GetObjectDistance(obj1, obj2)-(r1+r2));
+		let a = GetGapAngle( [ObjMove_GetX(obj1),ObjMove_GetY(obj1)], [ObjMove_GetX(obj2),ObjMove_GetY(obj2)] );
+		ObjMove_SetPosition(obj, ObjMove_GetX(obj1)+r1*cos(a), ObjMove_GetY(obj1)+r1*sin(a));
+		ObjStLaser_SetAngle(obj, a);
+		ObjLaser_SetLength(obj, r);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// いわ
+task SetEnemyIwa01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	if (flgStopSetZako) { return; }
+
+	let e_type = iniValue%2;
+	let eLife = 10;
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let hitSize = iniValue;
+	
+	if (hitSize > 30) { eSize = ENEMY_L; eLife = 100; }
+	else if (hitSize > 15) { eSize = ENEMY_M; eLife = 30; }
+	
+	let objEnemy = MakeEnemy(iniX, iniY, eLife, eSize);
+	alternative(eSize)
+	case(ENEMY_L) { SetEnemyDropItem(objEnemy, [MY_ITEM_TIME_5], [MY_ITEM_TIME_1, 5]); }
+	case(ENEMY_M) { SetEnemyDropItem(objEnemy, [MY_ITEM_TIME_1], [MY_ITEM_TIME_1, 4]); }
+	others { SetEnemyDropItem(objEnemy, [MY_ITEM_TIME_2], [MY_ITEM_TIME_1, 0]); }
+	
+	DrawStone( objEnemy, hitSize, 0 );
+	SetEnemyIntersection(objEnemy, min(8,hitSize*1.5), hitSize/2);	// 当たり判定再設定
+	TAct();
+	WaitForKilled(objEnemy);
+	if (CheckKillType(objEnemy) == 2)
+	{
+		// 撃ち返し
+		TUchikaeshi();
+	}
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		SetEnemyVisible(objEnemy, false);	// 一瞬無敵
+		waitObj(objEnemy, 15);
+		SetEnemyVisible(objEnemy, true);
+	}
+	
+	task TMove()
+	{
+		Enemy_SetPatternA2(objEnemy, 0, iniSpeed, iniAngle, -iniSpeed/30, 0, iniSpeed/2);
+		Enemy_SetPatternB2(objEnemy, 15, NO_CHANGE, NO_CHANGE, 0, 0.015, 0, 3);
+		TCheckDispINOut(objEnemy, hitSize);
+	}
+
+	task TUchikaeshi()
+	{
+		TUchikaeshi_Shot();
+		
+		if (hitSize < 15) { return; }
+		
+		let way = 3;
+		if (hitSize <= 30) { way = 2; }
+		
+		let base_angle = GetAngleToPlayer(objEnemy) + rand_int(0, way-1)/way*360;
+		let sz = hitSize/2;
+		
+		ascent(i in 0 .. way)
+		{
+			let sa = base_angle + (i+0.5)*360/way;
+			let ss = 3 - i/way*2;
+			SetEnemyIwa01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				ss, sa, sz);
+		}
+	}
+	task TUchikaeshi_Shot()
+	{
+		let speed = [1.25, 1.25, 1.25, 1.25][Difficult];
+		let way = [0, 1, 1, 3][Difficult];
+		let way_angle = 60;
+		let graphic = BGB_BALL_S_YELLOW;
+		if (hitSize > 30)
+		{
+			way = [6, 6, 12, 15][Difficult];
+			way_angle = [180, 180, 180, 180][Difficult];
+			graphic = BGW_BALL_M_YELLOW;
+		}
+		else if (hitSize > 15)
+		{
+			way = [3, 3, 8, 10][Difficult];
+			way_angle = [120, 120, 120, 120][Difficult];
+		}
+		
+		let ba = GetAngleToPlayer(objEnemy)+180;
+		ascent(i in 0 .. way)
+		{
+			let sa = ba + (i-(way-1)/2)/way*way_angle;
+			let fs = speed*6 * rand(0.5, 1);
+			let obj = My_CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				fs, sa, -fs/15, fs/4, graphic, 15);
+			ObjMove_AddPatternB2(obj, 15, NO_CHANGE, NO_CHANGE, 0, 0.025, 99, speed);
+		}
+	}
+}

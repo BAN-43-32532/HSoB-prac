@@ -1,0 +1,181 @@
+#include "./../../../lib/lib_Common.dnh"
+#include "./../../../lib/lib_Effect.dnh"
+#include "./../../../lib/loadlib/file_LoadStgImg.dnh"
+
+//----------------------------------------------------
+//”wŒi
+//----------------------------------------------------
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//”wŒiíœ
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//‰ŠúÝ’è
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_RANRAN);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { BackGround1a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	ObjRender_SetPosition(obj,MinX,MinY,0);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task BackGround1a
+{
+	BackGround1;
+	BackGround3;
+	BackGround2;
+
+	task BackGround1
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjPrim_SetTexture(obj, imgBgTexture[1]);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLEFAN);
+		ObjPrim_SetVertexCount(obj, 4);
+		ObjPrim_SetVertexPosition(obj, 0, 0, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 1, 384, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 2, 384, 448, 0);
+		ObjPrim_SetVertexPosition(obj, 3, 0, 448, 0);
+		ObjPrim_SetVertexColor(obj, 0, 128, 128, 192);
+		ObjPrim_SetVertexColor(obj, 1, 128, 128, 192);
+		ObjPrim_SetVertexColor(obj, 2, 160, 64, 64);
+		ObjPrim_SetVertexColor(obj, 3, 160, 64, 64);
+		ObjRender_SetPosition(obj,MinX,MinY,0);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 2.5;
+			ObjPrim_SetVertexUVT(obj, 0, 0+t, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 1, 384+t, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 2, 384+t, 448+t/2);
+			ObjPrim_SetVertexUVT(obj, 3, 0+t, 448+t/2);
+			ObjRender_SetAlpha(obj, alpha);
+			t -= 0.5;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjPrim_SetVertexUVT(obj, 0, 0+t, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 1, 384+t, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 2, 384+t, 448+t/2);
+			ObjPrim_SetVertexUVT(obj, 3, 0+t, 448+t/2);
+			t -= 0.5;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround2
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjPrim_SetTexture(obj, imgBgTexture[1]);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLEFAN);
+		ObjPrim_SetVertexCount(obj, 4);
+		ObjPrim_SetVertexPosition(obj, 0, 0, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 1, 384, 0, 0);
+		ObjPrim_SetVertexPosition(obj, 2, 384, 448, 0);
+		ObjPrim_SetVertexPosition(obj, 3, 0, 448, 0);
+		ObjPrim_SetVertexColor(obj, 0, 64, 64, 90);
+		ObjPrim_SetVertexColor(obj, 1, 64, 64, 90);
+		ObjPrim_SetVertexColor(obj, 2, 108, 128, 128);
+		ObjPrim_SetVertexColor(obj, 3, 140, 128, 128);
+		ObjRender_SetBlendType(obj, BLEND_SUBTRACT);
+		ObjRender_SetPosition(obj,MinX,MinY,0);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 2.5;
+			ObjPrim_SetVertexUVT(obj, 0, 0+t+128, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 1, 384+t+128, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 2, 384+t+128, 448+t/2);
+			ObjPrim_SetVertexUVT(obj, 3, 0+t+128, 448+t/2);
+			ObjRender_SetAlpha(obj, alpha);
+			t += 0.25;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjPrim_SetVertexUVT(obj, 0, 0+t+128, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 1, 384+t+128, 0+t/2);
+			ObjPrim_SetVertexUVT(obj, 2, 384+t+128, 448+t/2);
+			ObjPrim_SetVertexUVT(obj, 3, 0+t+128, 448+t/2);
+			t += 0.25;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround3
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 384, 448);
+		ObjSprite2D_SetDestRect(obj, 0, 0, 384, 448);
+		ObjRender_SetPosition(obj,MinX,MinY,0);
+
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 2.5;
+			ObjRender_SetAlpha(obj,alpha);
+			yield;
+		}
+		while(!flagEnd)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}

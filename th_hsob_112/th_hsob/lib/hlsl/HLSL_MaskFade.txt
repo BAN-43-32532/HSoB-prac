@@ -1,0 +1,79 @@
+//================================================================
+//大域設定値
+//Texture
+sampler sampler0_ : register(s0);
+
+float seed_; // マスク中心座標(0～1)
+
+//--------------------------------
+//マスク用テクスチャ
+//画面幅(マスクテクスチャサイズ)
+texture textureMask_;
+sampler samplerMask_ = sampler_state
+{ 
+	Texture = <textureMask_>;
+};
+
+
+//================================================================
+//--------------------------------
+//ピクセルシェーダ入力値
+struct PS_INPUT
+{
+	float4 diffuse : COLOR0;  //ディフューズ色
+	float2 texCoord : TEXCOORD0; //テクスチャ座標
+	float2 vPos : VPOS; //描画先座標
+};
+
+//--------------------------------
+//ピクセルシェーダ出力値
+struct PS_OUTPUT
+{
+	float4 color : COLOR0; //出力色
+};
+
+
+//================================================================
+// シェーダ
+//--------------------------------
+//ピクセルシェーダ
+PS_OUTPUT PsMaskFade( PS_INPUT In ) : COLOR0
+{
+	PS_OUTPUT Out;
+
+	//--------------------------------
+	// マスク用のテクスチャから色成分を取得
+	// r:透明度  g:x方向ノイズ  b:y方向ノイズ
+	float2 maskUV = float2(seed_*1.0f + In.texCoord.x*0.125f, In.texCoord.y);
+	float4 colorMask = tex2D(samplerMask_, maskUV);
+
+	//--------------------------------
+	//テクスチャの色
+	float2 texPos = float2(In.texCoord.x+colorMask.g/8.0f, In.texCoord.y+colorMask.b/2.0f);
+	float4 colorTexture = tex2D(sampler0_, texPos);
+
+	//頂点ディフーズ色
+	float4 colorDiffuse = In.diffuse;
+
+	//合成
+	float4 color = colorTexture * colorDiffuse;
+	Out.color = color;
+
+	//--------------------------------
+	Out.color.a *= (1.0f - colorMask.r);
+
+	return Out;
+}
+
+
+//================================================================
+//--------------------------------
+//technique
+technique TecMaskFade
+{
+	pass P0
+	{
+		PixelShader = compile ps_3_0 PsMaskFade();
+	}
+}
+

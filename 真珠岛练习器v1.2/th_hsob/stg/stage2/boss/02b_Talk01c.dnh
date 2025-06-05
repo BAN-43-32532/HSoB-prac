@@ -1,0 +1,185 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["2面　会話前半"]
+#Text["2面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_CHII);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_CHII, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "付丧神还真多。[r]不过正好用作飞刀的练习。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx2(cutinBoss1, "真过分吆！真过分吆！ ", -16, -280);
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossNameEx(cutinBoss1, -32, 0, -1, 0, objEnemy);
+
+			SetTalkEx(cutinBoss1, "既然这样，小幺只好要出全力吆！ ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CALM3);
+			SetTalkEx(cutinPlayer1, "靶子变大了，瞄准倒是更容易些。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "嘻嘻嘻，[r]反过来也是一样的。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "这把变大了的脆针剑，[r]人类可是挨着便要睡觉觉了吆。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetTalkEx(cutinPlayer1, "虽说不管是大还是小，[r]中了弹总归是会结束的。 ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "命名决斗法案（符卡规则）是这样没错。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "可是你是强敌。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "用这个大又强的来攻击，命中的时候[r]不小心会死的概率也会提升吆。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
+			SetTalkEx(cutinPlayer1, "哎呀。[r]那我也来用一下吧，强大的武器。 ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA3);
+			SetTalkEx(cutinPlayer1, "剑来，银之死神——！ ");
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "这、这是，妖剑Silver Blade！？ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+
+			PlayMusicWithName( 5, 30, 30 );
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

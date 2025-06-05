@@ -1,0 +1,561 @@
+//　Stage5
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+#include "./../../lib/lib_ChapterSkip.dnh"
+#include "./lib_World05_Objects01.dnh"
+#include "./lib_World05_Objects02.dnh"
+#include "./lib_World05_Objects03.dnh"
+
+let flagEnd = false;
+let dest=GetStartChapter(5);
+//todo: litebg&bgb not changed
+//　ステージの背景テクスチャ
+let world05_path;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_CloseScript)
+	{
+		//背景削除
+		flagEnd = true;
+		BlackOutEx( world_layer+2, 0, 120, false, [0,0,0] );
+		CloseMine(300);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world05_path = LoadingImageFile_StgWorld(5);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld05(); }
+	else { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task SetWorld05()
+{
+	let obj		= [
+		CreateTexture01( world05_path[0] ),
+	];
+	//　霧用のダミー
+	ObjRender_SetPosition( obj[0], -1024-512, 0, 0 );
+	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+	ObjSprite3D_SetBillboard( obj[0], true );
+	if(dest<=3){
+		SetWorld05a();
+	}
+	else if(dest<=6){
+		SetWorld05b(false, 0, 0);
+	}
+	else{
+		SetWorld05c(false, 0, 0);
+	}
+
+	while( !flagEnd )
+	{
+		yield;
+	}
+
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+
+task SetWorld05a()
+{
+	let obj		= [
+//		CreateTexture01( world05_path[0] ),
+		CreateTexture01( world05_path[1] ),
+	];
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let move2	= 0;
+	let moveB	= 0;
+	let ctr		= 0;
+	let spd = 4;
+	
+	//　モノクロシェーダ
+	let sLayer	= [ world_layer, world_layer+1 ];
+	let seed	= 0;
+	let count	= 0;
+	let rt	= CreateRenderTexture( "Monochrome", sLayer[0], sLayer[1], true );
+	let tex	= CreateShaderTexture( rt, BLEND_ALPHA, sLayer[1] );
+	let shd	= CreateShaderObject( tex, 0 );
+	ObjShader_SetTexture( shd, "g_Texture", fxMask[0] );
+	
+	//　霧用のダミー
+//	ObjRender_SetPosition( obj[0], -1024-512, 0, 0 );
+//	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+//	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　砂漠
+	ObjRender_SetPosition( obj[0], -512, -160, 0 );
+	ObjRender_SetAngleXYZ( obj[0], 90, 0, 90 );
+	
+	//　塔シルエット
+	World05Object101( [CenX, CenY-64, 0], 720, 256, world_layer+3 );
+	
+	//　今は無限です
+	while( GetStageScene() < 1 ){
+		
+		move1 = 1 * sin( moveA );
+		move2 = 1 * (1 - cos( moveB ))/2;
+		
+		if( move1 < 1 ){
+			ObjShader_SetFloat( shd, "m_seed", seed );
+			ObjShader_SetFloat( shd, "m_frame", frame );
+			ObjShader_SetFloat( shd, "m_count", count );
+			ObjShader_SetFloat( shd, "m_alpha", 1 - move1 );
+			RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		}
+		else if( !Obj_IsDeleted(shd) ){
+			Obj_Delete( shd );
+		}
+		
+		SetFogParam( 0, move1*1024, 128, 96, 64 );
+		SetCameraFocusXYZ( 0, (1-move2)*64, 0 );
+		SetCameraRadius( 192 + 64*sin(frame/8) );
+		SetCameraAzimuthAngle( 0 + 8 * cos(frame/4) );
+		SetCameraElevationAngle( 16 + 8*move2 * sin(frame/4) - 18*(1-move2) );
+		
+		ObjSprite3D_SetSourceDestRect( obj[0], 0, 0 + frame*spd, 1024, 1024 + frame*spd );
+		
+		if( frame > 0 && frame%64 == 0 ){
+			World05Object02( [ randEffect(0,384), randEffect(0,448) ], randEffect(0,1), 270, 120, [1,1], [255,255,255,160], world_layer+1, BLEND_ALPHA );
+		}
+		
+		if( frame%8 == 0 ){
+			World05Object03( [-randEffect(256,768),-randEffect(64,128),randEffect(-256,256)], [spd,0,0], [1,1,0], [0,0,randEffect(0,360)], 60, [255,192,128], randEffect(64,128) );
+		}
+		
+		if( frame%240 == 0 ){
+			World05Object01( [-1024-768,-160,randEffect(0,448)], [spd,0,0], 780, 1 );
+			World05Object01( [-1024-512,-160,randEffect(0,-448)], [spd,0,0], 780, 1 );
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 1; }
+		if( frame > 720 && move2 < 1 ){ moveB += 0.5; }
+		count += 0.01;
+		if( count > 1 ) {
+			count = 0;
+			seed++;
+		}
+		
+		yield;
+	}
+	// 背景遷移
+	if (GetStageScene() >= 1) { SetWorld05b(true, frame, frame); }
+	
+	//　フェードアウト
+	move1	= 0;
+	moveA	= 0;
+	while( true ){
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjSprite3D_SetSourceDestRect( obj[0], 0, 0 + frame*spd, 1024, 1024 + frame*spd );
+		ObjRender_SetAlpha( obj[0], (1-move1)*255 );
+		
+		if( frame%240 == 0 ){
+			World05Object01( [-1024-768,-160-160*move1,randEffect(0,448)], [spd,0,0], 780, 1 );
+			World05Object01( [-1024-512,-160-120*move1,randEffect(0,-448)], [spd,0,0], 780, 1 );
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.3; }
+		else { break; }
+		
+		yield;
+	}
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+task SetWorld05b(flgChanged, frame, frame_camera_ea)
+{
+	let obj		= [
+//		CreateTexture01( world05_path[0] ),
+		CreateTexture01( world05_path[1] ),
+	];
+//	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+//	let frame_camera_ea	= frame;
+	let spd = 2;
+	
+	let warp_frame	= 39.435*8*4*2;	// 内部突入時の遷移時間
+	let speedMod = GetAreaCommonData(CAREA_STAGE, "StageModification", 0 );
+	warp_frame = trunc(warp_frame / (1 + speedMod));
+
+	//　霧用のダミー
+//	ObjRender_SetPosition( obj[0], -1024-512, 0, 0 );
+//	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+//	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　砂漠
+	ObjRender_SetPosition( obj[0], -512, -160, 0 );
+	ObjRender_SetAngleXYZ( obj[0], 90, 0, 90 );
+	ObjRender_SetColor( obj[0], 160, 160, 160 );
+	
+	//　今は無限です
+	while( GetStageScene() < 2 ){
+		
+		move1 = 1 * sin( moveA );
+		
+		if (flgChanged)
+		{
+			// 前背景からの遷移時
+			SetFogParam( 0, 1024-move1*256, 128-move1*96, 96-move1*72, 64-move1*48 );
+			SetCameraFocusXYZ( 0, 0, 0 );
+			SetCameraRadius( 192-move1*128 + (64-move1*32)*sin(frame/8) );
+			SetCameraAzimuthAngle( 0-move1*8 + 8 * cos(frame/4) );
+			SetCameraElevationAngle( 16 + 8 * sin(frame_camera_ea/4) );
+			frame_camera_ea += (1-move1/2);
+
+			ObjRender_SetColor( obj[0], 255-95*move1, 255-95*move1, 255-95*move1 );
+		}
+		else
+		{
+			SetFogParam( 0, move1*784, move1*32, move1*24, move1*16 );
+			SetCameraFocusXYZ( 0, 0, 0 );
+			SetCameraRadius( 64 + 32*sin(frame/8) );
+			SetCameraAzimuthAngle( -8 + 8 * cos(frame/4) );
+			SetCameraElevationAngle( 16 + 8 * sin(frame_camera_ea/4) );
+			frame_camera_ea += 1/2;
+		}
+		
+		ObjSprite3D_SetSourceDestRect( obj[0], 0, 0 + frame*spd, 1024, 1024 + frame*spd );
+		
+		if( frame%4 == 0 ){
+			World05Object03( [-randEffect(256,768),-randEffect(128,192),randEffect(-256,256)], [spd,0,0], [1,1,0], [0,0,randEffect(0,360)], 60, [255,255,255], randEffect(32,64) );
+		}
+		
+		if( frame%4 == 0 ){
+			CreateFallLeaf( [-randEffect(128,512),randEffect(-128,192),randEffect(-192,192)], [randEffect(spd,spd*4),-randEffect(0.1,0.4),randEffect(0,0)], 0.2, 60, randEffect(0,128), [255,randEffect(128,255),64], true );
+		}
+		
+		if( frame%180 == 0 ){
+			World05Object04( [-1024-512,-192,-192], [spd,0,0], 840, 1 );
+			World05Object04( [-1024-512,-192,192], [spd,0,0], 840, 1 );
+		}
+
+		frame++;
+		if( move1 < 1 ){ moveA += 0.1; }
+		yield;
+	}
+	
+	// 背景遷移
+	if (GetStageScene() >= 2)
+	{
+		// 壁
+		World05Object102( [-784, 1024+512, -16], 1024+1024+256, warp_frame-180, warp_frame, world_layer );
+		// もやんもやん
+		if (IsDrawEffect() > 2)
+		{
+			World05Object103( [ CenX, CenY ], 0, 0, 360, [1,1], [255,255,255,255], warp_frame-360, 70, BLEND_ALPHA );
+		}
+		// 暗転
+		ascent(i in 0 .. 5)
+		{
+			World05Object104( [CenX,CenY,0], i*360/5/5*2, warp_frame-180+i*15, warp_frame, 70 );
+		}
+
+		//　フェードアウト
+		move1	= 0;
+		moveA	= 0;
+		let delay_frame = 0;
+		while( true ){
+			
+			move1 = 1 * sin( moveA );
+
+			SetCameraRadius( 64 + 32*sin(frame/8)*(1-move1) );
+			SetCameraAzimuthAngle( -8 + 8 * cos(frame/4)*(1-move1) );
+			SetCameraElevationAngle( 16 + 8 * sin(frame_camera_ea/4)*(1-move1) );
+			
+			ObjSprite3D_SetSourceDestRect( obj[0], 0, 0 + frame*spd, 1024, 1024 + frame*spd );
+			ObjRender_SetAlpha( obj[0], (1-move1)*255 );
+			
+			frame++;
+			delay_frame++;
+			if( moveA < 90 ){ moveA += 90/480; }
+			else { break; }
+			
+			yield;
+		}
+
+		waitEx(warp_frame-delay_frame-180);
+		
+		// 背景チェンジフラグON
+		SetAreaCommonData(CAREA_STAGE, "STG5R_CHP5", 1);
+		
+		waitEx(120);
+		
+		// 次の背景
+		SetWorld05c(true, frame, frame_camera_ea);
+	}
+
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+
+task SetWorld05c(flgChanged, frame, frame_camera_ea)
+{
+	let obj		= [
+		ObjPrim_Create(OBJ_PRIMITIVE_3D),
+	];
+//	let frame	= 0;
+	let count	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let move2	= 0;
+	let moveB	= 0;
+//	let frame_camera_ea	= frame;
+	let spd = 1;
+	
+	//　霧用のダミー
+//	ObjRender_SetPosition( obj[0], -1024-512, 0, 0 );
+//	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+//	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　塔
+	ObjPrim_SetTexture( obj[0], world05_path[9] );
+	ObjPrim_SetVertexCount( obj[0], 4 );
+	ObjPrim_SetPrimitiveType( obj[0], PRIMITIVE_TRIANGLESTRIP );
+	Obj_SetRenderPriorityI( obj[0], world_layer );
+	// 座標の配置＆alpha値をグラデーションにする
+	ascent(i in 0 .. 2)
+	{
+		let tmp = i/1;
+		let tmp_a = tmp*128;
+		ObjPrim_SetVertexUVT( obj[0], i*2+0, 0, tmp*2048 );
+		ObjPrim_SetVertexUVT( obj[0], i*2+1, 2048, tmp*2048 );
+		ObjPrim_SetVertexPosition( obj[0], i*2+0, -2048/2, (tmp-0.5)*2048, 0 );
+		ObjPrim_SetVertexPosition( obj[0], i*2+1,  2048/2, (tmp-0.5)*2048, 0 );
+		ObjPrim_SetVertexAlpha( obj[0], i*2+0, tmp_a );
+		ObjPrim_SetVertexAlpha( obj[0], i*2+1, tmp_a );
+	}
+	ascent( i in 0..length(obj) ){
+		ObjRender_SetPosition( obj[i], -1024, 512, 0 );
+		ObjRender_SetAngleXYZ( obj[i], 0, 90, 0 );
+		ObjRender_SetFogEnable(obj[i], false);
+	}
+	
+	//　今は無限です
+	while( GetStageScene() < 3 ){
+		let scale = randEffect( 0.5, 1 );
+		
+		move1 = 1 * sin( moveA );
+		move2 = 1 * sin( moveB );
+		
+		if (flgChanged)
+		{
+			// 前背景からの遷移時
+			SetFogParam( 0, 1024, 32, 24, 16 );
+			SetCameraFocusXYZ( 0, 0, 0 );
+			SetCameraRadius( 64 + 32*sin(frame/8) );
+			SetCameraAzimuthAngle( -8 + 8 * cos(frame/4) );
+			SetCameraElevationAngle( 16 + (8+move1*8) * sin(frame_camera_ea/4) );
+			frame_camera_ea += 1/2;
+		}
+		else
+		{
+			SetFogParam( 0, move1*1024, move1*32, move1*24, move1*16 );
+			SetCameraFocusXYZ( 0, 0, 0 );
+			SetCameraRadius( 64 + 32*sin(frame/8) );
+			SetCameraAzimuthAngle( -8 + 8 * cos(frame/4) );
+			SetCameraElevationAngle( 16 + 16 * sin(frame_camera_ea/4) );
+			frame_camera_ea += 1/2;
+		}
+		
+		local
+		{
+			let offset_y = frame * spd;
+			ObjPrim_SetVertexUVT( obj[0], 0, 0, 0+offset_y );
+			ObjPrim_SetVertexUVT( obj[0], 1, 2048, 0+offset_y );
+			ObjPrim_SetVertexUVT( obj[0], 2, 0, 2048+offset_y );
+			ObjPrim_SetVertexUVT( obj[0], 3, 2048, 2048+offset_y );
+		}
+		
+		// 砂煙
+		if( frame%4 == 0 ){
+			World05Object03( [-randEffect(256,768),randEffect(-512,256),randEffect(-256,256)], [0,-spd*randEffect(1,4),randEffect(spd,spd*2)], [1,1,0], [0,0,randEffect(0,360)], 60, [255,255,255], randEffect(32,128) );
+		}
+		
+		// ごぼ天っぽいやつ
+		if( frame%120 == 0 ){
+			alternative( count )
+			case( 0 ){ World05Object06( [-512,768,-randEffect(192,256)], [0,-spd*2,0], 60*16, [ scale, 1, scale ] ); }
+			case( 1 ){ World05Object06( [-512,768,randEffect(192,256)], [0,-spd*2,0], 60*16, [ scale, 1, scale ] ); }
+			case( 2 ){ World05Object06( [-768,768,randEffect(-64,64)], [0,-spd*2,0], 60*16, [ scale, 1, scale ] ); }
+			count++;
+			if( count > 0 && count%3 == 0 ){ count = 0; }
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 1; }
+		if( move2 < 1 ){ moveB += 0.1; }
+		
+		yield;
+	}
+
+	move1	= 0;
+	moveA	= 0;
+	BlackOut( 70, 60, 180, false, [0, 0, 0] );
+	while( move1 < 1 ){
+		// カメラ
+		SetCameraFocusXYZ( 0, 0, 0 );
+		SetCameraRadius( 64 + 32*sin(frame/8) );
+		SetCameraAzimuthAngle( -8 + 8 * cos(frame/4) );
+		SetCameraElevationAngle( 16 + 16 * sin(frame_camera_ea/4) );
+		frame_camera_ea += 1/2;
+
+		move1 = 1 * sin( moveA );
+		local
+		{
+			let offset_y = frame * spd - move1*1024;
+			ObjPrim_SetVertexUVT( obj[0], 0, 0, 0+offset_y );
+			ObjPrim_SetVertexUVT( obj[0], 1, 2048, 0+offset_y );
+			ObjPrim_SetVertexUVT( obj[0], 2, 0, 2048+offset_y );
+			ObjPrim_SetVertexUVT( obj[0], 3, 2048, 2048+offset_y );
+			
+			let tmp_a = 128*min(1, 2-move1*2);
+			ObjPrim_SetVertexAlpha( obj[0], 2, tmp_a );
+			ObjPrim_SetVertexAlpha( obj[0], 3, tmp_a );
+		}
+		
+		if( move1 < 1 ){ moveA += 0.25; }
+		frame++;
+		yield;
+	}
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+
+
+
+
+
+
+task BackGroundLite
+{
+	let flg = false;
+	
+	if(dest<=1){
+		// 砂漠（蜃気楼）
+		flg = _BackGroundLite(world05_path[0], 60*10, 0);
+		if (!flg) { return; }
+
+	}
+	if(dest<=3){
+		// 砂漠
+		flg = _BackGroundLite(world05_path[1], 0, 1);
+		if (!flg) { return; }
+	}
+	let warp_frame	= 39.435*8*4*2;	// 内部突入時の遷移時間
+	//5-5,ch6
+	if(dest<=6){
+		// 遺跡
+		flg = _BackGroundLite(world05_path[2], 0, 2);
+		if (!flg) { return; }
+		// えへくと
+		//let warp_frame	= 39.435*8*4*2;	// 内部突入時の遷移時間
+		let speedMod = GetAreaCommonData(CAREA_STAGE, "StageModification", 0 );
+		warp_frame = trunc(warp_frame / (1 + speedMod));
+		WarpEffectSet(warp_frame);
+
+		// 遺跡（塔ディレイ用）
+		flg = _BackGroundLite(world05_path[2], warp_frame-60*20, 2);
+		if (!flg) { return; }
+		// 塔
+		flg = _BackGroundLite(world05_path[3], 60*20-150, 2);
+		if (!flg) { return; }
+	}
+
+	
+	// 塔内
+	flg = _BackGroundLite(world05_path[4], 360, 3);
+	
+
+	
+	task WarpEffectSet(delay)
+	{
+		// もやんもやん
+		if (IsDrawEffect() > 2)
+		{
+			World05Object103( [ CenX, CenY ], 0, 0, 360, [1,1], [255,255,255,255], warp_frame-360, 70, BLEND_ALPHA );
+		}
+		// 暗転
+		ascent(i in 0 .. 5)
+		{
+			World05Object104( [CenX,CenY,0], i*360/5/5*2, warp_frame-180+i*15, warp_frame, 70 );
+		}
+
+		waitEx(delay-180-1);
+		
+		// 背景チェンジフラグON
+		SetAreaCommonData(CAREA_STAGE, "STG5R_CHP5", 1);
+	}
+}
+function _BackGroundLite(file_name, del_delay, del_scene)
+{
+	let obj = -1;
+	if (IsDrawBackground() >= 1)
+	{
+		obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, world_layer);
+		ObjRender_SetColor(obj, 255,255,255);
+		ObjPrim_SetTexture(obj, file_name);
+		ObjSprite2D_SetSourceRect(obj , 0,0,384,448);
+		ObjSprite2D_SetDestRect(obj, 0,0,384,448);
+		ObjRender_SetPosition(obj, MinX,MinY,0);
+	}
+
+	let alpha = 0;
+	while(alpha < 255)
+	{
+		alpha += 5;
+		if (IsDrawBackground() >= 1) { ObjRender_SetAlpha(obj,alpha); }
+		yield;
+	}
+	while(!flagEnd && GetStageScene() < del_scene)
+	{
+		yield;
+	}
+	waitEx(del_delay);
+	if (IsDrawBackground() >= 1) { DeleleMotion(obj, 180); }
+	if (GetStageScene() >= del_scene) { return(true); }
+	return(false);
+	
+	task DeleleMotion(obj, delay)
+	{
+		let alpha = 255;
+		waitEx(delay);
+		while(alpha > 0)
+		{
+			alpha -= 5;
+			ObjRender_SetAlpha(obj,alpha);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}

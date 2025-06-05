@@ -1,0 +1,271 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EX　会話前半"]
+#Text["EX　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "真是，说烦没有比这更烦的了。[r]那些家伙是什么雨后的竹笋吗？ ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "像你们这样的，[r]不靠卡诺匹斯罐变成两倍实力也足够对付了。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CALM);
+			SetTalkEx(cutinPlayer1, "竹笋就收在这个罐里，开始收获吧~ ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx2(cutinBoss1, "竹笋会发射弹幕吗？[r]你不觉得奇怪吗？ ", -48, -280);
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "……我甚至觉得竹笋会这么吐槽你。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "可不是我，是那边的蘑菇说的。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "无聊的争斗。[r]让竹笋和蘑菇去打一架好了。 ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "跟蘑菇和你都有关系，[r]这让我实在难以出口。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SURPRISE);
+			SetTalkEx(cutinBoss1, "真没想到退治妖怪的巫女竟然没来啊。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "灵梦偶尔会睡大觉没发觉异变。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "这种时候（其实不光是这种时候），[r]就由我代替她解决。 ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE2);
+			SetTalkEx(cutinPlayer1, "我说你，虽然换了个马甲，[r]但就是赛特吧？那时候我没跟你说过吗？ ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "我确实曾是赛特。 ", -96, -96);
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx3(cutinBoss1, "然而我现在已经不是赛特了。 ", 0, 0);
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx2(cutinBoss1, "我确实曾是赛特。 ", -96, -96);
+			SetTalkEx3(cutinBoss1, "然而我现在已经不是赛特了。[r]虽然如此，但原本的我也已经不存在了。 ", 0, 0);
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "啊，说起来好像确实没跟你说过。 ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "我记得好像只说过什么……[r]力量 is 火力之类的。 ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "巫女没有来，[r]难道不是瞧不起我的证据吗。 ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "又或者，打倒这个巫女的朋友，[r]就能诱使她出来吧。 ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "还真是相当看不起我呢。[r]已经输过一次的你，[r]能打倒实力变作两倍的我吗？ ");
+		}
+		case(20)
+		{
+			// BGM
+			PlayMusicWithName( 15, 30, 30 );
+
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "赛特怎么败的我不管。 ");
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "赛特怎么败的我不管。[r]那个『我』是『我』又不是『我』。 ");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "赛特怎么败的我不管。[r]那个『我』是『我』又不是『我』。[r]我是无名而无明的存在。 ");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinBoss1, I_CUTIN);
+			ResetTalkImagePosition(cutinBoss1, -64, 16, 1.1);	// おまえはそこでずれていけ
+			SetTalkEx(cutinBoss1, "星之魔法使啊，你那微弱的星光，[r]能照进我这无明的深渊里吗？！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "照什么照，没必要。[r]我的弹幕是力量。力量 is 火力。 ");
+		}
+		case(25)
+		{
+
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "你想要我照耀你那无名的什么？ ");
+		}
+		case(26)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
+			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
+			SetTalkEx3(cutinPlayer1, "好啊！ ", 108, -96);
+		}
+		case(27)
+		{
+			ResetTalkImagePosition(cutinPlayer1, 112, 24, 1.25);
+// おまえはそこでずれていけ
+			ChangeTalkTexture(cutinPlayer1, I_CUTIN2);
+			SetTalkEx(cutinPlayer1, "就让我用最大火力（Master）的星光（Spark）[r]给你开个大洞吧！ ");
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

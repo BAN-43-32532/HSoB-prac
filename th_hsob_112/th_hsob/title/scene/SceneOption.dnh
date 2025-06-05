@@ -1,0 +1,651 @@
+
+
+// オプション
+function SceneOption()
+{
+	let SELECT_NONE = -1;
+	let SELECT_VOLUME_B = 0;
+	let SELECT_VOLUME_S = 1;
+	let SELECT_VOLUME_P = 2;
+	let SELECT_EFFECT = 3;
+	let SELECT_BG = 4;
+	let SELECT_SHADER = 5;
+	let SELECT_ALERT = 6;
+	let SELECT_ACC = 7;
+	let SELECT_SPEED = 8;
+	let SELECT_TALK = 9;
+	let SELECT_RESTART = 10;
+	let SELECT_DEEP = 11;
+	let SELECT_DEFAULT = 12;
+	let SELECT_QUIT = 13;
+	
+	SceneOptionEnter();
+
+	function GetImgValue(ID)
+	{
+		alternative(ID)
+		case (SELECT_VOLUME_B)	{ return(0); }
+		case (SELECT_VOLUME_S)	{ return(2); }
+		case (SELECT_VOLUME_P)	{ return(4); }
+		case (SELECT_EFFECT)	{ return(6); }
+		case (SELECT_BG)	{ return(8); }
+		case (SELECT_SHADER)	{ return(38); }
+		case (SELECT_ALERT)	{ return(1); }
+		case (SELECT_ACC)	{ return(7); }
+		case (SELECT_SPEED)	{ return(8); }
+		case (SELECT_TALK)	{ return(32); }
+		case (SELECT_RESTART)	{ return(44); }
+		case (SELECT_DEEP)	{ return(46); }
+		case (SELECT_DEFAULT)	{ return(3); }
+		case (SELECT_QUIT)	{ return(5); }
+		others			{ return(-1); }
+	}
+	function GetCommonName(ID)
+	{
+		alternative(ID)
+		case (SELECT_VOLUME_B)	{ return("BGM_Volume"); }
+		case (SELECT_VOLUME_S)	{ return("SE_Volume"); }
+		case (SELECT_VOLUME_P)	{ return("Player_Volume"); }
+		case (SELECT_EFFECT)	{ return("Effect"); }
+		case (SELECT_BG)	{ return("Background"); }
+		case (SELECT_SHADER)	{ return("IsUseShader"); }
+		case (SELECT_ALERT)	{ return("Alert"); }
+		case (SELECT_ACC)	{ return("AccKey"); }
+		case (SELECT_SPEED)	{ return("RoadSpeed"); }
+		case (SELECT_TALK)	{ return("Auto_Talk"); }
+		case (SELECT_RESTART)	{ return("QRestart"); }
+		case (SELECT_DEEP)	{ return(""); }
+		case (SELECT_DEFAULT)	{ return(""); }
+		case (SELECT_QUIT)	{ return(""); }
+		others			{ return(""); }
+	}
+	function GetDataType(ID)
+	{
+		alternative(ID)
+		case (SELECT_VOLUME_B)	{ return([0,100,5]); }
+		case (SELECT_VOLUME_S)	{ return([0,100,5]); }
+		case (SELECT_VOLUME_P)	{ return([0,100,5]); }
+		case (SELECT_EFFECT)	{ return([0,4,1]); }
+		case (SELECT_BG)	{ return([0,2,1]); }
+		case (SELECT_SHADER)	{ return([0,1,1]); }
+		case (SELECT_ALERT)	{ return([0,1,1]); }
+		case (SELECT_ACC)	{ return([0,1,1]); }
+		case (SELECT_SPEED)	{ return([-99,99,1]); }
+		case (SELECT_TALK)	{ return([0,1,1]); }
+		case (SELECT_RESTART)	{ return([0,1,1]); }
+		case (SELECT_DEEP)	{ return([0,1,1]); }
+		case (SELECT_DEFAULT)	{ return([0,1,1]); }
+		case (SELECT_QUIT)	{ return([0,1,1]); }
+		others			{ return([0,1,1]); }
+	}
+	
+	function SceneOptionEnter()
+	{
+		let ALL_SELECT = [SELECT_VOLUME_B, SELECT_VOLUME_S, SELECT_VOLUME_P, SELECT_EFFECT, SELECT_BG, SELECT_SHADER, SELECT_DEEP, SELECT_DEFAULT, SELECT_QUIT];
+		let selectMax = length(ALL_SELECT);
+		// 数値の表示位置
+		let posDataX = 230;
+		
+		let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+		Obj_SetValue(objParent, "VALUE", 0);
+
+		//メニュー配置
+		local
+		{
+			let mx = 280+8;
+			let my = 200-32+64;
+			let offset_mx = [18, 12, 6, 0, 12, 24, 36, 48, 60, 72, 84, 96];
+			ascent(i in 0 .. selectMax)
+			{
+				let id = ALL_SELECT[i];
+				TMenuItemOption(objParent, i, mx+offset_mx[i], my, posDataX, GetImgValue(id), id, GetCommonName(id));
+				my += 24;
+			}
+		}
+		wait(10);
+		//キー状態がリセットされるまで待機
+		WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+		loop
+		{
+			//キー入力待ち
+			let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+			
+			alternative (downKey)
+			case (VK_UP)
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValueEx(objParent, "VALUE", -1, selectMax);
+			}
+			case (VK_DOWN)
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValueEx(objParent, "VALUE", 1, selectMax);
+			}
+			case (VK_LEFT)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				if (length(GetCommonName(tmpValue)) > 0)
+				{
+					let tmpArea = GetCommonName(tmpValue);
+					let tmpMin = GetDataType(tmpValue)[0];
+					let tmpMax = GetDataType(tmpValue)[1];
+					let tmpAdd = GetDataType(tmpValue)[2];
+					let tmpData = GetAreaCommonData(CAREA_CONFIG, tmpArea, 0);
+					tmpData -= tmpAdd;
+					if (tmpData < tmpMin) { tmpData = tmpMax; }
+					if (tmpData > tmpMax) { tmpData = tmpMin; }
+					SetAreaCommonData(CAREA_CONFIG, tmpArea, tmpData);
+					// 諸々チェック
+					CheckVolume();
+					
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			case (VK_RIGHT)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				if (length(GetCommonName(tmpValue)) > 0)
+				{
+					let tmpArea = GetCommonName(tmpValue);
+					let tmpMin = GetDataType(tmpValue)[0];
+					let tmpMax = GetDataType(tmpValue)[1];
+					let tmpAdd = GetDataType(tmpValue)[2];
+					let tmpData = GetAreaCommonData(CAREA_CONFIG, tmpArea, 0);
+					tmpData += tmpAdd;
+					if (tmpData < tmpMin) { tmpData = tmpMax; }
+					if (tmpData > tmpMax) { tmpData = tmpMin; }
+					SetAreaCommonData(CAREA_CONFIG, tmpArea, tmpData);
+					// 諸々チェック
+					CheckVolume();
+					
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			case (VK_OK)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				if (length(GetCommonName(tmpValue)) <= 0)
+				{
+					// 諸々チェック
+					CheckVolume();
+					
+					MenuEnter(objParent);
+					
+					if (tmpValue == SELECT_DEEP)	// その他設定
+					{
+						Obj_Delete(objParent);
+						SceneOptionDeep();
+						return;
+					}
+					else if (tmpValue == SELECT_DEFAULT)	// Default
+					{
+						LoadConfig(-1);
+						LoadIniFile;	// iniファイル読み直し
+						CheckVolume();
+					}
+					else if (tmpValue == SELECT_QUIT)	// Quit
+					{
+	// --------------------------------------------------------- コンフィグ保存
+						SaveConfig();
+						break;
+					}
+				}
+			}
+			case (VK_CANCEL)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				
+				// なにもなし
+				CallSoundPackage(sndTtCancel);
+
+				// Quitの上でキャンセルボタンを押したら保存せずに戻る
+				if (tmpValue == SELECT_QUIT)
+				{
+	// --------------------------------------------------------- オプションデータを変更前に戻す
+					LoadConfig(1);
+					LoadIniFile;	// iniファイル読み直し
+					break;
+				}
+				else
+				{
+					Obj_SetValue(objParent, "VALUE", length(ALL_SELECT)-1);
+					//キー状態がリセットされるまで待機
+					WaitForResetKey(VK_CANCEL);
+				}
+			}
+			wait(2);	//適当に固定ディレイ
+		}
+		Obj_Delete(objParent);
+	}
+
+	function SceneOptionDeep()
+	{
+		let ALL_SELECT = [SELECT_ALERT, SELECT_ACC, SELECT_SPEED, SELECT_TALK, SELECT_RESTART, SELECT_QUIT];
+		let selectMax = length(ALL_SELECT);
+		// 数値の表示位置
+		let posDataX = 230;
+		
+		let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+		Obj_SetValue(objParent, "VALUE", 0);
+
+		//メニュー配置
+		local
+		{
+			let mx = 280+8;
+			let my = 200-32+64;
+			let offset_mx = [18, 12, 6, 0, 12, 24, 36, 48, 60, 72, 84, 96];
+			ascent(i in 0 .. selectMax)
+			{
+				let id = ALL_SELECT[i];
+				TMenuItemOption(objParent, i, mx+offset_mx[i], my, posDataX, GetImgValue(id), id, GetCommonName(id));
+				my += 24;
+			}
+		}
+		wait(10);
+		//キー状態がリセットされるまで待機
+		WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+		loop
+		{
+			//キー入力待ち
+			let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+			
+			alternative (downKey)
+			case (VK_UP)
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValueEx(objParent, "VALUE", -1, selectMax);
+			}
+			case (VK_DOWN)
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValueEx(objParent, "VALUE", 1, selectMax);
+			}
+			case (VK_LEFT)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				if (length(GetCommonName(tmpValue)) > 0)
+				{
+					let tmpArea = GetCommonName(tmpValue);
+					let tmpMin = GetDataType(tmpValue)[0];
+					let tmpMax = GetDataType(tmpValue)[1];
+					let tmpAdd = GetDataType(tmpValue)[2];
+					let tmpData = GetAreaCommonData(CAREA_CONFIG, tmpArea, 0);
+					tmpData -= tmpAdd;
+					if (tmpData < tmpMin) { tmpData = tmpMax; }
+					if (tmpData > tmpMax) { tmpData = tmpMin; }
+					SetAreaCommonData(CAREA_CONFIG, tmpArea, tmpData);
+					// 諸々チェック
+					CheckVolume();
+					
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			case (VK_RIGHT)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				if (length(GetCommonName(tmpValue)) > 0)
+				{
+					let tmpArea = GetCommonName(tmpValue);
+					let tmpMin = GetDataType(tmpValue)[0];
+					let tmpMax = GetDataType(tmpValue)[1];
+					let tmpAdd = GetDataType(tmpValue)[2];
+					let tmpData = GetAreaCommonData(CAREA_CONFIG, tmpArea, 0);
+					tmpData += tmpAdd;
+					if (tmpData < tmpMin) { tmpData = tmpMax; }
+					if (tmpData > tmpMax) { tmpData = tmpMin; }
+					SetAreaCommonData(CAREA_CONFIG, tmpArea, tmpData);
+					// 諸々チェック
+					CheckVolume();
+					
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			case (VK_OK)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				if (length(GetCommonName(tmpValue)) <= 0)
+				{
+					// 諸々チェック
+					CheckVolume();
+					
+					MenuEnter(objParent);
+					
+					if (tmpValue == SELECT_QUIT)	// Quit
+					{
+						Obj_Delete(objParent);
+						SceneOptionEnter();
+						return;
+					}
+				}
+			}
+			case (VK_CANCEL)
+			{
+				let tmpValue = ALL_SELECT[Obj_GetValueD(objParent, "VALUE", 0)];
+				
+				// なにもなし
+				CallSoundPackage(sndTtCancel);
+				Obj_SetValue(objParent, "VALUE", length(ALL_SELECT)-1);
+				//キー状態がリセットされるまで待機
+				WaitForResetKey(VK_CANCEL);
+			}
+			wait(2);	//適当に固定ディレイ
+		}
+		Obj_Delete(objParent);
+	}
+	
+	// メニュー選択時モーション
+	function MenuEnter(parent)
+	{
+		CallSoundPackage(sndTtDecide);
+		Obj_SetValue(parent, "FLASH", 1);
+		wait(18);
+		Obj_SetValue(parent, "FLASH", 0);
+	}
+	// メニューパーツ
+	task TMenuItemOption(parent, index, base_x, base_y, posDataX, img_index, select_type, common_name)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjPrim_SetTexture(objText, imgTtSelectOption);
+		ObjSprite2D_SetSourceRect(objText, (img_index%2)*256, trunc(img_index/2)*32, 256+(img_index%2)*256, 32+trunc(img_index/2)*32);
+		ObjSprite2D_SetDestRect(objText, -256, 0, 0, 32);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjRender_SetScaleX(objText, 0);
+
+		let objValue = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		Obj_SetRenderPriorityI(objValue, 20);
+		ObjPrim_SetTexture(objValue, imgTtSelectOption);
+		ObjPrim_SetPrimitiveType(objValue, PRIMITIVE_TRIANGLELIST);
+		if (select_type == SELECT_VOLUME_B || select_type == SELECT_VOLUME_S || select_type == SELECT_VOLUME_P)
+			{ ObjPrim_SetVertexCount(objValue, (3+1)*6); }
+		else if (select_type == SELECT_SPEED)
+			{ ObjPrim_SetVertexCount(objValue, 5*6); }
+		else if (select_type == SELECT_EFFECT || select_type == SELECT_BG || select_type == SELECT_ACC || select_type == SELECT_ALERT || select_type == SELECT_TALK || select_type == SELECT_SHADER || select_type == SELECT_RESTART)
+			{ ObjPrim_SetVertexCount(objValue, 6); }
+		ObjRender_SetPosition(objValue, posDataX, base_y, 0);
+		
+		let baseColor = 255;
+		
+		let t = 0;
+		let before_index = -99999;
+		let selected_index = -1;
+		let before_data = -99999;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			let now_index = index-selected_index;
+			let new_data = GetAreaCommonData(CAREA_CONFIG, common_name, 0);
+			
+			let inf_checked = false;
+			if (before_index != now_index)
+			{
+				let timer = 5;
+				if (before_index == -99999) { before_index = now_index; timer = 1; }
+				// 振動
+				if (timer > 1 && index == selected_index) { ShakeImage(objText, [-256,0,0,32], 4, 6); }
+				ascent(t in 0 .. timer)
+				{
+					let tmp_index = (timer-t-1)/timer*before_index + (t+1)/timer*now_index;
+					let alpha = 255*max(0.4, (1-absolute(tmp_index)*0.6));
+					if (timer > 5) { alpha *= (t+1)/timer; }
+					ObjRender_SetAlpha(objText, alpha);
+					yield;
+				}
+				before_index = now_index;
+				// 解説表示
+				RefreshInformation(select_type, new_data);
+				inf_checked = true;
+			}
+			// 値チェンジ
+			if (new_data != before_data)
+			{
+				alternative(select_type)
+				case(SELECT_VOLUME_B, SELECT_VOLUME_S, SELECT_VOLUME_P)
+				{
+					let ix = 3;
+					let tmp = DigitToArray(new_data, 3) ~ [10];
+					ascent(i in 0 .. length(tmp))
+					{
+						let num = tmp[i];
+						if (num < 0)
+						{
+							AddImg_Triangle01(objValue, 6*i,
+								0, 0, 0, 0,
+								0+ix, 0, 32+ix, 32	// 貼り付け範囲
+							);
+						}
+						else
+						{
+							AddImg_Triangle01(objValue, 6*i,
+								0+num*32, 160, 32+num*32, 192,	// 切り取り範囲
+								0+ix, 0, 32+ix, 32	// 貼り付け範囲
+							);
+						}
+						ix += 15;
+					}
+				}
+				case(SELECT_EFFECT)
+				{
+					AddImg_Triangle01(objValue, 0,
+						0+new_data*32, 160, 32+new_data*32, 192,	// 切り取り範囲
+						0+2*16, 0, 32+2*16, 32	// 貼り付け範囲
+					);
+				}
+				case(SELECT_BG)
+				{
+					AddImg_Triangle01(objValue, 0,
+						0+new_data*128, 192, 128+new_data*128, 224,	// 切り取り範囲
+						0-64, 0, 128-64, 32	// 貼り付け範囲
+					);
+				}
+				case(SELECT_ACC)
+				{
+					AddImg_Triangle01(objValue, 0,
+						0+new_data*128, 256, 128+new_data*128, 288,	// 切り取り範囲
+						0-64, 0, 128-64, 32	// 貼り付け範囲
+					);
+				}
+				case(SELECT_ALERT)
+				{
+					AddImg_Triangle01(objValue, 0,
+						0+(1-new_data)*128, 224, 128+(1-new_data)*128, 256,	// 切り取り範囲
+						0-64, 0, 128-64, 32	// 貼り付け範囲
+					);
+				}
+				case(SELECT_TALK)
+				{
+					AddImg_Triangle01(objValue, 0,
+						256, 544+new_data*32, 384, 576+new_data*32,	// 切り取り範囲
+						0-64, 0, 128-64, 32	// 貼り付け範囲
+					);
+				}
+				case(SELECT_SHADER)
+				{
+					AddImg_Triangle01(objValue, 0,
+						0+(1-new_data)*128, 224, 128+(1-new_data)*128, 256,	// 切り取り範囲
+						0-64, 0, 128-64, 32	// 貼り付け範囲
+					);
+				}
+				case(SELECT_SPEED)
+				{
+					let tmp = [];
+					DigitToArray(absolute(new_data), 2);
+					// 符号分
+					if (new_data > 0) { tmp = [12]~tmp; }
+					else if (new_data < 0) { tmp = [13]~tmp; }
+					else { tmp = [-1]~tmp; }
+					// 数字1桁目
+					tmp = tmp ~ [trunc(absolute(new_data)/10)%10];
+					// 小数点
+					tmp = tmp ~ [11];
+					// 数字2桁目
+					tmp = tmp ~ [trunc(absolute(new_data))%10];
+					// %
+					tmp = tmp ~ [10];
+					
+					// 数字
+					let ix = -1;
+					ascent(i in 0 .. length(tmp))
+					{
+						let num = tmp[i];
+						if (num < 0)
+						{
+							AddImg_Triangle01(objValue, 6*i,
+								0, 0, 0, 0,
+								0+ix, 0, 32+ix, 32	// 貼り付け範囲
+							);
+						}
+						else
+						{
+							AddImg_Triangle01(objValue, 6*i,
+								0+num*32, 160, 32+num*32, 192,	// 切り取り範囲
+								0+ix, 0, 32+ix, 32	// 貼り付け範囲
+							);
+						}
+						ix += 15;
+						if (num == 11) { ix -= 8; }
+					}
+				}
+				case(SELECT_RESTART)
+				{
+					AddImg_Triangle01(objValue, 0,
+						0+(1-new_data)*128, 224, 128+(1-new_data)*128, 256,	// 切り取り範囲
+						0-64, 0, 128-64, 32	// 貼り付け範囲
+					);
+				}
+				// 解説表示
+				if (!inf_checked) { RefreshInformation(select_type, new_data); }
+				before_data = new_data;
+			}
+			// 選択決定
+			if (selected_index == index && Obj_GetValueD(parent, "FLASH", 0)) {
+				let tmp_c = baseColor - (trunc(t/3)%2)*160;
+				ObjRender_SetColor(objText, tmp_c, tmp_c, tmp_c);
+			} else {
+				ObjRender_SetColor(objText, baseColor, baseColor, baseColor);
+			}
+			// 開幕アニメ
+			if (t < 10)
+			{
+				ObjRender_SetScaleX(objText, (t+1)/10);
+				ObjRender_SetAlpha(objValue, (t+1)/10*255);
+			}
+			t++;
+			yield;
+		}
+		let base_alpha = 255*max(0.4, (1-absolute(before_index)*0.6));
+		ObjRender_SetColor(objText, baseColor, baseColor, baseColor);
+		descent(t in 0 .. 10)
+		{
+			let alpha = base_alpha*((t+1)/10);
+			ObjRender_SetAlpha(objText, alpha);
+			ObjRender_SetAlpha(objValue, 255*(t+1)/10);
+			if (selected_index != index)
+			{
+				ObjRender_SetX(objText, ObjRender_GetX(objText)+3);
+				ObjRender_SetX(objValue, ObjRender_GetX(objValue)+3);
+			}
+			yield;
+		}
+		Obj_Delete(objText);
+		Obj_Delete(objValue);
+		
+		
+		// 解説表示
+		function RefreshInformation(select_type, new_data)
+		{
+			if (index == selected_index)
+			{
+				alternative(select_type)
+				case(SELECT_EFFECT)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+64, base_y,
+						0, 288+new_data*32, 256, 32);
+				}
+				case(SELECT_BG)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+64, base_y,
+						256, 288+new_data*32, 256, 32);
+				}
+				case(SELECT_ACC)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+64, base_y,
+						0, 480, 256, 32);
+				}
+				case(SELECT_SPEED)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+74, base_y,
+						0, 448, 256, 32);
+				}
+				case(SELECT_ALERT)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+74, base_y,
+						256, 384+(1-new_data)*32, 256, 32);
+				}
+				case(SELECT_TALK)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+74, base_y,
+						0, 544+new_data*32, 256, 32);
+				}
+				case(SELECT_SHADER)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+74, base_y,
+						0, 640+(1-new_data)*32, 256, 32);
+				}
+				case(SELECT_RESTART)
+				{
+					TMenuItemInformation(parent, common_name, posDataX+74, base_y,
+						0, 768, 256, 32);
+				}
+			}
+		}
+	}
+
+	task TMenuItemInformation(parent, common_name, x, y, ix, iy, iw, ih)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjPrim_SetTexture(objText, imgTtSelectOption);
+		ObjSprite2D_SetSourceRect(objText, ix, iy, ix+iw, iy+ih);
+		ObjSprite2D_SetDestRect(objText, 0, 0, iw, ih);
+		ObjRender_SetPosition(objText, x, y, 0);
+
+		let t = 0;
+		let before_index = Obj_GetValueD(parent, "VALUE", -1);
+		let before_data = GetAreaCommonData(CAREA_CONFIG, common_name, 0);
+		while(!Obj_IsDeleted(parent))
+		{
+			// 値チェンジ
+			if (before_index != Obj_GetValueD(parent, "VALUE", -1) ||
+				before_data != GetAreaCommonData(CAREA_CONFIG, common_name, 0))
+			{
+				break;
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+	
+	// 保存
+	function SaveConfig()
+	{
+		//バージョン情報
+		SetAreaCommonData(CAREA_CONFIG, "VERSION", GAME_VERSION);
+		//保存
+		if (IsCommonDataAreaExists("SAVED_CONFIG")) { ClearAreaCommonData("SAVED_CONFIG"); }
+		CreateCommonDataArea("SAVED_CONFIG");
+		CopyCommonDataArea("SAVED_CONFIG", CAREA_CONFIG);
+		SaveCommonDataAreaA2("SAVED_CONFIG", saveCommonCONFIG);
+		// キー設定
+		ConfigSkipKey();
+	}
+	
+	// 値変更時の諸々チェック
+	function CheckVolume()
+	{
+		NotifyEventAll(ev_Title_ResetVolume, 0);
+	}
+}

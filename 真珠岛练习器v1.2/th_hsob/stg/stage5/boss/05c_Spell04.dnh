@@ -1,0 +1,656 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["セトスペカ4"]
+#Text["E-N:鵺符「弾幕アメミット」　H:鵺符「アーマード・アーマーン」　L:異神「バアルのような俺」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Set.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(360);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+let RightHandPos = [CenX-150, 150];
+let LeftHandPos = [CenX+150, 150];
+let StormSpd = [];
+let StormAng = [];
+let StormTime = 45;
+
+
+@Initialize {
+	let SPELL_ID = 64;
+	let SPELL_NAME = [9, 9, 10, 11][Difficult];
+
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	// アイテム数
+	bossDropItem = 150;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SET);	//ボスセット
+	//手のオブジェクト初期化
+	SetHandInitialize();
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+	GetCurrentScriptDirectory()~"05c_Background.dnh",
+	GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+	CheckLinkLife_Boss(objEnemy);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	let wtInit = 0;
+	let objHand = Ini_SetAndSetHand(wtInit, CenX, 160,
+					RightHandPos[0], RightHandPos[1],
+					LeftHandPos[0], LeftHandPos[1]);
+	WaitSetHand(wtInit);
+	CallSpellCard(true);	//スペカ起動
+	SetSetHandMove01(objHand[0], 0, 0, 360);
+	SetSetHandMove01(objHand[1], 1, 180, 360);
+	let D = 1;
+	BossCharge(objEnemy);
+	let quant = [2, 3, 3, 2][Difficult];
+	let r = [54, 36, 36, 60][Difficult];
+	let way = [9, 7, 6, 12][Difficult];
+	let dist = [216, 144, 144, 240][Difficult];
+	let time = 0;
+	let Itv = [300, 300, 300, 360][Difficult];
+	let Itv2 = [120, 120, 120, 120][Difficult];
+	let y_spd = [0.5, 0.5, 0.5, (dist/2*(3^0.5))/Itv][Difficult];
+	let y = -16-r+GetCenterY-45;
+
+	let stormR = dist-2*r;
+	let old_STX = 0;
+	let old_STY = 0;
+	let STA = 0;
+	ascent(t in 0 .. StormTime+1){
+		let old_x = 0;
+		let R = r+stormR*sin(90*t/StormTime);
+		let x = R*cos(STA);
+		let y = R*sin(STA);
+		if(t > 0){
+			StormSpd = StormSpd ~ [((x-old_STX)^2+(y-old_STY)^2)^0.5];
+			StormAng = StormAng ~ [atan2(y-old_STY, x-old_STX)];
+		}
+		old_STX = x;
+		old_STY = y;
+		STA += 2.0;
+	}
+	while(eAlive){
+		let x = GetCenterX()+dist/4*D;
+		let ang = GetAngleToPlayer(objEnemy);
+		TShotA(quant, dist, way, r, x, y, y_spd, D, time, Itv, Itv2);
+		y -= dist/2*(3^0.5);
+		D = -D;
+		while(y < -16-r-240*(y_spd)){
+			time++;
+			y += y_spd;
+			wait(1);
+		}
+	}
+}
+
+task SetSetHandMove01(objHand, type, wt, interval){
+	let eColor = EFF_PURPLE;
+	CheckLinkLife_Familier(objEnemy, objHand, 0.6);	// ボスと体力連動
+	TAct();
+	WaitForKilledFamilier(objHand, 8, 0);
+	ZakoFinalize(objHand, eColor);
+	
+	task TAct()
+	{
+		SetEnemyVisible(objHand, true);
+		TMove;
+
+	}
+	
+	task TMove(){
+		if(Difficult <= D_HARD){
+			waitObj_WithHoming(objHand, wt, 0.03);
+			while(CanShotBullet(objHand)){
+	//			BossCharge(objHand);
+				waitObj_WithHoming(objHand, interval-90, 0.03);
+				waitObj_WithHomingCresc(objHand, 30, 0.03);
+				let ang = ObjMove_GetAngle(objHand);
+				if(!IsTimeStopObj(objHand)){
+					TShot(30, ang);
+				}
+				wait(60);
+			}
+		}else{
+			while(CanShotBullet(objHand)){
+				type = [0, 1][type==0];
+				let ang = GetAngleToPlayer(objHand);
+				CallSound(sndShot4);
+				ascent(i in 0 .. 9){
+					let a = ang+15.0*(i-4);
+					RhombusShot2(objHand, 3, 12, 7.2, ObjMove_GetX(objHand)+30*cos(a), ObjMove_GetY(objHand)+30*sin(a),
+					 1.2-0.6*(i%2), a, BGW_CHRYSTAL_M_BLUE, 10, sndShot3);
+				}
+				waitObj_WithHoming(objHand, 120, 0.03);
+				ascent(i in 0 .. 2){
+					if(i%2 == type){
+						TThunder(objHand, 5, 36, 30, 30, GetAngleToPlayer(objHand), 1, 20, 2, 90);
+						waitObj_WithHoming(objHand, 90, 0.03);
+					}else{
+						waitObj_WithHoming(objHand, 90, 0.03);
+					}
+				}
+				waitObj_WithHoming(objHand, 60, 0.03);
+			}
+		}
+		EraseEnemy(objHand);
+
+		task TShot(r, ang){
+			let spd = [2.4, 2.4, 2.0, 10][Difficult];
+			let arc = [2, 2, 2.0, 0][Difficult];
+			let way = [6,9,14,0][Difficult];
+			let quant = [10, 10, 8, 0][Difficult];
+			let wt = [4, 4, 4, 4][Difficult];
+			let W = (way-1)/2;
+			ascent(i in 0 .. way){
+				Shot(quant, wt, r, spd, ang+arc*(i-W));
+			}
+			
+			task Shot(quant, wt, r, spd, ang){
+				ascent(i in 0 .. quant){
+					if(!CanShotBullet(objHand) || IsTimeStopObj(objHand)){return;}
+					CallSound(sndShot3);
+					let s = (0.7+0.3*i/quant) * spd;
+					My_CreateShotA1(ObjMove_GetX(objHand)+r*cos(ang), ObjMove_GetY(objHand)+r*sin(ang), s, ang, BGW_ICE_ORANGE, 5);
+					wait(wt);
+				}
+			}
+		}
+
+		task TThunder(objEnemy, way, arc, r, spd, ang, quant, thunder_r, wt, laserWt){
+			CallSound(sndBoon);
+			let way2 = [way, way-1, way];
+			ascent(jW in 0 .. 2){
+				let iwM = (way2[jW]-1)/2;
+				ascent(iW in 0 .. way2[jW]){
+					let a = ang + arc*(iW-iwM);
+					Thunder(ObjMove_GetX(objEnemy)+r*cos(a), ObjMove_GetY(objEnemy)+r*sin(a), spd, a, ang, quant, thunder_r, wt, laserWt);
+				}
+				wait(10);
+			}
+			wait(laserWt-10*2);
+			if(!CanShotBullet(objHand)){return;}
+			CallSound(sndFlare);
+			
+			task Thunder(x, y, spd, ang, t_ang, quant, thunder_r, wt, laserWt){
+				if(!CanShotBullet(objEnemy) || IsTimeStopObj(objEnemy)){return;}
+				let objS = My_CreateShotA1(x, y, spd, ang, BGW_BALL_M_BLUE, 0);
+				Obj_SetVisible(objS, false);
+				ObjShot_SetIntersectionEnable(objS, false);
+				Move(objS);
+				loop(wt){
+					loop(quant){TLaser(objS, thunder_r, wt, laserWt);}
+					yield;
+				}
+
+				task Move(objS){
+					wait(3);
+					ascent(t in 0 .. 15){
+						let a = atan2(ObjMove_GetY(objS)-y, ObjMove_GetX(objS)-x)-t_ang;
+						let l = GetDistance([ObjMove_GetX(objS), ObjMove_GetY(objS)] ,[x, y])*cos(a);
+						let tx = x + (l + spd*2)*cos(t_ang);
+						let ty = y + (l + spd*2)*sin(t_ang);
+						ObjMove_SetAngle( objS, atan2( ty-ObjMove_GetY(objS), tx-ObjMove_GetX(objS) ) );
+						wait(1);
+					}
+					ObjMove_SetAngle( objS, t_ang );
+				}
+			}
+
+			task TLaser(objS, r, wt, laserWt){
+				let ang = rand(0, 360);
+				let R = rand(r, r/2);
+				let old_ang = ang;
+				let old_R = R;
+				let old_x = ObjMove_GetX(objS);
+				let old_y = ObjMove_GetY(objS);
+				wait(wt);
+				while(!Obj_IsDeleted(objS)){
+					ang = old_ang+90+rand(0, 180);
+					R = rand(r, r/2);
+					
+					Laser([old_x+old_R*cos(old_ang), old_y+old_R*sin(old_ang)], [ObjMove_GetX(objS)+R*cos(ang), ObjMove_GetY(objS)+R*sin(ang)], laserWt);
+					old_ang = ang;
+					old_R = R;
+					old_x = ObjMove_GetX(objS);
+					old_y = ObjMove_GetY(objS);
+					wait(wt);
+				}
+
+				task Laser(pos1, pos2, time){
+					let L = GetDistance(pos2 ,pos1);
+					let objL = My_CreateStraightLaserA1Ex(pos2[0], pos2[1], GetGapAngle(pos2 ,pos1), L, 12, 999999, BGW_BEAM_BLUE, time, [false, false]);
+					ObjShot_SetAutoDelete(objL, false);
+					ObjStLaser_SetSource(objL, false);
+//					ObjShot_SetIntersectionEnable(objL, false);
+					descent(i in 1 .. time+1){
+						ObjRender_SetAlpha(objL, 191*i/time);
+						wait(1);
+					}
+					ObjRender_SetAlpha(objL, 255);
+					wait(20);
+					ObjShot_SetIntersectionEnable(objL, false);
+					descent(i in 0 .. 10){
+						ObjRender_SetAlpha(objL, 255*i/10);
+//						ObjLaser_SetLength(objL, L*i/time2);
+						wait(1);
+					}
+					Obj_Delete(objL);
+				}
+			}
+
+			task TLaser2(objS, speed, ang, ang2, count, r, wt){
+				let angle = rand(0, 360);
+				let R = rand(r, r/2);
+				let angle2 = angle;
+				let R2 = R;
+				let X = ObjMove_GetX(objS);
+				let Y = ObjMove_GetY(objS);
+				let old_X = X;
+				let old_Y = Y;
+				wait(wt);
+				ascent(i in 0 .. count/2){
+					X += speed*cos(ang);
+					Y += speed*sin(ang);
+					angle = angle2+90+rand(0, 180);
+					R = rand(r, r/2);
+					
+					Laser(old_X+R2*cos(angle2), old_Y+R2*sin(angle2), X+R*cos(angle), Y+R*sin(angle), wt*10);
+					angle2 = angle;
+					R2 = R;
+					old_X = X;
+					old_Y = Y;
+					wait(wt);
+				}
+				let D = (ang-ang2)/absolute(ang-ang2);
+				ang = -(ang-ang2)+ang2;
+				ascent(i in 0 .. count/2){
+					X += speed*cos(ang);
+					Y += speed*sin(ang);
+					angle = angle2+90+rand(0, 180);
+					R = rand(r, r/2);
+					
+					Laser(old_X+R2*cos(angle2), old_Y+R2*sin(angle2), X+R*cos(angle), Y+R*sin(angle), wt*10);
+					angle2 = angle;
+					R2 = R;
+					old_X = X;
+					old_Y = Y;
+					wait(wt);
+				}
+
+				task Laser(x, y, x2, y2, time){
+					let objL = CreateStraightLaserA1(x, y, atan2(y2-y, x2-x), ((y2-y)^2+(x2-x)^2)^0.5, 10, 9999, BGW_BEAM_BLUE, 0);
+					ObjShot_SetAutoDelete(objL, false);
+					ObjStLaser_SetSource(objL, false);
+					ObjShot_SetIntersectionEnable(objL, false);
+					descent(i in 1 .. time+1){
+						ObjRender_SetColor(objL, 255*i/time, 255*i/time, 255*i/time);
+						yield;
+					}
+					Obj_Delete(objL);
+				}
+			}
+		}
+/*		task TThunder(objEnemy, way, arc, wt, r, spd){
+//			CallSound(sndShot4);
+			let ang = GetAngleToPlayer(objEnemy);
+			let c = -2.5;
+			ascent(i in 1 .. way+1){
+				if(!CanShotBullet(objEnemy) || IsTimeStopObj(objEnemy)){return;}
+				let a = arc*c;
+				Thunder(ObjMove_GetX(objEnemy)+r*cos(ang+a), ObjMove_GetY(objEnemy)+r*sin(ang+a), spd, ang+a);
+				Thunder(ObjMove_GetX(objEnemy)+r*cos(ang-a), ObjMove_GetY(objEnemy)+r*sin(ang-a), spd, ang-a);
+				c += i;
+				wait(wt);
+			}
+			
+			task Thunder(x, y, spd, ang){
+				if(!CanShotBullet(objEnemy) || IsTimeStopObj(objEnemy)){return;}
+				CallSound(sndBoon);
+				Effect_LaserWarning(x, y, ang, 6, 600, 5);
+				let objEffect = CreateStraightLaserA1(x, y, ang, 0, 20, 9999, BGW_BEAM_E_BLUE, 9999);
+				ascent(i in 1 .. 61){
+					ObjLaser_SetLength(objEffect, 10*i);
+					wait(1);
+				}
+				wait(30);
+				if(!CanShotBullet(objEnemy) || IsTimeStopObj(objEnemy)){return;}
+				CallSound(sndFlare);
+				let objL = My_CreateLooseLaserA1(x, y, spd, ang, spd*30, 20, BGW_THUNDER_BLUE, 0);
+				descent(i in 1 .. 31){
+					ObjRender_SetAlpha(objEffect, 255*i/30);
+					wait(1);
+				}
+				Obj_Delete(objEffect);
+
+			}
+			
+			task Effect_LaserWarning(x, y, angle, r, leng, time){
+				ascent(i in 1 .. time+1){
+					if(!CanShotBullet(objHand)){return;}
+					let r2 = r*sin(90*i/time);
+					Effect(x+r2*cos(angle+90), y+r2*sin(angle+90), angle, leng, 30);
+					Effect(x+r2*cos(angle-90), y+r2*sin(angle-90), angle, leng, 30);
+					wait(1);
+				}
+				
+				task Effect(x, y, angle, leng, time){
+					let objEffect = CreateStraightLaserA1(x, y, angle, leng, 6, 9999, BGW_BEAM_E_BLUE, 0);
+					ObjStLaser_SetSource(objEffect, false);
+					ObjShot_SetIntersectionEnable(objEffect, false);
+//					ObjRender_SetColor(objEffect, 0, 0, 0);
+					ObjShot_SetItemChange(objEffect, false);
+
+					descent(i in 1 .. time+1){
+						if(!CanShotBullet(objHand)){break;}
+						ObjRender_SetAlpha(objEffect, 31*i/time);
+						wait(1);
+					}
+					Obj_Delete(objEffect);
+				}
+			}
+		}*/
+	}
+}
+
+task TShotA(quant, dist, way, r, base_x, base_y, y_spd, D, time, interval, mTime){
+	let grap_ADD = [	ADD_BGW_BALL_S_RED,
+						ADD_BGW_BALL_S_ORANGE,
+						ADD_BGW_BALL_S_YELLOW,
+						ADD_BGW_BALL_S_GREEN,
+						ADD_BGW_BALL_S_SKY,
+						ADD_BGW_BALL_S_BLUE,
+						ADD_BGW_BALL_S_PURPLE,
+					];
+	let grap_ALPHA = [	BGW_BALL_S_RED,
+						BGW_BALL_S_ORANGE,
+						BGW_BALL_S_YELLOW,
+						BGW_BALL_S_GREEN,
+						BGW_BALL_S_SKY,
+						BGW_BALL_S_BLUE,
+						BGW_BALL_S_PURPLE,
+					];
+	let ArrayX = [];
+	let ArrayAng = [];
+	let ArrayCount = 0;
+	let objCirc = [];
+	let objRing = [];
+	let objNucl = [];
+	let iMinus = (quant-1)/2;
+
+	ascent(iQ in 0 .. quant){
+		let objC = CircleEffect_INI(0.41);
+		let objR = RingEffect_INI(0.42);
+		ObjRender_SetBlendType(objC, BLEND_SUBTRACT);
+		ObjRender_SetAlpha(objC, 63);
+		RingEffect_SetScareToRadius(objR, r);
+		RingEffect_SetScareToRadius(objC, r);
+		objRing = objRing ~ [objR];
+		objCirc = objCirc ~ [objC];
+		if(Difficult == D_HARD){
+			objNucl = objNucl ~ [NuclearShot(base_x+dist*(iQ-iMinus), base_y, [63,63,15], r-10, 15)];
+		}else{
+			objNucl = objNucl ~ [-1];
+		}
+		ObjMove_AddPatternA1(objNucl[iQ], 0, y_spd, 90);
+		ObjShot_SetAutoDelete(objNucl[iQ], false);
+		ObjShot_SetSpellResist(objNucl[iQ], true);
+		ascent(iW in 0 .. way){
+			ArrayX = ArrayX ~ [iQ-iMinus];
+			ArrayAng = ArrayAng ~ [360*iW/way];
+			ArrayCount++;
+		}
+	}
+	let ANGLE = rand(0, 360);
+	let delete_flag = false;
+	let trance_form = false;
+	ascent(iA in 0 .. ArrayCount){
+		Shot(iA);
+	}
+	loop{
+		if(!eAlive || base_y > GetClipMaxY()+r+16){break;}
+		while(time%interval >= mTime){			//拡散中の処理
+			base_y += y_spd;
+			if(!eAlive || base_y > GetClipMaxY()+r+16){break;}
+			time++;
+			RenderRing(objRing);
+			yield;
+		}
+		trance_form = false;
+		ascent(iQ in 0 .. quant){
+			ascent(iW in 0 .. way){
+				Shot2(iQ-iMinus ,360*(iW+1/3)/way);
+				Shot2(iQ-iMinus ,360*(iW+2/3)/way);
+			}
+		}
+		if(Difficult >= D_LUNA){
+			TShot2_Luna();
+		}
+		while(time%interval < mTime){			//集合中の処理
+			if(!eAlive || base_y > GetClipMaxY()+r+16){break;}
+			base_y += y_spd;
+			ANGLE += 0.8*D;
+			time++;
+			RenderRing(objRing);
+			wait(1);
+		}
+		trance_form = true;
+		let old_ArrayX = ArrayX;
+		let old_ArrayAng = ArrayAng;
+		descent(iA in 0 .. ArrayCount){
+			let rd = trunc(rand(0, (iA+1)*100-0.0001))%(iA+1);
+			ArrayX = [old_ArrayX[rd]] ~ ArrayX;
+			ArrayAng = [old_ArrayAng[rd]] ~ ArrayAng;
+			ArrayX = erase(ArrayX, ArrayCount);
+			ArrayAng = erase(ArrayAng, ArrayCount);
+			old_ArrayX = erase(old_ArrayX, rd);
+			old_ArrayAng = erase(old_ArrayAng, rd);
+		}
+	}
+	delete_flag = true;
+	descent(i in 0 .. length(objRing)){
+		Obj_Delete(objRing[i]);
+		objRing = erase(objRing, i);
+		Obj_Delete(objCirc[i]);
+		objCirc = erase(objCirc, i);
+		Obj_Delete(objNucl[i]);
+		objNucl = erase(objNucl, i);
+	}
+
+	function RenderRing(objRing){
+		ascent(i in 0 .. length(objRing)){
+			ObjRender_SetPosition(objRing[i], base_x+dist*(i-iMinus), base_y, 0);
+			ObjRender_SetPosition(objCirc[i], base_x+dist*(i-iMinus), base_y, 0);
+		}
+	}
+
+	task Shot(blt_num){
+		let x = dist*ArrayX[blt_num];
+		let ang = ArrayAng[blt_num];
+		let grapNum = 1;
+		if(Difficult <= D_HARD){	grapNum = trunc(rand(0, 700-0.0001))%7;}
+		let objS = My_CreateShotA1(base_x+x, base_y,  0, ang, grap_ADD[grapNum], 10);
+		ObjShot_SetAutoDelete(objS, false);
+		ObjShot_SetSpellResist(objS, true);
+		while(!delete_flag){
+			if(Obj_IsDeleted(objS)){return;}
+			if(trance_form){	
+				CallSound(sndShot4);
+				let a = ANGLE+ang;
+				objS = ShotReCreate(objS, base_x+x+r*cos(a), base_y+r*sin(a), ang, grap_ALPHA[grapNum]);
+				Move(objS, x, ang, dist*ArrayX[blt_num], ArrayAng[blt_num], (interval- mTime));
+				if(Obj_IsDeleted(objS)){return;}
+				x = dist*ArrayX[blt_num];
+				ang = ArrayAng[blt_num];
+				a = ANGLE+ang;
+				CallSound(sndShot2);
+				objS = ShotReCreate(objS, base_x+x+r*cos(a), base_y+r*sin(a), ang, grap_ADD[grapNum]);
+			}
+			let a = ANGLE+ang;
+			ObjMove_SetPosition(objS, base_x+x+r*cos(a), base_y+r*sin(a));
+			ObjMove_SetAngle(objS, a);
+			wait(1);
+		}
+		Obj_Delete(objS);
+	}
+	
+	task Shot2(blt_num, ang){
+		let x = dist*blt_num;
+		let grapNum = 1;
+		if(Difficult <= D_HARD){	grapNum = trunc(rand(0, 700-0.0001))%7;}
+		let objS = My_CreateShotA1(base_x+x, base_y,  0, ang, grap_ADD[grapNum], 10);
+		ObjShot_SetAutoDelete(objS, false);
+		while(time%interval != mTime){
+			if(Obj_IsDeleted(objS) || delete_flag){break;}
+			let a = ANGLE+ang;
+			ObjMove_SetPosition(objS, base_x+x+r*cos(a), base_y+r*sin(a));
+			ObjMove_SetAngle(objS, a);
+			wait(1);
+		}
+		Obj_Delete(objS);
+	}
+
+	task TShot2_Luna(){
+		let w = 0;
+		let wAdd = 1.5;
+		let grap = [BGB_BALL_S_ORANGE, BGW_BALL_SS_ORANGE, BGB_ICE_ORANGE];
+		let c = 0;
+		while(time%interval != mTime){
+			if(!eAlive){break;}
+			w += wAdd;
+			let way = trunc(w);
+			w -= way;
+			ascent(iQ in 0 .. quant){
+				let ang = rand(0, 360);
+				ascent(iW in 0 .. way){
+					Shot2_Luna(iQ-iMinus ,ang+360*iW/way, grap[c]);
+					c ++;
+					c%=3;
+				}
+			}
+			wait(1);
+		}
+	}
+	
+	task Shot2_Luna(blt_num, ang, grap){
+		let x = dist*blt_num;
+		let angBase = ANGLE+ang;
+		let objS = My_CreateShotA1(base_x+x+r*cos(angBase), base_y+r*sin(angBase),  0, ang, grap, 2);
+		ObjShot_SetAutoDelete(objS, false);
+		ascent(t in 1 .. StormTime-9){
+			if(Obj_IsDeleted(objS) || delete_flag){break;}
+			ObjMove_SetSpeed(objS, StormSpd[t]);
+			ObjMove_SetAngle(objS, angBase+StormAng[t]*D);
+			ObjMove_SetY(objS, ObjMove_GetY(objS)+y_spd);
+			wait(1);
+		}
+		ascent(t in StormTime-9 .. StormTime){
+			if(Obj_IsDeleted(objS) || delete_flag){break;}
+			ObjMove_SetSpeed(objS, StormSpd[t]);
+			ObjMove_SetAngle(objS, angBase+StormAng[t]*D);
+			ObjMove_SetY(objS, ObjMove_GetY(objS)+y_spd);
+			ObjRender_SetAlpha(objS, 255*(StormTime-t)/10);
+			wait(1);
+		}
+		Obj_Delete(objS);
+	}
+	function ShotReCreate(objS, x, y, ang, grap){
+		if(Obj_IsDeleted(objS)){break;}
+		Obj_Delete(objS);
+		objS = My_CreateShotA1(x, y,  0, ang, grap, 10);
+		ObjShot_SetAutoDelete(objS, false);
+		ObjShot_SetSpellResist(objS, true);
+		return objS;
+	}
+
+	function Move(objS, ini_bx, ini_ang, fin_bx, fin_ang, frame){
+		let t1 = frame/2;
+		if(Difficult >= D_LUNA){t1 = frame/3;}
+		let t2 = frame-t1;
+		let rScale = 1.0;
+		let objL = LaserEffect(ObjMove_GetX(objS), ObjMove_GetY(objS), ObjMove_GetAngle(objS), t1, t2);
+		let LsrLeng = 0;
+		let LsrAng = 0;
+		let iniX = r*cos(ANGLE+ini_ang);
+		let iniY = r*sin(ANGLE+ini_ang);
+		let finX = r*cos(ANGLE+fin_ang);
+		let finY = r*sin(ANGLE+fin_ang);
+		ascent(i in 1 .. t1+1){
+			let rate1 = (1-cos(180*min(i, t1)/t1))/2;
+			iniX = r*(1+rScale*rate1)*cos(ANGLE+ini_ang);
+			iniY = r*(1+rScale*rate1)*sin(ANGLE+ini_ang);
+
+			let lx = (finX + fin_bx) - (iniX + ini_bx);
+			LsrLeng = ((finY - iniY)^2 + lx^2)^0.5;
+			LsrAng = atan2(finY - iniY, lx);
+			ObjMove_SetPosition(objS, base_x + ini_bx+ iniX, base_y + iniY);
+			ObjMove_SetPosition(objL, ObjMove_GetX(objS), ObjMove_GetY(objS));
+			ObjStLaser_SetAngle(objL, LsrAng);
+			ObjLaser_SetLength(objL, LsrLeng);
+			wait(1);
+		}
+		iniX = r*(1+rScale)*cos(ANGLE+ini_ang);
+		iniY = r*(1+rScale)*sin(ANGLE+ini_ang);
+		let lx = (finX + fin_bx) - (iniX + ini_bx);
+		LsrLeng = ((finY - iniY)^2 + lx^2)^0.5;
+		LsrAng = atan2(finY - iniY, lx);
+		ascent(i in 1 .. t2+1){
+			let rate2 = (1-cos(180*i/t2))/2;
+			let x_move = ini_bx + (fin_bx - ini_bx) * rate2;
+			let bx = iniX + (finX - iniX) * rate2;
+			let by = iniY + (finY - iniY) * rate2;
+
+			ObjMove_SetPosition(objS, base_x + x_move + bx, base_y + by);
+			ObjMove_SetPosition(objL, ObjMove_GetX(objS), ObjMove_GetY(objS));
+			ObjStLaser_SetAngle(objL, LsrAng);
+			ObjLaser_SetLength(objL, LsrLeng*(1-rate2));
+			wait(1);
+		}
+
+		function LaserEffect(x, y, ang, time1, time2){
+			let objEffect = CreateStraightLaserA1(x, y, ang, 0, 40, 9999, BGW_BEAM_PURPLE, time1+time2);
+			ObjStLaser_SetSource(objEffect, false);
+			ObjShot_SetIntersectionEnable(objEffect, false);
+//			ObjRender_SetColor(objEffect, 0, 0, 0);
+			ObjShot_SetItemChange(objEffect, false);
+			Move();
+			return objEffect;
+
+			task Move(){
+				ascent(i in 1 .. time1+1){
+					ObjRender_SetAlpha(objEffect, 255*i/time1);
+					wait(1);
+				}
+				ascent(i in 1 .. time2+1){
+					wait(1);
+				}
+				Obj_Delete(objEffect);
+			}
+		}
+	}
+}

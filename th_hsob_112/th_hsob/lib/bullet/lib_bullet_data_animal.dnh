@@ -1,0 +1,187 @@
+	#UserShotData
+	
+	shot_image = "./../../img/bullet_animal.png"
+	//delay_rect = (32,960,64,994);
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//Å@äIíe
+	//í èÌ
+	ShotData{
+		id = 537
+		delay_color = (255,32,32)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 0, 224, 32 )
+			animation_data = ( 8, 224, 0, 256, 32 )
+		}
+	}
+	ShotData{
+		id = 538
+		delay_color = (32,255,32)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 32, 224, 64 )
+			animation_data = ( 8, 224, 32, 256, 64 )
+		}
+	}
+	ShotData{
+		id = 539
+		delay_color = (32,32,255)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 64, 224, 96 )
+			animation_data = ( 8, 224, 64, 256, 96 )
+		}
+	}
+	ShotData{
+		id = 540
+		delay_color = (255,255,32)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 96, 224, 128 )
+			animation_data = ( 8, 224, 96, 256, 128 )
+		}
+	}
+	ShotData{
+		id = 541
+		delay_color = (255,32,255)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 128, 224, 160 )
+			animation_data = ( 8, 224, 128, 256, 160 )
+		}
+	}
+	ShotData{
+		id = 542
+		delay_color = (32,255,255)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 160, 224, 192 )
+			animation_data = ( 8, 224, 160, 256, 192 )
+		}
+	}
+	ShotData{
+		id = 543
+		delay_color = (255,128,32)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 192, 224, 224 )
+			animation_data = ( 8, 224, 192, 256, 224 )
+		}
+	}
+	ShotData{
+		id = 544
+		delay_color = (255,255,255)
+		render = ALPHA
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 224, 224, 256 )
+			animation_data = ( 8, 224, 224, 256, 256 )
+		}
+	}
+
+	//â¡éZçáê¨
+	ShotData{
+		id = 1137
+		delay_color = (255,32,32)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 0, 224, 32 )
+			animation_data = ( 8, 224, 0, 256, 32 )
+		}
+	}
+	ShotData{
+		id = 1138
+		delay_color = (32,255,32)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 32, 224, 64 )
+			animation_data = ( 8, 224, 32, 256, 64 )
+		}
+	}
+	ShotData{
+		id = 1139
+		delay_color = (32,32,255)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 64, 224, 96 )
+			animation_data = ( 8, 224, 64, 256, 96 )
+		}
+	}
+	ShotData{
+		id = 1140
+		delay_color = (255,255,32)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 96, 224, 128 )
+			animation_data = ( 8, 224, 96, 256, 128 )
+		}
+	}
+	ShotData{
+		id = 1141
+		delay_color = (255,32,255)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 128, 224, 160 )
+			animation_data = ( 8, 224, 128, 256, 160 )
+		}
+	}
+	ShotData{
+		id = 1142
+		delay_color = (32,255,255)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 160, 224, 192 )
+			animation_data = ( 8, 224, 160, 256, 192 )
+		}
+	}
+	ShotData{
+		id = 1143
+		delay_color = (255,128,32)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 192, 224, 224 )
+			animation_data = ( 8, 224, 192, 256, 224 )
+		}
+	}
+	ShotData{
+		id = 1144
+		delay_color = (255,255,255)
+		render = ADD_ARGB
+		collision = (6,0,0)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 224, 224, 256 )
+			animation_data = ( 8, 224, 224, 256, 256 )
+		}
+	}

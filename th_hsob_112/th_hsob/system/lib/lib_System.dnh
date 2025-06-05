@@ -1,0 +1,13 @@
+#include "./../../lib/lib_CommonDataManager.dnh"
+#include "./../../lib/lib_SystemAll.dnh"
+#include "./../../lib/lib_File.dnh"
+
+// 次フレームでID記録（リプレイズレ用）
+task SetSystemScriptID(txtScript)
+{
+	loop(2)
+	{
+		SetAreaCommonData(CAREA_SYSTEM, txtScript, GetOwnScriptID());
+		yield;
+	}
+}

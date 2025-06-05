@@ -1,0 +1,169 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["1面　会話前半"]
+#Text["1面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_RANRAN);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_RANRAN, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "要是没有我，[r]幻想乡会怎么样啊。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "幻想乡的和平[r]真的像是沙上的巴别塔一样脆弱啊。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
+			SetTalkEx2(cutinBoss1, "嘻嘻嘻，真是令人惊讶。 ", -48, -280);
+		}
+		case(3)
+		{
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "没想到除了获得上人加护的我们（妖怪）以外，[r]还有人类能动弹啊。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "虽然不是什么值得自豪的事情，[r]但我可是人称幻想乡的时停者咲夜的呢。[r]（主要是被大小姐这么叫） ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA2);
+			SetTalkEx(cutinBoss1, "嘻嘻，也就是说只要打倒了你，[r]就没人能反抗上人了呢。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "嘴上那么说，最后惨败的人，[r]我见过的就比钍衰变链的数目…… ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			SetTalkEx(cutinPlayer1, "不对，这句话我倒是第一次听到。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "见识一下准备带到冥土去的礼物吧。 ");
+
+			PlayMusicWithName( 3, 30, 30 );
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "乃是我那能将这片灰白的世界尽染的，[r]绯绯染色的神髓！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

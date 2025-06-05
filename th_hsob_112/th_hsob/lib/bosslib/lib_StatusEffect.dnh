@@ -1,0 +1,914 @@
+
+//=======================================================================
+//　ボス関連のシステムエフェクト
+//=======================================================================
+
+
+
+
+//=======================================================================
+//　ターゲットマーカー
+//=======================================================================
+task BossEffect_Marker(objTarget)
+{
+	//初期設定
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 91);
+	ObjPrim_SetTexture(obj, imgSystemMarker);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 64, 16);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjSprite2D_SetDestCenter(obj);
+
+	ObjRender_SetY(obj, MaxY+8);
+	let alpha = 255;
+	CheckMarker();
+	while(eAlive)
+	{
+		ObjRender_SetX(obj, ObjMove_GetX(objTarget));
+		ObjRender_SetAlpha(obj, alpha);
+		yield;
+	}
+	Obj_Delete(obj);
+	
+	task CheckMarker()
+	{
+		let t = 0;
+		while(!Obj_IsDeleted(objTarget))
+		{
+			if (!GetEnemyVisible(objTarget) || !Obj_GetValueD(objTarget, "LifeCircle", true)) { alpha = 0; }
+			else if (absolute(ObjMove_GetX(objTarget)-GetPlayerX) < 48)
+			{
+				alpha = 100+t*10; t++; t %= 6;
+			}
+			else if (ObjMove_GetX(objTarget) < MinX)
+			{
+				alpha = max(0, 255+(ObjMove_GetX(objTarget)-MinX)*4);
+			}
+			else if (ObjMove_GetX(objTarget) > MaxX)
+			{
+				alpha = max(0, 255+(MaxX-ObjMove_GetX(objTarget))*4);
+			}
+			else { alpha = 255; }
+			yield;
+		}
+	}
+}
+
+//=======================================================================
+//  ボスのライフ表示（サークルゲージ）
+//=======================================================================
+task BossEffect_LifeCircle(objBoss)
+{
+	_BossEffect_LifeCircle(objBoss, 72);
+}
+task BossEffect_LifeCircleEx(objBoss, circle_size)
+{
+	_BossEffect_LifeCircle(objBoss, circle_size);
+}
+
+task _BossEffect_LifeCircle(objBoss, circle_size)
+{
+	//初期ライフを得る
+	let iniStepMaxLifeMax = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_MAX_LIFE);
+	let iniStepMaxLife = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_LIFE);
+	let iniBossLife = ObjEnemyBossScene_GetInfo(objScene, INFO_CURRENT_LIFE);
+	let iniSingleLife = ObjEnemy_GetInfo(objBoss, INFO_LIFE);
+	//今回の段階におけるゲージ最大値
+	let GaugeRateMax = iniStepMaxLife / iniStepMaxLifeMax;
+	//最小値
+	let GaugeRate = iniBossLife / iniStepMaxLifeMax;
+	let GaugeRateMin = GaugeRateMax - GaugeRate;
+	//各種設定
+	let center_point = 32;
+//	let circle_size = 72;
+	let circle_width = 7;
+	let offset_width = 0;
+	//これより近くに自機がいると半透明化
+	let hide_border = (circle_size+circle_width*2+8)^2;
+	
+	let objs = [-1, -1, -1, -1, -1];
+	let obj_count = length(objs);
+	
+	//ライフゲージ
+	objs[0] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[0], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[0], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[0], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[0], 71);
+	ObjRender_SetBlendType(objs[0], BLEND_ALPHA);
+
+	//ライフゲージ色変化
+	objs[1] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[1], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[1], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[1], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[1], 71);
+	ObjRender_SetBlendType(objs[1], BLEND_ALPHA);
+	ObjRender_SetColor(objs[1], 128, 128, 128);
+
+	//枠線
+	objs[2] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[2], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[2], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[2], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[2], 72);
+
+	//ライフゲージ背景
+	objs[4] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[4], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[4], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[4], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[4], 70);
+	ObjRender_SetColor(objs[4], 192, 192, 192);
+	ObjRender_SetBlendType(objs[4], BLEND_MULTIPLY);
+
+	//円状にセット
+	ascent(i in 0 .. (center_point+1))
+	{
+		let tmp = i/center_point;
+		let tmp_a = 270 - tmp*360;
+		let tmp_a2 = 270 - tmp*360*GaugeRateMin;
+		ObjPrim_SetVertexUVT(objs[1], i*2+0, tmp*128, 96);
+		ObjPrim_SetVertexUVT(objs[1], i*2+1, tmp*128, 112);
+		ObjPrim_SetVertexPosition(objs[1], i*2+0,
+				circle_size*cos(tmp_a2), circle_size*sin(tmp_a2), 0);
+		ObjPrim_SetVertexPosition(objs[1], i*2+1,
+				(circle_size+circle_width)*cos(tmp_a2), (circle_size+circle_width)*sin(tmp_a2), 0);
+
+		ObjPrim_SetVertexUVT(objs[2], i*2+0, tmp*128, 80);
+		ObjPrim_SetVertexUVT(objs[2], i*2+1, tmp*128, 96);
+		ObjPrim_SetVertexPosition(objs[2], i*2+0,
+				(circle_size-offset_width)*cos(tmp_a), (circle_size-offset_width)*sin(tmp_a), 0);
+		ObjPrim_SetVertexPosition(objs[2], i*2+1,
+				(circle_size+circle_width+offset_width)*cos(tmp_a), (circle_size+circle_width+offset_width)*sin(tmp_a), 0);
+
+		ObjPrim_SetVertexUVT(objs[4], i*2+0, tmp*128, 64);
+		ObjPrim_SetVertexUVT(objs[4], i*2+1, tmp*128, 80);
+		ObjPrim_SetVertexPosition(objs[4], i*2+0,
+				circle_size*cos(tmp_a), circle_size*sin(tmp_a), 0);
+		ObjPrim_SetVertexPosition(objs[4], i*2+1,
+				(circle_size+circle_width)*cos(tmp_a), (circle_size+circle_width)*sin(tmp_a), 0);
+	}
+
+	//ライフカラー
+	SetLifeColor();
+
+	//ライフの区切り
+	objs[3] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[3], PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objs[3], imgSystemLife);
+	Obj_SetRenderPriorityI(objs[3], 72);
+	ResetLifeGate();
+
+	let lifeRateRender = 1;
+	// ステップの最初のスペルだったらアニメーション
+	if (iniStepMaxLifeMax <= iniStepMaxLife)
+	{
+		lifeRateRender = 0;
+	}
+	
+	let baseAlpha = 255;
+	let t = 0;
+	while(eAlive)
+	{
+		//ボスの座標に表示。ボスがいないなら隠す
+		if (!Obj_IsDeleted(objBoss))
+		{
+			if (GetEnemyVisible(objBoss) && Obj_GetValueD(objBoss, "LifeCircle", true))
+			{
+				//近くにいるなら半透明表示
+				let ex = ObjMove_GetX(objBoss); let ey = ObjMove_GetY(objBoss);
+				let hideFlag = true;
+				let alpha = baseAlpha;
+				if ((GetPlayerX-ex)^2 + (GetPlayerY-ey)^2 < hide_border) { hideFlag = false; alpha = baseAlpha/3; }
+				ascent(i in 0 .. 4)
+				{
+					ObjRender_SetPosition(objs[i], ex, ey, 0);
+					ObjRender_SetAlpha(objs[i], alpha);
+					Obj_SetVisible(objs[i], true);
+				}
+				ObjRender_SetPosition(objs[4], ex, ey, 0);
+				Obj_SetVisible(objs[4], hideFlag);
+				lifeRateRender = min(lifeRateRender+0.02, 1);
+			} else {
+				//ボスが隠れているならやっぱり隠す
+				ascent(i in 0 .. obj_count) { Obj_SetVisible(objs[i], false); }
+			}
+		} else {
+			let tmp_boss = GetEnemyBossObjectID();
+			if (length(tmp_boss) > 0)
+			{
+				objBoss = tmp_boss[0];
+				ascent(i in 0 .. obj_count) { Obj_SetVisible(objs[i], true); }
+			}
+			else
+			{
+				ascent(i in 0 .. obj_count) { Obj_SetVisible(objs[i], false); }
+			}
+		}
+		//ライフ表示
+		let lifeRate = min(GaugeRateMin + ObjEnemy_GetInfo(objBoss, INFO_LIFE)/iniSingleLife*GaugeRate,
+					lifeRateRender);
+		UpdateLife(lifeRate, t);
+
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. obj_count) { Obj_Delete(objs[i]); }
+	
+	//ライフゲージ再描画
+	function UpdateLife(life_late, anime_value)
+	{
+		ascent(i in 0 .. (center_point+1))
+		{
+			let tmp_a = 270 - life_late*360*i/center_point;
+
+			ObjPrim_SetVertexPosition(objs[0], i*2+0,
+					circle_size*cos(tmp_a), circle_size*sin(tmp_a), 0);
+			ObjPrim_SetVertexPosition(objs[0], i*2+1,
+					(circle_size+circle_width)*cos(tmp_a), (circle_size+circle_width)*sin(tmp_a), 0);
+
+			let tmp = i/center_point * life_late;
+			ObjPrim_SetVertexUVT(objs[0], i*2+0, tmp*128+anime_value, 96);
+			ObjPrim_SetVertexUVT(objs[0], i*2+1, tmp*128+anime_value, 112);
+		}
+	}
+	//ライフの区切りをセット
+	function ResetLifeGate()
+	{
+		let listLifeDiv = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_LIFE_RATE_LIST);
+		let div_count = length(listLifeDiv);
+		let lifeRateMax = 1 - iniStepMaxLife/iniStepMaxLifeMax;
+		ObjPrim_SetVertexCount(objs[3], div_count*6);
+
+		let x = 48; let y = 16;
+		let w = 8; let h = 32;
+		let r1 = circle_size-1;
+		let r2 = circle_size+circle_width+1;
+		descent(i in 0 .. div_count)
+		{
+			// 現在ライフより先の区切りは表示しない
+			if (listLifeDiv[i] <= lifeRateMax) { break; }
+			let a1 = 360*listLifeDiv[i] - 90 - 3;
+			let a2 = 360*listLifeDiv[i] - 90 + 3;
+			AddImg_Triangle02(objs[3], i*6,
+				x, y, x+w, y+h,
+				cos(a1)*r2, sin(a1)*r2, cos(a1)*r1, sin(a1)*r1,
+				cos(a2)*r2, sin(a2)*r2, cos(a2)*r1, sin(a2)*r1);
+		}
+	}
+	//ライフカラー
+	task SetLifeColor(){
+		let infCurLifeMax = ObjEnemyBossScene_GetInfo(objScene, INFO_CURRENT_LIFE_MAX);
+		let infCurLifeNow = ObjEnemyBossScene_GetInfo(objScene, INFO_CURRENT_LIFE);
+		let threshold = [ infCurLifeMax*0.5, infCurLifeMax*0.15 ];
+		while( !Obj_IsDeleted(objs[0]) ){
+			infCurLifeNow = ObjEnemyBossScene_GetInfo(objScene, INFO_CURRENT_LIFE);
+			let color = [];
+			if( infCurLifeNow > threshold[0] ){ color = [64,255,64]; }
+			else if( infCurLifeNow > threshold[1] ){ color = [255,255,64]; }
+			else{ color = [255,64,64]; }
+			ObjRender_SetColor(objs[0], color[0], color[1], color[2]);
+			yield;
+		}
+	}
+}
+task BossEffect_LifeCirclePartition(objBoss, circle_size, par_position)
+{
+	//初期ライフを得る
+	let iniStepMaxLifeMax = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_MAX_LIFE);
+	let iniStepMaxLife = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_LIFE);
+	let iniBossLife = ObjEnemyBossScene_GetInfo(objScene, INFO_CURRENT_LIFE_MAX);
+	//今回の段階におけるゲージ最大値
+	let GaugeRateMax = iniStepMaxLife / iniStepMaxLifeMax;
+	//最小値
+	let GaugeRate = iniBossLife / iniStepMaxLifeMax;
+	let GaugeRateMin = GaugeRateMax - GaugeRate;
+	let GaugePosition = GaugeRateMin + (GaugeRateMax-GaugeRateMin) * (1-par_position);
+	//各種設定
+//	let circle_size = 72;
+	let circle_width = 8;
+	//これより近くに自機がいると半透明化
+	let hide_border = (circle_size+circle_width*2+8)^2;
+	
+	//区切り
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(obj, imgSystemLife);
+	Obj_SetRenderPriorityI(obj, 72);
+	ObjPrim_SetVertexCount(obj, 6);
+
+	local
+	{
+		let x = 48+8; let y = 16;
+		let w = 8; let h = 32;
+		let r1 = circle_size-1;
+		let r2 = circle_size+circle_width+1;
+		
+		let a1 = GaugePosition*360 - 90 - 3;
+		let a2 = GaugePosition*360 - 90 + 3;
+		AddImg_Triangle02(obj, 0,
+			x, y, x+w, y+h,
+			cos(a1)*r2, sin(a1)*r2, cos(a1)*r1, sin(a1)*r1,
+			cos(a2)*r2, sin(a2)*r2, cos(a2)*r1, sin(a2)*r1);
+	}
+	
+	let baseAlpha = 255;
+	let t = 0;
+	while(eAlive)
+	{
+		//ボスの座標に表示。ボスがいないなら隠す
+		if (!Obj_IsDeleted(objBoss))
+		{
+			if (GetEnemyVisible(objBoss) && Obj_GetValueD(objBoss, "LifeCircle", true))
+			{
+				//近くにいるなら半透明表示
+				let ex = ObjMove_GetX(objBoss); let ey = ObjMove_GetY(objBoss);
+				let alpha = baseAlpha;
+				if ((GetPlayerX-ex)^2 + (GetPlayerY-ey)^2 < hide_border) { alpha = baseAlpha/3; }
+				ObjRender_SetPosition(obj, ex, ey, 0);
+				ObjRender_SetAlpha(obj, alpha);
+				Obj_SetVisible(obj, true);
+			} else {
+				//ボスが隠れているならやっぱり隠す
+				Obj_SetVisible(obj, false);
+			}
+		} else {
+			let tmp_boss = GetEnemyBossObjectID();
+			if (length(tmp_boss) > 0)
+			{
+				objBoss = tmp_boss[0];
+				Obj_SetVisible(obj, true);
+			}
+			else
+			{
+				Obj_SetVisible(obj, false);
+			}
+		}
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// 使い魔用
+task FamilierEffect_LifeCircle(objFamilier, circle_size)
+{
+	//初期ライフを得る
+	let iniBossLife = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+	let iniSingleLife = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+	//今回の段階におけるゲージ最大値
+	let GaugeRateMax = 1;
+	//最小値
+	let GaugeRate = 1;
+	let GaugeRateMin = 0;
+	//各種設定
+	let center_point = 32;
+//	let circle_size = 72;
+	let circle_width = 7;
+	let offset_width = 0;
+	//これより近くに自機がいると半透明化
+	let hide_border = (circle_size+circle_width*2+8)^2;
+	
+	let objs = [-1, -1, -1, -1];
+	let obj_count = length(objs);
+	
+	//ライフゲージ
+	objs[0] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[0], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[0], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[0], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[0], 71);
+//	ObjRender_SetBlendType(objs[0], BLEND_ADD_ARGB);
+
+	//ライフゲージ色変化
+	objs[1] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[1], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[1], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[1], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[1], 71);
+	ObjRender_SetBlendType(objs[1], BLEND_MULTIPLY);
+	ObjRender_SetColor(objs[1], 128, 128, 128);
+
+	//枠線
+	objs[2] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[2], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[2], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[2], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[2], 72);
+
+	//ライフゲージ背景
+	objs[3] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[3], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[3], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[3], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[3], 70);
+	ObjRender_SetColor(objs[3], 192, 192, 192);
+	ObjRender_SetBlendType(objs[3], BLEND_MULTIPLY);
+
+	//円状にセット
+	ascent(i in 0 .. (center_point+1))
+	{
+		let tmp = i/center_point;
+		let tmp_a = 270 - tmp*360;
+		let tmp_a2 = 270 - tmp*360*GaugeRateMin;
+		ObjPrim_SetVertexUVT(objs[1], i*2+0, tmp*128, 96);
+		ObjPrim_SetVertexUVT(objs[1], i*2+1, tmp*128, 112);
+		ObjPrim_SetVertexPosition(objs[1], i*2+0,
+				circle_size*cos(tmp_a2), circle_size*sin(tmp_a2), 0);
+		ObjPrim_SetVertexPosition(objs[1], i*2+1,
+				(circle_size+circle_width)*cos(tmp_a2), (circle_size+circle_width)*sin(tmp_a2), 0);
+
+		ObjPrim_SetVertexUVT(objs[2], i*2+0, tmp*128, 80);
+		ObjPrim_SetVertexUVT(objs[2], i*2+1, tmp*128, 96);
+		ObjPrim_SetVertexPosition(objs[2], i*2+0,
+				(circle_size-offset_width)*cos(tmp_a), (circle_size-offset_width)*sin(tmp_a), 0);
+		ObjPrim_SetVertexPosition(objs[2], i*2+1,
+				(circle_size+circle_width+offset_width)*cos(tmp_a), (circle_size+circle_width+offset_width)*sin(tmp_a), 0);
+
+		ObjPrim_SetVertexUVT(objs[3], i*2+0, tmp*128, 64);
+		ObjPrim_SetVertexUVT(objs[3], i*2+1, tmp*128, 80);
+		ObjPrim_SetVertexPosition(objs[3], i*2+0,
+				circle_size*cos(tmp_a), circle_size*sin(tmp_a), 0);
+		ObjPrim_SetVertexPosition(objs[3], i*2+1,
+				(circle_size+circle_width)*cos(tmp_a), (circle_size+circle_width)*sin(tmp_a), 0);
+	}
+
+	SetLifeColor();
+
+	let lifeRateRender = 1;
+	let baseAlpha = 0;
+
+	let t = 0;
+	while(!Obj_IsDeleted(objFamilier))
+	{
+		//ボスの座標に表示。ボスがいないなら隠す
+		if (GetEnemyVisible(objFamilier) && Obj_GetValueD(objFamilier, "LifeCircle", true))
+		{
+			//近くにいるなら半透明表示
+			let ex = ObjMove_GetX(objFamilier); let ey = ObjMove_GetY(objFamilier);
+			let hideFlag = true;
+			let alpha = baseAlpha;
+			if ((GetPlayerX-ex)^2 + (GetPlayerY-ey)^2 < hide_border) { hideFlag = false; alpha = baseAlpha/3; }
+			ascent(i in 0 .. 3)
+			{
+				ObjRender_SetPosition(objs[i], ex, ey, 0);
+				ObjRender_SetAlpha(objs[i], alpha);
+				Obj_SetVisible(objs[i], true);
+			}
+			ObjRender_SetPosition(objs[3], ex, ey, 0);
+			Obj_SetVisible(objs[3], hideFlag);
+			lifeRateRender = min(lifeRateRender+0.02, 1);
+		} else {
+			//ボスが隠れているならやっぱり隠す
+			ascent(i in 0 .. obj_count) { Obj_SetVisible(objs[i], false); }
+		}
+		//ライフ表示
+		let lifeRate = min(GaugeRateMin + ObjEnemy_GetInfo(objFamilier, INFO_LIFE)/iniSingleLife*GaugeRate,
+					lifeRateRender);
+		UpdateLife(lifeRate, t);
+
+		baseAlpha = min(255, baseAlpha+5);
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. obj_count) { Obj_Delete(objs[i]); }
+	
+	//ライフゲージ再描画
+	function UpdateLife(life_late, anime_value)
+	{
+		ascent(i in 0 .. (center_point+1))
+		{
+			let tmp_a = 270 - life_late*360*i/center_point;
+
+			ObjPrim_SetVertexPosition(objs[0], i*2+0,
+					circle_size*cos(tmp_a), circle_size*sin(tmp_a), 0);
+			ObjPrim_SetVertexPosition(objs[0], i*2+1,
+					(circle_size+circle_width)*cos(tmp_a), (circle_size+circle_width)*sin(tmp_a), 0);
+
+			let tmp = i/center_point * life_late;
+			ObjPrim_SetVertexUVT(objs[0], i*2+0, tmp*128+anime_value, 96);
+			ObjPrim_SetVertexUVT(objs[0], i*2+1, tmp*128+anime_value, 112);
+		}
+	}
+	//ライフカラー
+	task SetLifeColor(){
+		let infCurLifeMax = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+		let infCurLifeNow = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+		let threshold = [ infCurLifeMax*0.5, infCurLifeMax*0.15 ];
+		while( !Obj_IsDeleted(objs[0]) ){
+			infCurLifeNow = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+			let color = [];
+			if( infCurLifeNow > threshold[0] ){ color = [64,255,64]; }
+			else if( infCurLifeNow > threshold[1] ){ color = [255,255,64]; }
+			else{ color = [255,64,64]; }
+			ObjRender_SetColor(objs[0], color[0], color[1], color[2]);
+			yield;
+		}
+	}
+}
+
+// 別の敵と表示を連動する
+task FamilierEffect_LinkLifeCircle(objBase, objBoss, circle_size)
+{
+	//初期ライフを得る
+	let iniStepMaxLifeMax = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_MAX_LIFE);
+	let iniStepMaxLife = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_TOTAL_LIFE);
+	let iniBossLife = ObjEnemyBossScene_GetInfo(objScene, INFO_CURRENT_LIFE);
+	let iniSingleLife = ObjEnemy_GetInfo(objBoss, INFO_LIFE);
+	//今回の段階におけるゲージ最大値
+	let GaugeRateMax = iniStepMaxLife / iniStepMaxLifeMax;
+	//最小値
+	let GaugeRate = iniBossLife / iniStepMaxLifeMax;
+	let GaugeRateMin = GaugeRateMax - GaugeRate;
+	//各種設定
+	let center_point = 32;
+//	let circle_size = 72;
+	let circle_width = 8;
+	let offset_width = 0;
+	//これより近くに自機がいると半透明化
+	let hide_border = (circle_size+circle_width*2+8)^2;
+	
+	let objs = [-1, -1, -1, -1, -1];
+	let obj_count = length(objs);
+	
+	//ライフゲージ
+	objs[0] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[0], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[0], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[0], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[0], 71);
+//	ObjRender_SetBlendType(objs[0], BLEND_ADD_ARGB);
+
+	//ライフゲージ色変化
+	objs[1] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[1], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[1], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[1], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[1], 71);
+	ObjRender_SetBlendType(objs[1], BLEND_MULTIPLY);
+	ObjRender_SetColor(objs[1], 128, 128, 128);
+
+	//枠線
+	objs[2] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[2], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[2], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[2], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[2], 72);
+
+	//ライフゲージ背景
+	objs[4] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[4], PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetTexture(objs[4], imgSystemLife);
+	ObjPrim_SetVertexCount(objs[4], (center_point+1)*2);
+	Obj_SetRenderPriorityI(objs[4], 70);
+	ObjRender_SetColor(objs[4], 192, 192, 192);
+	ObjRender_SetBlendType(objs[4], BLEND_MULTIPLY);
+
+	//円状にセット
+	ascent(i in 0 .. (center_point+1))
+	{
+		let tmp = i/center_point;
+		let tmp_a = 270 - tmp*360;
+		let tmp_a2 = 270 - tmp*360*GaugeRateMin;
+		ObjPrim_SetVertexUVT(objs[1], i*2+0, tmp*128, 96);
+		ObjPrim_SetVertexUVT(objs[1], i*2+1, tmp*128, 112);
+		ObjPrim_SetVertexPosition(objs[1], i*2+0,
+				circle_size*cos(tmp_a2), circle_size*sin(tmp_a2), 0);
+		ObjPrim_SetVertexPosition(objs[1], i*2+1,
+				(circle_size+circle_width)*cos(tmp_a2), (circle_size+circle_width)*sin(tmp_a2), 0);
+
+		ObjPrim_SetVertexUVT(objs[2], i*2+0, tmp*128, 80);
+		ObjPrim_SetVertexUVT(objs[2], i*2+1, tmp*128, 96);
+		ObjPrim_SetVertexPosition(objs[2], i*2+0,
+				(circle_size-offset_width)*cos(tmp_a), (circle_size-offset_width)*sin(tmp_a), 0);
+		ObjPrim_SetVertexPosition(objs[2], i*2+1,
+				(circle_size+circle_width+offset_width)*cos(tmp_a), (circle_size+circle_width+offset_width)*sin(tmp_a), 0);
+
+		ObjPrim_SetVertexUVT(objs[4], i*2+0, tmp*128, 64);
+		ObjPrim_SetVertexUVT(objs[4], i*2+1, tmp*128, 80);
+		ObjPrim_SetVertexPosition(objs[4], i*2+0,
+				circle_size*cos(tmp_a), circle_size*sin(tmp_a), 0);
+		ObjPrim_SetVertexPosition(objs[4], i*2+1,
+				(circle_size+circle_width)*cos(tmp_a), (circle_size+circle_width)*sin(tmp_a), 0);
+	}
+
+	//ライフの区切り
+	objs[3] = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objs[3], PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objs[3], imgSystemLife);
+	Obj_SetRenderPriorityI(objs[3], 72);
+	ResetLifeGate();
+
+	SetLifeColor();
+
+	let lifeRateRender = 1;
+	let baseAlpha = 0;
+
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		if (GetEnemyVisible(objBase) && Obj_GetValueD(objBase, "LifeCircle", true))
+		{
+			//近くにいるなら半透明表示
+			let ex = ObjMove_GetX(objBase); let ey = ObjMove_GetY(objBase);
+			let hideFlag = true;
+			let alpha = baseAlpha;
+			if ((GetPlayerX-ex)^2 + (GetPlayerY-ey)^2 < hide_border) { hideFlag = false; alpha = baseAlpha/3; }
+			ascent(i in 0 .. 4)
+			{
+				ObjRender_SetPosition(objs[i], ex, ey, 0);
+				ObjRender_SetAlpha(objs[i], alpha);
+				Obj_SetVisible(objs[i], true);
+			}
+			ObjRender_SetPosition(objs[4], ex, ey, 0);
+			Obj_SetVisible(objs[4], hideFlag);
+			lifeRateRender = min(lifeRateRender+0.02, 1);
+		} else {
+			//ボスが隠れているならやっぱり隠す
+			ascent(i in 0 .. obj_count) { Obj_SetVisible(objs[i], false); }
+		}
+		//ライフ表示
+		let lifeRate = min(GaugeRateMin + ObjEnemy_GetInfo(objBoss, INFO_LIFE)/iniSingleLife*GaugeRate,
+					lifeRateRender);
+		UpdateLife(lifeRate, t);
+
+		baseAlpha = min(255, baseAlpha+5);
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. obj_count) { Obj_Delete(objs[i]); }
+	
+	//ライフゲージ再描画
+	function UpdateLife(life_late, anime_value)
+	{
+		ascent(i in 0 .. (center_point+1))
+		{
+			let tmp_a = 270 - life_late*360*i/center_point;
+
+			ObjPrim_SetVertexPosition(objs[0], i*2+0,
+					circle_size*cos(tmp_a), circle_size*sin(tmp_a), 0);
+			ObjPrim_SetVertexPosition(objs[0], i*2+1,
+					(circle_size+circle_width)*cos(tmp_a), (circle_size+circle_width)*sin(tmp_a), 0);
+
+			let tmp = i/center_point * life_late;
+			ObjPrim_SetVertexUVT(objs[0], i*2+0, tmp*128+anime_value, 96);
+			ObjPrim_SetVertexUVT(objs[0], i*2+1, tmp*128+anime_value, 112);
+		}
+	}
+	//ライフの区切りをセット
+	function ResetLifeGate()
+	{
+		let listLifeDiv = ObjEnemyBossScene_GetInfo(objScene, INFO_ACTIVE_STEP_LIFE_RATE_LIST);
+		let div_count = length(listLifeDiv);
+		let lifeRateMax = 1 - iniStepMaxLife/iniStepMaxLifeMax;
+		ObjPrim_SetVertexCount(objs[3], div_count*6);
+
+		let x = 48; let y = 16;
+		let w = 8; let h = 32;
+		let r1 = circle_size-1;
+		let r2 = circle_size+circle_width+1;
+		descent(i in 0 .. div_count)
+		{
+			// 現在ライフより先の区切りは表示しない
+			if (listLifeDiv[i] <= lifeRateMax) { break; }
+			let a1 = 360*listLifeDiv[i] - 90 - 3;
+			let a2 = 360*listLifeDiv[i] - 90 + 3;
+			AddImg_Triangle02(objs[3], i*6,
+				x, y, x+w, y+h,
+				cos(a1)*r2, sin(a1)*r2, cos(a1)*r1, sin(a1)*r1,
+				cos(a2)*r2, sin(a2)*r2, cos(a2)*r1, sin(a2)*r1);
+		}
+	}
+	//ライフカラー
+	task SetLifeColor(){
+		let infCurLifeMax = ObjEnemy_GetInfo(objBoss, INFO_LIFE);
+		let infCurLifeNow = ObjEnemy_GetInfo(objBoss, INFO_LIFE);
+		let threshold = [ infCurLifeMax*0.5, infCurLifeMax*0.15 ];
+		while( !Obj_IsDeleted(objs[0]) ){
+			infCurLifeNow = ObjEnemy_GetInfo(objBoss, INFO_LIFE);
+			let color = [];
+			if( infCurLifeNow > threshold[0] ){ color = [64,255,64]; }
+			else if( infCurLifeNow > threshold[1] ){ color = [255,255,64]; }
+			else{ color = [255,64,64]; }
+			ObjRender_SetColor(objs[0], color[0], color[1], color[2]);
+			yield;
+		}
+	}
+}
+function BossEffect_DisableLifeCircle(obj)
+{
+	Obj_SetValue(obj, "LifeCircle", false);
+}
+
+//-----------------------------------------------------------------------
+// 赤い魔法陣
+//-----------------------------------------------------------------------
+task BossEffect_MagicCircle(objBoss)
+{
+	let isDirect = GetAreaCommonData(CAREA_STAGE, "MagicCircleState", 0);
+	let scale = 1;
+	
+	//初期設定
+	let obj2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj2, imgSystemMCircle);
+	ObjRender_SetBlendType(obj2, BLEND_SUBTRACT);
+	ObjPrim_SetPrimitiveType(obj2, PRIMITIVE_TRIANGLESTRIP);
+	Obj_SetRenderPriorityI(obj2, priorityAura+1);
+	ObjSprite2D_SetSourceRect(obj2, 256, 0, 512, 256);
+	ObjSprite2D_SetDestCenter(obj2);
+	ObjRender_SetScaleXYZ(obj2, scale, scale,0);
+	ObjRender_SetAlpha(obj2, 64);
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgSystemMCircle);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+	Obj_SetRenderPriorityI(obj, priorityAura+1);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 256, 256);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetScaleXYZ(obj, scale, scale,0);
+	ObjRender_SetAlpha(obj, 140);
+
+	if (!isDirect)
+	{
+		scale = 0;
+		ascent(t in 0 .. 60)
+		{
+			if (Obj_IsDeleted(objBoss) || !Obj_GetValueD(objBoss, "MagicCircle", true)) { break; }
+			let tmp = sin(t/60*90);
+			let angleZ  = 0.75*aTime(objBoss) - (1-tmp)*180;
+			let angleX  = 45*(sin(angleZ/3))^2;
+			let angleY  = 20*(1-cos(angleZ));
+			scale  = tmp;
+			
+			ObjRender_SetPosition(obj, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+			ObjRender_SetAngleXYZ(obj, angleX, angleY, angleZ);
+			ObjRender_SetScaleXYZ(obj, scale, scale, scale);
+			ObjRender_SetPosition(obj2, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+			ObjRender_SetAngleXYZ(obj2, angleX, angleY, angleZ);
+			ObjRender_SetScaleXYZ(obj2, scale, scale, scale);
+
+			yield;
+		}
+		if (Obj_GetValueD(objBoss, "MagicCircle", true)) { scale = 1; }
+		// 起動済みなら値をセット
+		SetAreaCommonData(CAREA_STAGE, "MagicCircleState", 1);
+	}
+	while(eAlive && Obj_GetValueD(objBoss, "MagicCircle", true) && !Obj_IsDeleted(objBoss))
+	{
+		let angleZ  = 0.75*aTime(objBoss);
+		let angleX  = 45*(sin(angleZ/3))^2;
+		let angleY  = 20*(1-cos(angleZ));
+		ObjRender_SetPosition(obj, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+		ObjRender_SetAngleXYZ(obj, angleX, angleY, angleZ);
+		ObjRender_SetPosition(obj2, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+		ObjRender_SetAngleXYZ(obj2, angleX, angleY, angleZ);
+		yield;
+	}
+	if (!Obj_GetValueD(objBoss, "MagicCircle", true) && !Obj_IsDeleted(objBoss))
+	{
+		let base_scale = scale;
+		descent(t in 0 .. 30)
+		{
+			let scale = base_scale*sin((t+1)/30*90);
+			let angleZ  = 0.75*aTime(objBoss);
+			let angleX  = 45*(sin(angleZ/3))^2;
+			let angleY  = 20*(1-cos(angleZ));
+			ObjRender_SetPosition(obj, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+			ObjRender_SetAngleXYZ(obj, angleX, angleY, angleZ);
+			ObjRender_SetScaleXYZ(obj, scale, scale, scale);
+			ObjRender_SetPosition(obj2, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+			ObjRender_SetAngleXYZ(obj2, angleX, angleY, angleZ);
+			ObjRender_SetScaleXYZ(obj2, scale, scale, scale);
+			yield;
+		}
+		Obj_Delete(obj);
+		Obj_Delete(obj2);
+		BossEffect_ResetMagicCircle();
+		
+		// 再設置
+		while (!Obj_GetValueD(objBoss, "MagicCircle", true)) { yield; }
+		BossEffect_MagicCircle(objBoss);
+	}
+	else
+	{
+		Obj_Delete(obj);
+		Obj_Delete(obj2);
+	}
+}
+// 魔法陣リセット
+function BossEffect_ResetMagicCircle()
+{
+	SetAreaCommonData(CAREA_STAGE, "MagicCircleState", 0);
+}
+function BossEffect_DisableMagicCircle(obj)
+{
+	Obj_SetValue(obj, "MagicCircle", false);
+}
+function BossEffect_EnableMagicCircle(obj)
+{
+	Obj_SetValue(obj, "MagicCircle", true);
+}
+
+//-----------------------------------------------------------------------
+//オーラカラーは共通（めんどいので一旦妥協）
+//-----------------------------------------------------------------------
+task BossEffect_YugamiAura(isBoss, R, G, B)
+{
+	// （全敵一括でエフェクト表示するのでボス本体のみ実行）
+	// 敵ごとにカラーを変えるよう仕様変更したい場合はここでカラー設定
+	if (!isBoss) { return; }
+	
+	//レンダリングターゲットに使用するテクスチャ
+	let renderTexture = GetReservedRenderTargetName(0);
+
+	let frame = 0; //フレーム
+	let baseEffectRadius = 192; //基準エフェクト半径
+	let outerFluct = 32; //エフェクト半径の最大変化量
+	let effectRadius = 0; //エフェクト半径
+
+
+	let priEffectMin = 20; //エフェクトをかける最小優先度
+	let priEffectMax = 28; //エフェクトをかける最大優先度
+
+	//背景のみエフェクトの対象とする
+	//エフェクトの描画でまかなえるため、
+	//優先度20～28の通常描画を無効にする。
+	SetInvalidRenderPriorityA1(priEffectMin, priEffectMax);
+
+	let frameWidth = GetClipWidth();
+	let frameHeight = GetClipHeight();
+	let frameLeft = MinX();
+	let frameRight = MaxX();
+	let frameTop = MinY();
+	let frameBottom = MaxY();
+
+	//--------------------------------
+	//ゆがみオブジェクト
+	let objWave = ObjPrim_Create(OBJ_SPRITE_2D); //2Dスプライトオブジェクト生成
+	ObjPrim_SetTexture(objWave, renderTexture); //テクスチャを設定
+	ObjSprite2D_SetSourceRect(objWave, frameLeft, frameTop, frameRight, frameBottom);
+	ObjSprite2D_SetDestRect(objWave, 0, 0, frameWidth, frameHeight);
+	Obj_SetRenderPriorityI(objWave, priEffectMax + 1);
+
+	//ダミーテクスチャ（ないと描画がおかしくなる、必要！）
+	let objBlack = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjSprite2D_SetDestRect(objBlack, 0, 0, GetScreenWidth, GetScreenHeight);
+	ObjRender_SetColor(objBlack, 0, 0, 0);
+	ObjRender_SetBlendType(objBlack, BLEND_ADD_RGB);
+	Obj_SetRenderPriorityI(objBlack, priEffectMax);
+
+	//ゆがみオブジェクトにシェーダを設定
+	ObjShader_SetShaderF(objWave, hlslBossWave);
+	ObjShader_SetTechnique(objWave, "TecWave");
+	//--------------------------------
+	//シェーダにパラメータを設定
+	ObjShader_SetFloatArray(objWave, "waveColor_", [R/255, G/255, B/255, 1]);
+	ascent(i in 0 .. length(objAllEnemys))
+	{
+		if (i < 2)
+		{
+			BossEffect_YugamiAura_SetParameter(objWave, objAllEnemys[i], ["enemyPos_", "enemyPos2_"][i]);
+		}
+	}
+	
+	while(eAlive)
+	{
+		//エフェクト半径
+		effectRadius = baseEffectRadius + outerFluct * sin(frame*4);
+		if (frame < 30) { effectRadius *= sin((frame+1)*3); }
+
+		//--------------------------------
+		//優先度20～28(背景)をエフェクト用のテクスチャに描画
+		//シェーダ解除
+		RenderToTextureA1(renderTexture, priEffectMin, priEffectMax, true);
+
+		//--------------------------------
+		//シェーダにパラメータを設定
+		ObjShader_SetFloat(objWave, "frame_", frame);
+		ObjShader_SetFloat(objWave, "waveRadius_", effectRadius);
+//		ObjShader_SetFloatArray(objWave, "enemyPos_",
+//			[ObjMove_GetX(Enemy) + frameLeft, ObjMove_GetY(Enemy) + frameTop]);
+
+		frame++;
+		yield;
+	}
+
+	//エフェクト用オブジェクト削除
+	Obj_Delete(objWave);
+	Obj_Delete(objBlack);
+	ClearInvalidRenderPriority();
+}
+
+task BossEffect_YugamiAura_SetParameter(objWave, Enemy, area_name)
+{
+	while(!Obj_IsDeleted(Enemy))
+	{
+		ObjShader_SetFloatArray(objWave, area_name,
+			[ObjMove_GetX(Enemy) + GetStgFrameLeft(), ObjMove_GetY(Enemy) + GetStgFrameTop()]);
+		yield;
+	}
+	// 倒したら非表示に
+	ObjShader_SetFloatArray(objWave, area_name, [0, 0]);
+}

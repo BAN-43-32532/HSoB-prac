@@ -1,0 +1,294 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　自機共通のオプション関数
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+#include "./lib_Option_Player01.dnh"
+#include "./lib_Option_Player02.dnh"
+#include "./lib_Option_Player03.dnh"
+#include "./lib_Option_Player04.dnh"
+
+//　自機変数で作成オプション変更
+//　v_optCountは輝夜opt用　何個目のオプションなのかがわかる
+function CreateOption( v_playerNo, v_distNormal, v_distSlow, v_angleNormal, v_angleSlow, v_optCount ){
+	let obj;
+	alternative( v_playerNo )
+	case( 0 ){ obj = CreateOptionPl01( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 1 ){ obj = CreateOptionPl02( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 2 ){ obj = CreateOptionPl03( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 3 ){ obj = CreateOptionPl04( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow, v_optCount ); }
+	return obj;
+}
+
+//　皇用追加オプション
+function CreateYellowOption( v_playerNo, v_distNormal, v_distSlow, v_angleNormal, v_angleSlow, v_optCount ){
+	let obj;
+	alternative( v_playerNo )
+	case( 0 ){ obj = CreateYellowOptionPl01( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 1 ){ obj = CreateYellowOptionPl02( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 2 ){ obj = CreateYellowOptionPl03( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 3 ){ obj = CreateYellowOptionPl04( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow, v_optCount ); }
+	return obj;
+}
+
+//　素用追加オプション
+function CreateWhiteOption( v_playerNo, v_distNormal, v_distSlow, v_angleNormal, v_angleSlow, v_optCount ){
+	let obj;
+	alternative( v_playerNo )
+	case( 0 ){ obj = CreateWhiteOptionPl01( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 1 ){ obj = CreateWhiteOptionPl02( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 2 ){ obj = CreateWhiteOptionPl03( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ); }
+	case( 3 ){ obj = CreateWhiteOptionPl04( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow, v_optCount ); }
+	return obj;
+}
+
+//　オプション座標設定
+task OptionUpdate( v_obj, v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ){
+	let nextDist = 0;
+	let nextAngle = 0;
+	let pos = [ 0, 0 ];
+	let posN = [ 0, 0 ];
+	let posS = [ 0, 0 ];
+	let v_color = GetPlayerWeapon();
+	
+	ObjRender_SetPosition( v_obj, GetPlayerX(), GetPlayerY(), 0 );
+	
+	while( !Obj_IsDeleted(v_obj) && v_color == GetPlayerWeapon() ){
+		let key = GetVirtualKeyState(VK_SLOWMOVE);
+		let pang = GetPlayerAngle();
+		
+		pos = [ ObjRender_GetX( v_obj ), ObjRender_GetY( v_obj ) ];
+		posN = [
+			GetPlayerX() + v_distNormal * cos( v_angleNormal+pang ),
+			GetPlayerY() + v_distNormal * sin( v_angleNormal+pang ),
+		];
+		posS = [
+			GetPlayerX() + v_distSlow * cos( v_angleSlow+pang ),
+			GetPlayerY() + v_distSlow * sin( v_angleSlow+pang ),
+		];
+		
+		if( key != KEY_HOLD ){
+			//　高速
+			nextDist	= GetDistance( pos, posN );
+			nextAngle	= GetGapAngle( pos, posN );
+		}
+		else{
+			//　低速
+			nextDist	= GetDistance( pos, posS );
+			nextAngle	= GetGapAngle( pos, posS );
+		}
+		
+		let spos = [
+			ObjRender_GetX( v_obj ) + nextDist/4 * cos( nextAngle ),
+			ObjRender_GetY( v_obj ) + nextDist/4 * sin( nextAngle ),
+		];
+		ObjRender_SetPosition( v_obj, spos[0], spos[1], 0 );
+		
+		yield;
+	}
+	Obj_Delete(v_obj);
+}
+
+//　自機から距離v_distA、角度v_angleA離れた点Aを中心とし、
+//　距離v_distBArray[x,y]、角度v_angleB離れた位置を、速度v_spinで周回する
+task OptionUpdateSpiner( v_obj, v_distA, v_angleA, v_distBArray, v_angleB, v_spin ){
+	let posA = [ 0, 0 ];
+	let posB = [ 0, 0 ];
+	let spin = 0;
+	let v_color = GetPlayerWeapon();
+
+	ObjRender_SetPosition( v_obj, GetPlayerX(), GetPlayerY(), 0 );
+	while( !Obj_IsDeleted(v_obj) && v_color == GetPlayerWeapon() ){
+		let pang = GetPlayerAngle();
+		posA = [
+			GetPlayerX() + v_distA * cos( v_angleA+pang ),
+			GetPlayerY() + v_distA * sin( v_angleA+pang ),
+		];
+		posB = Rotate2D_XY(v_distBArray[0] * cos( v_angleB + spin ),
+				v_distBArray[1] * sin( v_angleB + spin ),
+				pang);
+
+		ObjRender_SetPosition( v_obj, posA[0]+posB[0], posA[1]+posB[1], 0 );
+		spin = spin + v_spin;
+		yield;
+	}
+	Obj_Delete(v_obj);
+}
+
+//　陰陽玉描画
+task OptionDrawOnmyo( v_obj, v_blend, v_scale, v_color ){
+	ObjPrim_SetTexture( v_obj, imgPlOption01 );
+	Obj_SetRenderPriorityI( v_obj, 38 );
+	ObjRender_SetBlendType( v_obj, v_blend );
+	
+	alternative( v_color )
+	case( "RED" ){ ObjSprite2D_SetSourceRect( v_obj, 0, 0, 32, 32 ); }
+	case( "ORANGE" ){ ObjSprite2D_SetSourceRect( v_obj, 32, 0, 64, 32 ); }
+	case( "YELLOW" ){ ObjSprite2D_SetSourceRect( v_obj, 64, 0, 96, 32 ); }
+	case( "GREEN" ){ ObjSprite2D_SetSourceRect( v_obj, 96, 0, 128, 32 ); }
+	case( "AQUA" ){ ObjSprite2D_SetSourceRect( v_obj, 128, 0, 160, 32 ); }
+	case( "BLUE" ){ ObjSprite2D_SetSourceRect( v_obj, 160, 0, 192, 32 ); }
+	case( "PURPLE" ){ ObjSprite2D_SetSourceRect( v_obj, 192, 0, 224, 32 ); }
+	case( "WHITE" ){ ObjSprite2D_SetSourceRect( v_obj, 224, 0, 256, 32 ); }
+	others{ ObjSprite2D_SetSourceRect( v_obj, 0, 0, 32, 32 ); }
+	ObjSprite2D_SetDestCenter( v_obj );
+	
+	ObjRender_SetScaleXYZ( v_obj, v_scale, v_scale, 0 );
+}
+
+//　八卦炉描画
+task OptionDrawHakkero( v_obj, v_blend, v_scale, v_color ){
+	ObjPrim_SetTexture( v_obj, imgPlOption01 );
+	Obj_SetRenderPriorityI( v_obj, 38 );
+	ObjRender_SetBlendType( v_obj, v_blend );
+	
+	alternative( v_color )
+	case( "RED" ){ ObjSprite2D_SetSourceRect( v_obj, 0, 32, 32, 64 ); }
+	case( "ORANGE" ){ ObjSprite2D_SetSourceRect( v_obj, 32, 32, 64, 64 ); }
+	case( "YELLOW" ){ ObjSprite2D_SetSourceRect( v_obj, 64, 32, 96, 64 ); }
+	case( "GREEN" ){ ObjSprite2D_SetSourceRect( v_obj, 96, 32, 128, 64 ); }
+	case( "AQUA" ){ ObjSprite2D_SetSourceRect( v_obj, 128, 32, 160, 64 ); }
+	case( "BLUE" ){ ObjSprite2D_SetSourceRect( v_obj, 160, 32, 192, 64 ); }
+	case( "PURPLE" ){ ObjSprite2D_SetSourceRect( v_obj, 192, 32, 224, 64 ); }
+	case( "WHITE" ){ ObjSprite2D_SetSourceRect( v_obj, 224, 32, 256, 64 ); }
+	others{ ObjSprite2D_SetSourceRect( v_obj, 0, 32, 32, 64 ); }
+	ObjSprite2D_SetDestCenter( v_obj );
+	
+	ObjRender_SetScaleXYZ( v_obj, v_scale, v_scale, 0 );
+}
+
+//　クリスタル描画
+task OptionDrawCrystal( v_obj, v_blend, v_scale, v_rgba ){
+	let anime	= 0;
+	let animeX	= 0;
+	
+	ObjPrim_SetTexture( v_obj, imgPlOption01 );
+	Obj_SetRenderPriorityI( v_obj, 38 );
+	ObjRender_SetBlendType( v_obj, v_blend );
+	ObjSprite2D_SetSourceRect( v_obj, 0, 96, 32, 128 );
+	ObjSprite2D_SetDestCenter( v_obj );
+	
+	ObjRender_SetScaleXYZ( v_obj, v_scale, v_scale, 0 );
+	ObjRender_SetColor( v_obj, v_rgba[0], v_rgba[1], v_rgba[2] );
+	ObjRender_SetAlpha( v_obj, v_rgba[3] );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		ObjSprite2D_SetSourceRect( v_obj, 0 + animeX*32, 96, 32 + animeX*32, 128 );
+		if( anime > 0 && anime%8 == 0 ){ animeX++; }
+		anime++;
+		yield;
+	}
+}
+
+//　カード描画
+task OptionDrawCard( v_obj, v_blend, v_scale, v_rgba ){
+	let anime	= 0;
+	let animeX	= 0;
+	let animeY	= 0;
+	
+	ObjPrim_SetTexture( v_obj, imgPlOption01 );
+	Obj_SetRenderPriorityI( v_obj, 38 );
+	ObjRender_SetBlendType( v_obj, v_blend );
+	ObjSprite2D_SetSourceRect( v_obj, 0, 160, 32, 192 );
+	ObjSprite2D_SetDestCenter( v_obj );
+	
+	ObjRender_SetScaleXYZ( v_obj, v_scale, v_scale, 0 );
+	ObjRender_SetAngleZ( v_obj, 45 );
+	ObjRender_SetColor( v_obj, v_rgba[0], v_rgba[1], v_rgba[2] );
+	ObjRender_SetAlpha( v_obj, v_rgba[3] );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		ObjSprite2D_SetSourceRect( v_obj, 0 + animeX*32, 160 + animeY%2*32, 32 + animeX*32, 192 + animeY%2*32 );
+		if( anime > 0 && anime%4 == 0 ){
+			animeX++;
+			if( animeX > 0 && animeX%8 == 0 ){
+				animeX = 0;
+				animeY++;
+			}
+		}
+		anime++;
+		yield;
+	}
+}
+
+//　珠描画
+task OptionDrawSphere( v_obj, v_blend, v_scale, v_rgba ){
+	let anime	= 0;
+	let animeX	= 0;
+	
+	ObjPrim_SetTexture( v_obj, imgPlOption01 );
+	Obj_SetRenderPriorityI( v_obj, 38 );
+	ObjRender_SetBlendType( v_obj, v_blend );
+	ObjSprite2D_SetSourceRect( v_obj, 0, 224, 32, 256 );
+	ObjSprite2D_SetDestCenter( v_obj );
+	
+	ObjRender_SetScaleXYZ( v_obj, v_scale, v_scale, 0 );
+	ObjRender_SetColor( v_obj, v_rgba[0], v_rgba[1], v_rgba[2] );
+	ObjRender_SetAlpha( v_obj, v_rgba[3] );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		ObjSprite2D_SetSourceRect( v_obj, 0 + animeX*32, 224, 32 + animeX*32, 256 );
+		if( anime > 0 && anime%4 == 0 ){ animeX++; }
+		anime++;
+		yield;
+	}
+}
+
+//　回転
+task SetSpin( v_obj, v_speed ){
+	let spin = 0;
+	while( !Obj_IsDeleted(v_obj) && v_speed != 0 ){
+		ObjRender_SetAngleZ( v_obj, spin );
+		spin += v_speed;
+		yield;
+	}
+}
+
+//　透明度
+task SetAlpha( v_obj, v_alpha, v_speed ){
+	let alpha = 0;
+	let speed = 0;
+	while( !Obj_IsDeleted(v_obj) ){
+		alpha = v_alpha[0] + v_alpha[1] * sin( speed );
+		ObjRender_SetAlpha( v_obj, alpha );
+		speed += v_speed;
+		yield;
+	}
+}
+
+//　被弾時非表示
+task SetVisible( v_obj ){
+	while( !Obj_IsDeleted(v_obj) ){
+		if( GetPlayerState() == STATE_NORMAL ){
+			Obj_SetVisible( v_obj, true );
+		}
+		else{
+			Obj_SetVisible( v_obj, false );
+		}
+		yield;
+	}
+}
+
+//　低速時のみオプションをアクティブにする
+task SetActiveModeSlow( v_obj ){
+	let scale = [ ObjRender_GetScaleX(v_obj), ObjRender_GetScaleY(v_obj) ];
+	let move1 = 0;
+	let moveA = 0;
+	while( !Obj_IsDeleted(v_obj) ){
+		let key = GetVirtualKeyState(VK_SLOWMOVE);
+		move1 = 1 * sin( moveA );
+		if( key != KEY_HOLD ){
+			//　高速時
+			ObjRender_SetScaleXYZ( v_obj, 0, 0, 0 );
+			moveA = 0;
+		}
+		else{
+			//　低速時
+			ObjRender_SetScaleXYZ( v_obj, move1*scale[0], move1*scale[1], 0 );
+			if( move1 < 1 ){ moveA += 15; }
+		}
+		
+		yield;
+	}
+}

@@ -1,0 +1,100 @@
+// ---------------------------
+//  チャプター関連
+// ---------------------------
+
+// スペカデータ
+#include "./SpellData.dnh"
+#include "./lib_ChapterSkip.dnh"
+
+let CHAPTER_ROAD = 0;
+let CHAPTER_BOSS = 1;
+let CHAPTER_SPELL = 2;
+let CHAPTER_INTERVAL = 3;
+
+task ChapterInit()
+{
+	SetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_ALL", 0);
+	SetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_SAFE", 0);
+	SetAreaCommonData(CAREA_STAGE, "STAGE_LASTWORD", 0);
+}
+
+task ChapterStart(chapterStage, chapterID, chapterType)
+{
+	let txtID = GetRoadChapterID(chapterStage, chapterID);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterID", txtID);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterType", chapterType);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmID", IntToString(chapterStage));
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmTexture", chapterID);
+
+	if(GetCurrentChapter()==-1){
+		let curstage=GetAreaCommonData(CAREA_STAGE, "StageIndex",1);
+		SetCurrentChapter(GetStartChapter(curstage));
+	}
+	else{
+		IntoNextchapter();
+	}
+
+	NotifyEventAll(ev_ChapterStart, 0);
+}
+task ChapterStartBoss(bossID, spellID, chapterType)
+{
+	// spellID < 0  ： ???? / 通常弾幕
+	// spellID >= 0 ： ボス名 / 通常弾幕
+	// chapterType == CHAPTER_SPELL ： スペカ
+	
+	let id = spellID + 2;
+	if (chapterType != CHAPTER_SPELL)
+	{
+		if (spellID < 0) { id = 0; }
+		else { id = 1; }
+	}
+	
+	let txtID = GetSpellChapterID(bossID, spellID, chapterType);
+	
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterID", txtID);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterType", chapterType);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmID", bossID);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmTexture", id);
+
+	if(GetCurrentChapter()==-1){
+		SetCurrentChapter(GetStartChapter(0));
+	}
+	else{
+		IntoNextchapter();
+	}
+
+	NotifyEventAll(ev_ChapterStart, 0);
+}
+task ChapterReset()
+{
+	NotifyEventAll(ev_ChapterReset, 0);
+}
+
+// スペカID自動取得
+function GetSpellChapterID(bossID, spellID, chapterType)
+{
+	let chapterID = bossID;
+
+	if (chapterType == CHAPTER_SPELL)
+	{
+		chapterID = chapterID ~ "-S" ~IntToString(spellID);
+	}
+	else
+	{
+		if (spellID < 0) { chapterID = chapterID ~ "-R" ~IntToString(-spellID); }
+		else { chapterID = chapterID ~ "-N" ~IntToString(spellID); }
+	}
+	return(chapterID);
+}
+// 道中ID自動取得
+function GetRoadChapterID(chapterStage, chapterID)
+{
+	return("R"~IntToString(chapterStage)~"-"~IntToString(chapterID));
+}
+
+function GetSpellChapterCaption(id, diff)
+{
+	let boss_name = GetBossName(id, true);
+	let s_name = GetSpellCardName(id, diff);
+	return(boss_name ~ "[r]" ~ s_name);
+}

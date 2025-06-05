@@ -1,0 +1,1367 @@
+
+//=======================================================================
+//　スペカ関連のシステムエフェクト
+//=======================================================================
+
+let UseResultSystem = 1;
+
+let CUTMOTION_NORMAL	= 0;
+let CUTMOTION_UP	= 1;
+let CUTMOTION_DOWN	= 2;
+let CUTMOTION_LEFT	= 3;
+let CUTMOTION_RIGHT	= 4;
+let CUTMOTION_TWIN_UP	= 5;
+let CUTMOTION_TWIN_DOWN	= 6;
+let CUTMOTION_TWIN_UP_LONG	= 7;
+let CUTMOTION_TWIN_DOWN_LONG	= 8;
+let CUTMOTION_TILT	= 9;
+let CUTMOTION_NONE	= 10;
+
+//=======================================================================
+//  スペカデータセット、データ読み込み
+//=======================================================================
+task _SetSpellCardData(objBoss, sIndex, sNameID, spellBackground, cutinFile, cutinSize, cutinMotion)
+{
+	CreateCommonDataArea(CAREA_SPELL);
+	SetAreaCommonData(CAREA_SPELL, "CUTIN_Y", 0);
+	SetAreaCommonData(CAREA_SPELL, "CUTIN_Ys", []);
+	
+	SetAreaCommonData(CAREA_SPELL, "SPELL_INDEX", GetSpellCardIndex(sIndex));
+	SetAreaCommonData(CAREA_SPELL, "SPELL_NAME", [sNameID]);
+	SetAreaCommonData(CAREA_SPELL, "SPELL_NAME_FILE", Boss_GetSpellCardImage(objBoss));	//ボスIDからパスを自動取得
+	SetAreaCommonData(CAREA_SPELL, "SPELL_BONUS", SpellCard_CalcBaseScore(sIndex));
+	SetAreaCommonData(CAREA_SPELL, "SPELL_BG", spellBackground);	//空文字列なら背景なし
+	SetAreaCommonData(CAREA_SPELL, "SPELL_BOSSID", [objBoss]);
+	if (IsDrawEffect() < 1)
+	{
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE", [""]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE", [0]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION", [CUTMOTION_NORMAL]);
+	} else {
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE", [cutinFile]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE", [cutinSize]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION", [cutinMotion]);
+	}
+}
+task SetSpellCardData(sIndex, sNameID, spellBackground, cutinFile, cutinSize, cutinMotion)
+{
+	_SetSpellCardData(objEnemy, sIndex, sNameID, spellBackground, cutinFile, cutinSize, cutinMotion)
+}
+task SetSpellCardDataEx(objBoss, sIndex, sNameID, spellBackground, cutinFile, cutinSize, cutinMotion)
+{
+	_SetSpellCardData(objBoss, sIndex, sNameID, spellBackground, cutinFile, cutinSize, cutinMotion)
+}
+
+//スペカ呼び出し
+function CallSpellCard(flgDrawFrame)
+{
+	let BaseY = MinY+8;
+	
+	if (flgDrawFrame)
+	{
+		// スペカならスペカ処理開始
+		ObjEnemyBossScene_StartSpell(objScene);
+		// イベント呼び出し
+		NotifyEventAll(ev_StartSpell, 0);
+	}
+	_CallSpellCard(flgDrawFrame, BaseY);
+}
+
+// （以下、複数宣言用）
+// IDにマイナスを設定した場合はカットインのみ追加
+task AddSpellCardData(objSubBoss, sNameID, cutinFile, cutinSize, cutinMotion)
+{
+	SetAreaCommonData(CAREA_SPELL, "SPELL_NAME",
+		GetAreaCommonData(CAREA_SPELL, "SPELL_NAME", []) ~ [sNameID]);
+	SetAreaCommonData(CAREA_SPELL, "SPELL_BOSSID",
+		GetAreaCommonData(CAREA_SPELL, "SPELL_BOSSID", []) ~ [objSubBoss]);
+
+	if (IsDrawEffect() < 2)
+	{
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE",
+			GetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE", []) ~ [""]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE",
+			GetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE", []) ~ [0]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION",
+			GetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION", []) ~ [CUTMOTION_NORMAL]);
+	} else {
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE",
+			GetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE", []) ~ [cutinFile]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE",
+			GetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE", []) ~ [cutinSize]);
+		SetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION",
+			GetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION", []) ~ [cutinMotion]);
+	}
+}
+
+//=======================================================================
+//  スペカ得点計算式
+//=======================================================================
+function SpellCard_CalcBaseScore(sIndex)
+{
+	let id = GetSpellCardIndex_ID(sIndex);
+	let rate = GetSpellCardScoreRate(id);
+	let sc = 0;
+	if (Difficult() != D_EXTRA) {
+		sc = GetMaxScore()*trunc(5+Difficult()*1)*50 * rate;
+	} else {
+		let rateEx = [1.0, 0.25, 1.0][DifficultEx()];
+		sc = GetMaxScore()*trunc(5+Difficult()*1)*50 * rate * rateEx;
+	}
+	sc = trunc(sc/10)*10;
+	return(sc);
+}
+
+//=======================================================================
+//　スペカ宣言
+//=======================================================================
+task _CallSpellCard(flgDrawFrame, BaseY)
+{
+	//スペカ取得フラグリセット
+	isBossSpell = true;
+	//スペカ演出有り？（通常弾幕でリザルトを記録したい場合、引数をfalseにする）
+	let isDrawFrame = flgDrawFrame;
+
+	//スペカのステータス
+	let SpellIndex = GetAreaCommonData(CAREA_SPELL, "SPELL_INDEX", 0);
+	let SpellScore = GetAreaCommonData(CAREA_SPELL, "SPELL_BONUS", 0);
+	let SpellTimer = ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+	let isDurable = ObjEnemyBossScene_GetInfo(objScene, INFO_IS_DURABLE_SPELL);
+	let isSpellPractice = (GetPlayMode() == GAME_SPELL);
+	let useResult = ((SpellIndex != "") && UseResultSystem);
+	SetAreaCommonData(CAREA_SPELL, "CUTIN_FRAME_ID", 0);
+	SetAreaCommonData(CAREA_SPELL, "DRAW_CUTIN_FRAME_ID", 0);
+
+	//魔法陣
+	ascent(i in 0 .. length(objAllEnemys))
+	{
+		//SpellCard_MagicCircle(objAllEnemys[i]);
+		SpellCardMagicTimer( objAllEnemys[i] );
+	}
+
+	//スコア計算
+	let MaxSpellScore = SpellScore;
+	if (MaxSpellScore > 0) { SpellCard_CalcScore(); }
+
+	//挑戦数に加算
+	if (useResult)
+	{
+		AddResult(SpellIndex, isSpellPractice, 1, 0);
+	}
+	
+	// 開始時の実時間を保存
+	SetRealTime();
+	task SetRealTime()
+	{
+		if (ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) >= 0)
+		{
+			// 開始時の実時間を保存
+			SetAreaCommonData(CAREA_STAGE, "SpellRealTime", GetStageTime() - (ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF) - ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF))/60*1000 );
+			// 終了時間をリセット
+			SetAreaCommonData(CAREA_STAGE, "SpellRealTime2", 0);
+		}
+		else
+		{
+			// 終了時間をリセット
+			SetAreaCommonData(CAREA_STAGE, "SpellRealTime2", 0);
+			// 開始時の実時間を仮保存
+			SetAreaCommonData(CAREA_STAGE, "SpellRealTime", GetStageTime() );
+			
+			// タイマー初期値がない場合は待機
+			while(ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) < 0 &&
+				(isBossSpell && ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL)))
+			{
+				yield;
+			}
+			
+			if (isBossSpell && ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL))
+			{
+				// 開始時の実時間を保存
+				SetAreaCommonData(CAREA_STAGE, "SpellRealTime", GetStageTime() - (ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF) - ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF))/60*1000 );
+			}
+		}
+	}
+
+	if (isDrawFrame)
+	{
+		//スペカ演出
+		let snfile = GetAreaCommonData(CAREA_SPELL, "SPELL_NAME_FILE", 0);
+		
+		let sid_s = GetAreaCommonData(CAREA_SPELL, "SPELL_BOSSID", [objEnemy]);
+		let sname_s = GetAreaCommonData(CAREA_SPELL, "SPELL_NAME", [0]);
+		let simg_s = GetAreaCommonData(CAREA_SPELL, "SPELL_IMAGE", [""]);
+		let sisize_s = GetAreaCommonData(CAREA_SPELL, "SPELL_ISIZE", [1]);
+		let smotion_s = GetAreaCommonData(CAREA_SPELL, "SPELL_IMOTION", [CUTMOTION_NORMAL]);
+		
+		let sbg = GetAreaCommonData(CAREA_SPELL, "SPELL_BG", "");
+		let sbg_opt = GetAreaCommonData(CAREA_SPELL, "SPELL_BG_OPT", "");
+		
+		let chara_count = length(sname_s);
+
+		//背景スクリプト読み込み
+		if (sbg != "")
+		{
+			let idBG = LoadScript(sbg);
+			SetScriptArgument(idBG, 0, sbg_opt);
+			StartScript(idBG);
+			SetAreaCommonData(CAREA_STAGE, "SPELL_BACKGROUND", idBG);
+		}
+		// カットイン演出（ライン）
+		let eff_t = 90 + (chara_count-1)*75;
+		SpellCard_Effect_Enter(eff_t);
+
+		// カットイン演出
+		ascent(i in 0 .. chara_count)
+		{
+			let flgCutinOnly = (sname_s[i] < 0);	// カットインのみ追加
+			if (i > 0 && !flgCutinOnly) { BaseY += 26; }
+			SpellCard_Effect(BaseY, sid_s[i], sname_s[i], snfile, simg_s[i], sisize_s[i], smotion_s[i]);
+			SetAreaCommonData(CAREA_SPELL, "CUTIN_Y", BaseY);
+			SetAreaCommonData(CAREA_SPELL, "CUTIN_Ys",
+				GetAreaCommonData(CAREA_SPELL, "CUTIN_Ys", []) ~ [BaseY]);
+
+			if (i < chara_count-1)
+			{
+				// 次のカットインのみフラグがOFFならウェイト
+				if (!(sname_s[i+1] < 0)) { wait(75); }
+			}
+		}
+
+		// 数値表示系
+		SpellCard_Effect_Score();
+	}
+
+	//スペカ中は待機
+	let stime = SpellTimer;
+	while(isBossSpell && ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL))
+	{
+		if (objScene != ID_INVALID) { stime = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF); }
+		yield;
+	}
+	// 終了時の実時間
+	let srealtime = trunc(GetAreaCommonData(CAREA_STAGE, "SpellRealTime2", 0) - GetAreaCommonData(CAREA_STAGE, "SpellRealTime", 0));
+
+	//適当にウェイト
+	loop(15) { yield; }
+
+	//スペカ取得メッセージ
+	if (MaxSpellScore > 0)
+	{
+		let tmp_stime = SpellTimer - stime;
+		if (SpellScore <= 0) {
+			SpellCard_FailSpell(tmp_stime, srealtime, useResult);
+		} else {
+			let addScore = SpellScore;
+			SpellCard_GainSpell(tmp_stime, srealtime, addScore, useResult, SpellIndex, isSpellPractice);
+		}
+		// ケラケラケラ
+		if (!isDurable && stime <= 0)
+		{
+			CallSound(sndFailSpellCard);
+		}
+	}
+
+	//----------------------------------------------------
+	//スペカエフェクト
+	//----------------------------------------------------
+	task SpellCard_Effect_Enter(EffectTimer)
+	{
+		//発動モーション
+		if (MaxSpellScore > 0)
+		{
+			ascent(i in 0 .. 10)
+			{
+				SpellCutin_Line(CenX, 60+i*32, -30, [1.5, -1.5][i%2]);
+			}
+			ascent(j in 0 .. 3)
+			{
+				let cw = j+7;
+				ascent(i in 0 .. cw)
+				{
+					SpellCutin_Line2(MaxX-40, MaxY-40, 120+j*30, i*360/cw, [0.75, -0.75][j%2]);
+				}
+			}
+			ascent(i in 0 .. 6)
+			{
+				SpellCutin_Line2(50, 30, 100, i*360/6, 0.75);
+			}
+		}
+		//背景ライン
+		task SpellCutin_Line(cX, cY, cutAngle, addAngle)
+		{
+			let Xsize = 450;
+
+			let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+			Obj_SetRenderPriorityI(obj, 30);
+			ObjPrim_SetTexture(obj, imgSystemFrame);
+			ObjSprite2D_SetSourceRect(obj, 0, 56, 0+Xsize, 72);
+			ObjSprite2D_SetDestCenter(obj);
+			ObjRender_SetAngleZ(obj, cutAngle);
+			ObjRender_SetPosition(obj, cX, cY, 0);
+
+			let t = 0;
+			ascent(i in 0 .. 24+1)
+			{
+				ObjRender_SetAlpha(obj, sin(i*90/24)*160);
+				ObjSprite2D_SetSourceRect(obj, t*addAngle, 56, t*addAngle+Xsize, 72);
+				t++;
+				yield;
+			}
+			loop(EffectTimer)
+			{
+				ObjSprite2D_SetSourceRect(obj, t*addAngle, 56, t*addAngle+Xsize, 72);
+				t++;
+				yield;
+			}
+			descent(i in 0 .. 24+1)
+			{
+				ObjRender_SetAlpha(obj, sin(i*90/24)*160);
+				ObjSprite2D_SetSourceRect(obj, t*addAngle, 56, t*addAngle+Xsize, 72);
+				t++;
+				yield;
+			}
+			Obj_Delete(obj);
+		}
+		//背景ラインその2
+		task SpellCutin_Line2(cX, cY, cR, cA, addAngle)
+		{
+			let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+			Obj_SetRenderPriorityI(obj, 30);
+			ObjPrim_SetTexture(obj, imgSystemFrame);
+			ObjSprite2D_SetSourceRect(obj, 0, 56, 128, 72);
+			ObjSprite2D_SetDestCenter(obj);
+			ObjRender_SetPosition(obj, cX, cY, 0);
+			
+			ascent(i in 0 .. 24+1)
+			{
+				ObjRender_SetAlpha(obj, sin(i*90/24)*160);
+				ObjRender_SetPosition(obj, cX+cR*cos(cA), cY+cR*sin(cA), 0);
+				ObjRender_SetAngleZ(obj, cA+90);
+				cA += addAngle;
+				yield;
+			}
+			loop(EffectTimer)
+			{
+				ObjRender_SetPosition(obj, cX+cR*cos(cA), cY+cR*sin(cA), 0);
+				ObjRender_SetAngleZ(obj, cA+90);
+				cA += addAngle;
+				yield;
+			}
+			descent(i in 0 .. 24+1)
+			{
+				ObjRender_SetAlpha(obj, sin(i*90/24)*160);
+				ObjRender_SetPosition(obj, cX+cR*cos(cA), cY+cR*sin(cA), 0);
+				ObjRender_SetAngleZ(obj, cA+90);
+				cA += addAngle;
+				yield;
+			}
+			Obj_Delete(obj);
+		}
+
+	}
+	task SpellCard_Effect_Score()
+	{
+		loop(90) { yield; }
+
+		let Base_SpellX = -115;
+		if (useResult) { Base_SpellX = -195; }
+
+		//スペカ得点
+		let objScore = -1;
+		if (MaxSpellScore > 0)
+		{
+			objScore = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+			ObjPrim_SetPrimitiveType(objScore, PRIMITIVE_TRIANGLELIST);
+			ObjPrim_SetTexture(objScore, imgSystemFrame);
+			Obj_SetRenderPriorityI(objScore, 74);
+			ObjRender_SetPosition(objScore, MaxX+Base_SpellX+35, 0+21, 0);
+
+			SpellCutin_DrawScore(objScore);
+		}
+
+		//スペカ得点
+		let objWishScore = -1;
+		if (MaxSpellScore > 0)
+		{
+			objWishScore = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+			ObjPrim_SetPrimitiveType(objWishScore, PRIMITIVE_TRIANGLELIST);
+			ObjPrim_SetTexture(objWishScore, imgSystemFrame);
+			Obj_SetRenderPriorityI(objWishScore, 74);
+			ObjRender_SetPosition(objWishScore, MaxX+Base_SpellX+35-7, 0+21+10, 0);
+		}
+
+		//History
+		let objHistory = -1;
+		if (useResult)
+		{
+			objHistory = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+			ObjPrim_SetPrimitiveType(objHistory, PRIMITIVE_TRIANGLELIST);
+			ObjPrim_SetTexture(objHistory, imgSystemFrame);
+			Obj_SetRenderPriorityI(objHistory, 74);
+			ObjRender_SetPosition(objHistory, MaxX+Base_SpellX+152, 0+21, 0);
+
+			SpellCutin_DrawHistory(objHistory);
+		}
+
+		//文字
+		let objTitles = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(objTitles, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(objTitles, 6*2);
+		ObjPrim_SetTexture(objTitles, imgSystemFrame);
+		Obj_SetRenderPriorityI(objTitles, 74);
+		ObjRender_SetPosition(objTitles, MaxX+Base_SpellX, 0+21, 0);
+		//"SCORE"
+		if (MaxSpellScore > 0)
+		{
+			AddImg_Triangle01(objTitles, 0,
+				10, 80, 41, 90,
+				0, 0, 31, 10);
+		}
+		//"HISTORY"
+		if (useResult)
+		{
+			AddImg_Triangle01(objTitles, 6,
+				44, 80, 77, 90,
+				0+115, 0, 33+115, 10);
+		}
+		
+		let alpha = 255;
+		
+		while(isBossSpell)
+		{
+			let by = GetAreaCommonData(CAREA_SPELL, "CUTIN_Y", 0) + 21;
+			//半透明
+			if (GetPlayerY < by+96) {
+				if (alpha > 64) { alpha -= 16; }
+				else { alpha = max(0, alpha-1); }
+			} else {
+				alpha = min(255, alpha+16);
+			}
+
+			ObjRender_SetAlpha(objTitles, alpha);
+			ObjRender_SetAlpha(objScore, alpha);
+			ObjRender_SetAlpha(objWishScore, alpha);
+			ObjRender_SetAlpha(objHistory, alpha);
+
+			ObjRender_SetY(objTitles, by);
+			ObjRender_SetY(objScore, by);
+			ObjRender_SetY(objWishScore, by+10);
+			ObjRender_SetY(objHistory, by);
+			yield;
+		}
+		Obj_Delete(objTitles);
+		Obj_Delete(objScore);
+		Obj_Delete(objWishScore);
+		Obj_Delete(objHistory);
+
+		//スペカ得点描画
+		task SpellCutin_DrawScore(obj)
+		{
+			let count = 10;
+			ObjPrim_SetVertexCount(obj, 6*count);
+			ascent(i in 0 .. count)
+			{
+				SetSmallNumber_Base(obj, i, i*7, 0, 8, 9);
+			}
+
+			while(!Obj_IsDeleted(obj))
+			{
+				let score = min(SpellScore, 9999999990);
+
+				//数字描画
+				if (score <= 0)
+				{
+					ObjPrim_SetVertexCount(obj, 6*count);
+					AddImg_Triangle01(obj, 0, 10, 92, 40, 101,
+						20, 0, 50, 9);
+					break;
+				}
+				else
+				{
+					let listNum = DigitToArray2(score, count);
+					ascent(i in 0 .. count)
+					{
+						SetSmallNumber(obj, i, listNum[i]);
+					}
+				}
+				yield;
+			}
+		}
+		//ヒストリー描画
+		task SpellCutin_DrawHistory(obj)
+		{
+			let count = 2;
+			let max_count = 5;
+			ObjPrim_SetVertexCount(obj, 6*max_count);
+			ascent(i in 0 .. max_count)
+			{
+				SetSmallNumber_Base(obj, i, i*7, 0, 8, 9);
+			}
+
+			//リザルト読み込み
+			let tmp_result = LoadResultStage(SpellIndex, isSpellPractice);
+			let resultAll = tmp_result[0];
+			let resultSuccess = tmp_result[1];
+			local
+			{
+				//成功
+				let tmp = min(resultSuccess, 99);
+				let listNum = DigitToArray2(tmp, count);
+				ascent(i in 0 .. count)
+				{
+					SetSmallNumber(obj, i, listNum[i]);
+				}
+			}
+			SetSmallNumber(obj, 2, 10);
+			local
+			{
+				//ALL
+				let tmp = min(resultAll, 99);
+				let listNum = DigitToArray2(tmp, count);
+				ascent(i in 0 .. count)
+				{
+					SetSmallNumber(obj, 3+i, listNum[i]);
+				}
+			}
+		}
+		//小数字配置
+		function SetSmallNumber(obj, keta, num)
+		{
+			if (num < 0)
+			{
+				ascent(i in 0 .. 6)
+				{
+					ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+				}
+			}
+			else
+			{
+				ObjPrim_SetVertexUVT(obj, keta*6  , num*8+10, 104);
+				ObjPrim_SetVertexUVT(obj, keta*6+1, (num+1)*8+10, 104);
+				ObjPrim_SetVertexUVT(obj, keta*6+2, num*8+10, 113);
+				ObjPrim_SetVertexUVT(obj, keta*6+3, (num+1)*8+10, 104);
+				ObjPrim_SetVertexUVT(obj, keta*6+4, num*8+10, 113);
+				ObjPrim_SetVertexUVT(obj, keta*6+5, (num+1)*8+10, 113);
+			}
+		}
+		function SetSmallNumber_Base(obj, keta, x, y, w, h)
+		{
+			ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+			ObjPrim_SetVertexPosition(obj, keta*6+1, x+w, y, 0);
+			ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+h, 0);
+			ObjPrim_SetVertexPosition(obj, keta*6+3, x+w, y, 0);
+			ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+h, 0);
+			ObjPrim_SetVertexPosition(obj, keta*6+5, x+w, y+h, 0);
+		}
+	}
+
+	//----------------------------------------------------
+	//スペカ得点計算
+	//----------------------------------------------------
+	task SpellCard_CalcScore()
+	{
+		let base_SpellScore = SpellScore;
+		let minusscore = 0;
+		if (SpellTimer <= 0 || !isDurable)
+				{ minusscore = SpellScore / (SpellTimer-300) * 0.75; }
+
+		SpellScore = trunc(base_SpellScore/10)*10;
+		
+		while (isBossSpell)
+		{
+			if (ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) > 0 ||
+				ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SPELL_COUNT) > 0)
+			{
+				SpellScore = 0;
+				break;
+			}
+			// タイマー関連
+			if (ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) < 0)
+			{
+				SpellScore = base_SpellScore;
+			}
+			else if (!isDurable && ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) <= 0)
+			{
+				SpellScore = 0;
+				break;
+			}
+			else
+			{
+				let timer = max(0, SpellTimer-ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF)-300);
+				SpellScore = trunc((base_SpellScore-minusscore*timer)/10)*10;
+			}
+			yield;
+		}
+	}
+}
+
+//----------------------------------------------------
+//スペカエフェクト
+//----------------------------------------------------
+task SpellCard_Effect(BaseY, objBoss, name_index, path_name, cutin_image, cutin_size, cutin_motion)
+{
+	_SpellCard_Effect(BaseY, objBoss, name_index, path_name, cutin_image, cutin_size, cutin_motion,
+		imgSystemSCircle2, 1);
+}
+task _SpellCard_Effect(BaseY, objBoss, name_index, path_name, cutin_image, cutin_size, cutin_motion, imgfile_gaku, scale_gaku)
+{
+	// index < 0の場合はカットインのみ表示して終了
+	if (name_index < 0)
+	{
+		//発動モーション
+		if (cutin_image != "") { SpellCutin_Image(); }
+		return;
+	}
+
+	//効果音
+	if (cutin_motion != CUTMOTION_NONE) { CallSound(sndCallSpellCard); }
+	let frame_id = GetAreaCommonData(CAREA_SPELL, "CUTIN_FRAME_ID", 0);
+	SetAreaCommonData(CAREA_SPELL, "CUTIN_FRAME_ID", frame_id+1);
+
+	//文字列
+	let text_width = 512;
+	let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objText, 74);
+	ObjPrim_SetTexture(objText, path_name);
+	ObjSprite2D_SetSourceRect(objText, 0, 32*name_index, text_width, 32*(name_index+1));
+	//ObjSprite2D_SetDestRect(objText, 0, -16, text_width, 16);
+	ObjSprite2D_SetDestRect(objText, -text_width, -16, 0, 16);
+
+	//額縁
+	let objGaku = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objGaku, 73);
+	//ObjPrim_SetTexture(objGaku, imgSystemFrame);
+	ObjPrim_SetTexture(objGaku, imgfile_gaku);
+	//ObjSprite2D_SetSourceRect(objGaku, 0, 0, 256, 50);
+	//ObjSprite2D_SetDestRect(objGaku, -256, -25, 0, 25);
+	ObjSprite2D_SetSourceRect(objGaku, 0, 64, 512, 192);
+	ObjSprite2D_SetDestRect(objGaku, -512, -64, 0, 64);
+	
+	//発動モーション
+	//SpellCutin_TextMotion(objText, text_width);
+	//SpellCutin_GakuMotion(objGaku);
+	if (cutin_image != "") { SpellCutin_Image(); }
+	SpellCutin_AddMotion(objText, [416,BaseY+8], [1,1], [0,32]);
+	SpellCutin_AddMotion(objGaku, [416,BaseY+9], [0.6*scale_gaku,0.6*scale_gaku], [16,16+6]);
+
+	let alpha = 255;
+	let gaku_alpha = 1;
+	
+	loop(90) { yield; }
+	
+	while(isBossSpell && !Obj_IsDeleted(objBoss))
+	{
+		//フレームのみ非表示にしたい時はこの値を加算
+		if (frame_id < GetAreaCommonData(CAREA_SPELL, "DRAW_CUTIN_FRAME_ID", 0))
+		{
+			gaku_alpha = max(0, gaku_alpha-1/30);
+			ObjRender_SetAlpha(objGaku, 255*gaku_alpha);
+		}
+		//半透明
+		if (GetPlayerY < BaseY+117) {
+			if (alpha > 64) { alpha -= 16; }
+			else { alpha = max(0, alpha-1); }
+		} else {
+			alpha = min(255, alpha+16);
+		}
+		ObjRender_SetAlpha(objText, alpha);
+		ObjRender_SetAlpha(objGaku, alpha*gaku_alpha);
+		yield;
+	}
+	Obj_Delete(objText);
+	Obj_Delete(objGaku);
+	
+	let cutYs = GetAreaCommonData(CAREA_SPELL, "CUTIN_Ys", []);
+	let maxY = 0;
+	let del_i = -1;
+	ascent(i in 0 .. length(cutYs))
+	{
+		if (cutYs[i] == BaseY)
+		{
+			del_i = i;
+		} else {
+			maxY = max(maxY, cutYs[i]);
+		}
+	}
+	if (del_i >= 0) { cutYs = erase(cutYs, del_i); }
+	SetAreaCommonData(CAREA_SPELL, "CUTIN_Ys", cutYs);
+	SetAreaCommonData(CAREA_SPELL, "CUTIN_Y", maxY);
+	
+	//文字モーション
+	task SpellCutin_TextMotion(obj, t_width)
+	{
+		let ox = 0;
+		ObjRender_SetY(obj, BaseY+350+6);
+		ascent(i in 0 .. 60+1)
+		{
+			if (i <= 30) { ObjRender_SetAlpha(obj, i*255/30); }
+			if (i <= 40) { ObjRender_SetX(obj, MaxX+t_width*(40-i)/40-t_width+ox); }
+			yield;
+		}
+		ascent(i in 0 .. 30+1)
+		{
+			ObjRender_SetY(obj, BaseY+8 + (1-i/30)*350);
+			ObjRender_SetX(obj, MaxX-t_width+ox);
+			yield;
+		}
+		while(!Obj_IsDeleted(obj))
+		{
+			ObjRender_SetX(obj, MaxX-t_width+ox);
+			yield;
+		}
+	}
+	//額縁モーション
+	task SpellCutin_GakuMotion(obj)
+	{
+		ObjRender_SetPosition(obj, MaxX, BaseY+350+6, 0);
+		ascent(i in 0 .. 60+1)
+		{
+			if (i <= 30) { ObjRender_SetAlpha(obj, i*255/30); }
+			ObjRender_SetScaleXYZ(obj, (60-i)/60+0.8, (60-i)/60+0.8, 1);
+			yield;
+		}
+		ascent(i in 0 .. 30+1)
+		{
+			ObjRender_SetY(obj, BaseY+6 + (1-i/30)*350);
+			ObjRender_SetX(obj, MaxX);
+			yield;
+		}
+		while(!Obj_IsDeleted(obj))
+		{
+			ObjRender_SetX(obj, MaxX);
+			yield;
+		}
+	}
+	//追加モーション
+	task SpellCutin_AddMotion(obj, pos, scale, wait){
+		
+		// モーションなし（フェードインする）
+		if (cutin_motion == CUTMOTION_NONE)
+		{
+			let move1	= 0;
+			let moveA	= 0;
+			ObjRender_SetPosition(obj, pos[0], pos[1], 0);
+			ObjRender_SetAlpha(obj, 0);
+			//　出現
+			while( !Obj_IsDeleted(obj) && move1 < 1 ){
+				move1 = 1 * sin( moveA );
+				let sScale = [
+					scale[0]*3 - move1*(scale[0]*2),
+					scale[1]*3 - move1*(scale[1]*2),
+				];
+				ObjRender_SetAlpha(obj, move1*255);
+				ObjRender_SetScaleXYZ(obj, sScale[0], sScale[1], 0);
+				moveA += 3;
+				yield;
+			}
+		}
+		else
+		{
+			//let SCALE	= [ 0.6, 0.6 ];
+			//let POS		= [ 416, 32 ];
+			//let RANGE	= 350;
+			let RANGE	= (MaxY-72)-pos[1];
+			let move1	= 0;
+			let moveA	= 0;
+			ObjRender_SetPosition(obj, pos[0], pos[1]+RANGE, 0);
+			ObjRender_SetAlpha(obj, 0);
+			loop( wait[0] ){ yield; }
+			//　出現
+			while( !Obj_IsDeleted(obj) && move1 < 1 ){
+				move1 = 1 * sin( moveA );
+				let sScale = [
+					scale[0]*3 - move1*(scale[0]*2),
+					scale[1]*3 - move1*(scale[1]*2),
+				];
+				ObjRender_SetScaleXYZ(obj, sScale[0], sScale[1], 0);
+				ObjRender_SetAlpha(obj, move1*255);
+				moveA += 2;
+				yield;
+			}
+			moveA = 90;
+			loop( wait[1] ){ yield; }
+			//　上に上がる
+			while( !Obj_IsDeleted(obj) && move1 > -1 ){
+				move1 = 1 * sin( moveA );
+				let sPos = [
+					pos[0],
+					(pos[1]+RANGE/2) + (RANGE/2) * sin( moveA ),
+				];
+				ObjRender_SetPosition(obj, sPos[0], sPos[1], 0);
+				moveA += 3;
+				yield;
+			}
+		}
+	}
+	//カットイン画像
+	task SpellCutin_Image()
+	{
+		if (cutin_motion == CUTMOTION_NONE) { return; }
+		
+		let max_alpha = 255;
+		
+		let obj = GetCutinTexture();
+		Obj_SetRenderPriorityI(obj, 31);
+
+		alternative(cutin_motion)
+		case(CUTMOTION_UP, CUTMOTION_DOWN, CUTMOTION_LEFT, CUTMOTION_RIGHT,
+			CUTMOTION_TWIN_UP, CUTMOTION_TWIN_DOWN, CUTMOTION_TWIN_UP_LONG, CUTMOTION_TWIN_DOWN_LONG,
+			CUTMOTION_TILT)
+		{
+			let ix;
+			let iy;
+			let angle;
+			let spd = 18;
+			let timer = 75;
+			alternative(cutin_motion)
+			case(CUTMOTION_UP)
+			{
+				ix = CenX+32; iy = MaxY+128;
+				angle = -90;
+			}
+			case(CUTMOTION_DOWN)
+			{
+				ix = CenX+32; iy = MinY-32;
+				angle = 90;
+			}
+			case(CUTMOTION_LEFT)
+			{
+				ix = MinX-32; iy = 260;
+				angle = 0;
+			}
+			case(CUTMOTION_RIGHT)
+			{
+				ix = MaxX+32; iy = 260;
+				angle = 180;
+			}
+			case(CUTMOTION_TWIN_UP)
+			{
+				ix = MaxX; iy = 240;
+				angle = 180;
+			}
+			case(CUTMOTION_TWIN_DOWN)
+			{
+				ix = MinX; iy = 320;
+				angle = 0;
+			}
+			case(CUTMOTION_TWIN_UP_LONG)
+			{
+				ix = MinX+32; iy = 240;
+				angle = 0; timer = 75+75;
+			}
+			case(CUTMOTION_TWIN_DOWN_LONG)
+			{
+				ix = MaxX+96; iy = 300;
+				angle = 180; timer = 75+75;
+			}
+			case(CUTMOTION_TILT)
+			{
+				ix = MinX; iy = 150;
+				angle = 30; timer = 75+75;
+			}
+
+			ascent(i in 0 .. 24)
+			{
+				ObjRender_SetAlpha(obj, sin((i+1)*90/24)*max_alpha);
+				ObjRender_SetPosition(obj, ix, iy, 0);
+				spd -= 17/24;
+				ix += spd*cos(angle); iy += spd*sin(angle);
+				yield;
+			}
+			loop(timer)
+			{
+				ObjRender_SetPosition(obj, ix, iy, 0);
+				ix += spd*cos(angle); iy += spd*sin(angle);
+				yield;
+			}
+			descent(i in 0 .. 36)
+			{
+				ObjRender_SetAlpha(obj, sin((i+1)*90/36)*max_alpha);
+				ObjRender_SetPosition(obj, ix, iy, 0);
+				spd += 10/36;
+				ix += spd*cos(angle); iy += spd*sin(angle);
+				yield;
+			}
+		}
+		others
+		{
+			let ix = MaxX+64;
+			let iy = 124;
+			let spd = 18;
+			let angle = 135;
+			ascent(i in 0 .. 24)
+			{
+				let tmp_a = sin((i+1)*90/24)*max_alpha;
+				ObjRender_SetAlpha(obj, tmp_a);
+				ObjRender_SetPosition(obj, ix, iy, 0);
+
+				spd -= 17/24; angle += 15/24;
+				let vx = spd*cos(angle); let vy = spd*sin(angle);
+				ix += vx; iy += vy;
+				SpellCutin_Image_sub(ix, iy, cos(angle), sin(angle), tmp_a);
+				yield;
+			}
+			loop(75)
+			{
+				let tmp_a = max_alpha;
+				ObjRender_SetPosition(obj, ix, iy, 0);
+				ix += spd*cos(angle); iy += spd*sin(angle);
+
+				angle += 30/75;
+				let vx = spd*cos(angle); let vy = spd*sin(angle);
+				ix += vx; iy += vy;
+				SpellCutin_Image_sub(ix, iy, cos(angle), sin(angle), tmp_a);
+				yield;
+			}
+			descent(i in 0 .. 36)
+			{
+				let tmp_a = sin((i+1)*90/36)*max_alpha;
+				ObjRender_SetAlpha(obj, tmp_a);
+				ObjRender_SetPosition(obj, ix, iy, 0);
+
+				spd += 10/36;
+				let vx = spd*cos(angle); let vy = spd*sin(angle);
+				ix += vx; iy += vy;
+				SpellCutin_Image_sub(ix, iy, cos(angle), sin(angle), tmp_a);
+				yield;
+			}
+		}
+		Obj_Delete(obj);
+	}
+
+	task SpellCutin_Image_sub(x, y, vx, vy, alpha)
+	{
+		let obj = GetCutinTexture();
+		Obj_SetRenderPriorityI(obj, 30);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		
+		ascent(i in 0 .. 45)
+		{
+			let tmp = (i+1)/45;
+			let tmp_s = 1.1 + tmp/2;
+			let vs = tmp * 2;
+			ObjRender_SetAlpha(obj, (1-tmp)*alpha/24);
+			ObjRender_SetPosition(obj, x, y, 0);
+			ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, tmp_s);
+			x += vx*vs; y += vy*vs;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	
+	function GetCutinTexture()
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+		ObjPrim_SetVertexCount(obj, 4);
+		ObjPrim_SetTexture(obj, cutin_image);
+		local
+		{
+			let tw = GetTextureWidth(cutin_image) * cutin_size;
+			let th = GetTextureHeight(cutin_image) * cutin_size;
+			
+			ObjPrim_SetVertexUV(obj, 0, 0, 0);
+			ObjPrim_SetVertexUV(obj, 1, 1, 0);
+			ObjPrim_SetVertexUV(obj, 2, 0, 1);
+			ObjPrim_SetVertexUV(obj, 3, 1, 1);
+			ObjPrim_SetVertexPosition(obj, 0, -tw/2, -th/2, 0);
+			ObjPrim_SetVertexPosition(obj, 1, tw/2, -th/2, 0);
+			ObjPrim_SetVertexPosition(obj, 2, -tw/2, th/2, 0);
+			ObjPrim_SetVertexPosition(obj, 3, tw/2, th/2, 0);
+		}
+		return(obj);
+	}
+}
+
+//----------------------------------------------------
+//スペルカード取得表示
+//----------------------------------------------------
+task SpellCard_GainSpell(stime, srealtime, SpellScore, useResult, SpellIndex, isSpellPractice)
+{
+	//効果音
+	CallSound(sndGetSpellCard);
+	
+	//スコア加算
+	AddScore(SpellScore);
+	
+	//リザルトに反映
+	if (useResult)
+	{
+		AddResult(SpellIndex, isSpellPractice, 0, 1);
+	}
+
+	TGainSpell_Bonus(CenX, 80, 120);
+	// 撃破時間
+	let kTime = min(999999, trunc(stime*50/3));
+	TGainSpell_Timer(CenX, 140, 90, 0,
+		kTime, 30);
+	// 実時間
+	let rTime = min(999999, srealtime );
+	TGainSpell_Timer(CenX, 160, 90, 1,
+		rTime, 45);
+
+	local
+	{
+		let count = 10;
+		let keta_count = 0;
+		let wt = 120;
+		let score = SpellScore;
+		
+		let setY = 105;
+		let setX = CenX + 48;
+		
+		score = min(score, 9999999990);
+		let listNum = DigitToArray(score, count);
+
+		descent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			if (num == -1) { break; }
+			if (keta_count > 2 && keta_count % 3 == 0 && iObj != 0)
+			{
+				setX += 8;
+				TGainSpell_Sub(setX, setY, 11, wt);
+				setX -= 14;
+				wt -= 3;
+				loop(3) { yield; }
+			}
+			TGainSpell_Sub(setX, setY, num, wt);
+			setX -= 16;
+			wt -= 3;
+			loop(3) { yield; }
+			keta_count++;
+		}
+	}
+
+	// GetSpellCardBonus
+	task TGainSpell_Bonus(x, y, timer)
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgSystemBase01);
+		Obj_SetRenderPriorityI(obj, 79);
+		ObjSprite2D_SetSourceRect(obj, 256, 32, 512, 64);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetPosition(obj, x, y, 0);
+
+		ascent(i in 0 .. 60)
+		{
+			let tmp = ((i%4)+2)/5;
+			ObjRender_SetColor(obj, 255*tmp, 255*tmp, 255*tmp);
+			yield;
+		}
+		loop(timer-60) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	// 得点部分（文字１つ）
+	task TGainSpell_Sub(x, y, num, timer)
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj, 6);
+		ObjPrim_SetTexture(obj, imgSystemNumber);
+		Obj_SetRenderPriorityI(obj, 79);
+		SetPrimNumber_Base(obj, 0, 0, -18, 18, 36);
+		SetPrimNumber(obj, 0, num);
+		ObjRender_SetX(obj, x);
+
+		ascent(i in 0 .. 30)
+		{
+			let tmp = (i+1)/30;
+			ObjRender_SetY(obj, y-sin(tmp*180)*18);
+			ObjRender_SetColor(obj, 255*tmp, 255*tmp, 255*tmp);
+			ObjRender_SetAlpha(obj, 255*tmp);
+			yield;
+		}
+		loop(timer-30) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// 時間表示
+task TGainSpell_Timer(x, y, timer, text_type, draw_value, delay)
+{
+	loop(delay) { yield; }
+	
+	let count = 6;
+	let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objText, imgSystemBase01);
+	Obj_SetRenderPriorityI(objText, 79);
+	if (!text_type) { ObjSprite2D_SetSourceRect(objText, 128, 0, 256, 32); }
+	else { ObjSprite2D_SetSourceRect(objText, 128, 32, 256, 64); }
+	ObjSprite2D_SetDestCenter(objText);
+	ObjRender_SetPosition(objText, x-54, y, 0);
+	
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+2)*6);
+	Obj_SetRenderPriorityI(obj, 79);
+	ObjRender_SetPosition(obj, x-14, y-18, 0);
+	local
+	{
+		let listNum = DigitToArray(draw_value, count);
+		let offset_x = 0;
+		let keta_count = 0;
+		ascent(iObj in 0 .. count)
+		{
+			if (iObj < 3) {
+				SetPrimNumber_Base(obj, keta_count, offset_x, 0, 18, 36);
+				SetPrimNumber(obj, keta_count, listNum[iObj]);
+				offset_x += 12; keta_count++;
+			} else {
+				SetPrimNumber_Base(obj, keta_count, offset_x, 9, 12, 24);
+				SetPrimNumber(obj, keta_count, max(0, listNum[iObj]));
+				offset_x += 9; keta_count++;
+			}
+			if (iObj == 2)
+			{
+				offset_x -= 0;
+				SetPrimNumber_Base(obj, keta_count, offset_x, 1, 18, 36);
+				SetPrimNumber(obj, keta_count, 10);
+				offset_x += 8; keta_count++;
+			} else if (iObj == count-1) {
+				SetPrimNumber_Base(obj, keta_count, offset_x+4, 4, 18, 32);
+				SetPrimNumber(obj, keta_count, 12);
+				offset_x += 12; keta_count++;
+			}
+		}
+	}
+	ascent(i in 0 .. 15)
+	{
+		let tmp = (i+1)/15;
+		ObjRender_SetAlpha(obj, 255*tmp);
+		ObjRender_SetAlpha(objText, 255*tmp);
+		yield;
+	}
+	loop(timer-delay+15) { yield; }
+	descent(i in 0 .. 15)
+	{
+		let tmp = (i+1)/15;
+		ObjRender_SetAlpha(obj, 255*tmp);
+		ObjRender_SetAlpha(objText, 255*tmp);
+		yield;
+	}
+	Obj_Delete(obj);
+	Obj_Delete(objText);
+}
+
+//----------------------------------------------------
+//スペルカード取得失敗表示
+//----------------------------------------------------
+task SpellCard_FailSpell(stime, srealtime, useResult)
+{
+	//リザルトに反映
+	if (useResult)
+	{
+	//	else { AddResult(SpellIndex, SpellPractice, false, false); } 何も変化しない
+	}
+
+	TFailSpell_Bonus(CenX, 90, 120);
+	// 撃破時間
+	let kTime = min(999999, trunc(stime*50/3));
+	TGainSpell_Timer(CenX, 140, 90, 0,
+		kTime, 30);
+	// 実時間
+	let rTime = min(999999, srealtime);
+	TGainSpell_Timer(CenX, 160, 90, 1,
+		rTime, 45);
+
+
+	task TFailSpell_Bonus(x, y, timer)
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgSystemBase01);
+		Obj_SetRenderPriorityI(obj, 79);
+		ObjSprite2D_SetSourceRect(obj, 256, 256, 512, 288);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetPosition(obj, x, y, 0);
+
+		loop(timer) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+//----------------------------------------------------
+//  スペカ魔法陣
+//----------------------------------------------------
+task SpellCard_MagicCircle(objBoss)
+{
+	if (length(GetEnemyBossObjectID()) <= 0) { return; }
+	
+	let cp = 24;	//分割数
+	let objIn = MakeCircleObject(1, ObjEnemyBossScene_GetInfo(objScene, INFO_IS_LAST_SPELL));
+	
+	let timerOrg = ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+	let bLastSpell = ObjEnemyBossScene_GetInfo(objScene, INFO_IS_LAST_SPELL);
+
+	let cx = ObjRender_GetX(objBoss);
+	let cy = ObjRender_GetY(objBoss);
+	let maxRadius = 250 - 42;
+	let borderIn = 42;
+	
+	MCircle_CalcRadius(objIn, 20, borderIn, false, 105, true);
+
+	while(!Obj_IsDeleted(objBoss))
+	{
+		cx = cx * 0.96 + ObjRender_GetX(objBoss) * 0.04;
+		cy = cy * 0.96 + ObjRender_GetY(objBoss) * 0.04;
+		yield;
+	}
+	
+	task MCircle_CalcRadius(obj, offset_r, border_size, check_miss, timer, starting_motion)
+	{
+		let inRate = 0;
+		let outRate = 0;
+		let angleRender = 0;
+		let alpha = 0;
+		let fadeCount = 40;
+		let centerRadius = 0;
+		
+		let t = 0;
+		while(fadeCount > 0)
+		{
+			if (isBossSpell && 
+				!(Obj_IsDeleted(objBoss) || ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0 ||
+				Obj_GetValueD(objBoss, "ANIME_STOP", 0) || Obj_GetValueD(objBoss, "KILLED", 0)))
+			{
+				if (Obj_GetValueD(objBoss, "VISIBLE", 0) && Obj_GetValueD(objBoss, "MagicCircle", true)) { alpha = min(0.5, alpha+0.005); }
+				else { alpha = max(0, alpha-0.05); }
+			} else {
+				break;
+			}
+
+			let rRate = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) / timerOrg;
+			if (check_miss)
+			{
+				let bMiss = (ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) > 0 ||
+							 ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SPELL_COUNT) > 0);
+				if (bMiss) { border_size = min(-4, border_size+0.5); }
+			}
+
+			centerRadius = maxRadius * rRate + offset_r;
+			if (t < timer)
+			{
+				if (starting_motion)
+				{
+					outRate = sin((t+1)/timer*180) + (t+1)/timer;
+					inRate = ((t+1)/timer)^0.5;
+				}
+				else
+				{
+					outRate = min(1, outRate+1/timer*2);
+					inRate += 1/timer;
+				}
+			}
+			UpdateVertex(obj, cx, cy, inRate*centerRadius, outRate*centerRadius+border_size, angleRender, alpha);
+			angleRender += 5;
+			t++;
+			yield;
+		}
+		let getSpell = (
+			!(ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) > 0 || ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SPELL_COUNT) > 0)
+			&& (ObjEnemyBossScene_GetInfo(objScene, INFO_IS_DURABLE_SPELL) || ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) > 0)
+			);
+		if (!check_miss && getSpell)
+		{
+			descent(i in 0 .. 60)
+			{
+				let tmp = ((i+1)/60)^2;
+				let tmp_x = cx*tmp + GetPlayerX*(1-tmp);
+				let tmp_y = cy*tmp + GetPlayerY*(1-tmp);
+				UpdateVertex(obj, tmp_x, tmp_y, inRate*centerRadius, outRate*centerRadius+border_size, angleRender, alpha);
+				angleRender += 5;
+				outRate += 1/60;
+				alpha -= 0.2/60;
+				t++;
+				yield;
+			}
+			let tmp_outRate = outRate*centerRadius+border_size;
+			let tmp_inRate = inRate*centerRadius;
+			descent(i in 0 .. 30)
+			{
+				let tmp = sin((i+1)/30*90);
+				inRate = tmp_inRate * (tmp*10-9);
+				outRate = tmp_outRate * tmp;
+				UpdateVertex2(obj, GetPlayerX, GetPlayerY,
+					inRate, outRate, angleRender, alpha, (1-tmp)*2);
+				angleRender += (5-(1-tmp)*5);
+				if (i < 15)
+				{
+					alpha -= 0.3/15;
+				}
+				t++;
+				yield;
+			}
+		}
+		Obj_Delete(obj);
+	}
+
+	function MakeCircleObject(objType, bLastSpell)
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+		ObjPrim_SetVertexCount(obj, cp*2);
+		ObjRender_SetBlendType(obj, BLEND_ADD_RGB);
+		Obj_SetRenderPriorityI(obj, 30);
+		ObjPrim_SetTexture(obj, imgSystemSCircle);
+		let iy = [0, 64][bLastSpell];
+		ascent(i in 0 .. cp)
+		{
+			let left = i/cp*512 * 4;
+			ObjPrim_SetVertexUVT(obj, i*2+0, left, 0+iy);
+			ObjPrim_SetVertexUVT(obj, i*2+1, left, 64+iy);
+		}
+		return(obj);
+	}
+	function UpdateVertex(obj, x, y, r_in, r_out, angle, alpha)
+	{
+		ascent(i in 0..cp)
+		{
+			let tmp_a = 360 / (cp-1)*i;
+			let vx1 = r_out * cos(tmp_a);
+			let vy1 = r_out * sin(tmp_a);
+			ObjPrim_SetVertexPosition(obj, i*2+0, vx1, vy1, 0);
+			let vx2 = r_in * cos(tmp_a);
+			let vy2 = r_in * sin(tmp_a);
+			ObjPrim_SetVertexPosition(obj, i*2+1, vx2, vy2, 0);
+		}
+		ObjRender_SetColor(obj, 255*alpha, 255*alpha, 255*alpha);
+		ObjRender_SetPosition(obj, x, y, 0);
+		ObjRender_SetAngleZ(obj, angle);
+	}
+	function UpdateVertex2(obj, x, y, r_in, r_out, angle, alpha, effect_seed)
+	{
+		ascent(i in 0..cp)
+		{
+			let tmp_a = 360 / (cp-1)*i;
+			let r = 1 - (i%2)*effect_seed;
+			let vx1 = r_out*r * cos(tmp_a);
+			let vy1 = r_out*r * sin(tmp_a);
+			ObjPrim_SetVertexPosition(obj, i*2+0, vx1, vy1, 0);
+			let vx2 = r_in*r * cos(tmp_a);
+			let vy2 = r_in*r * sin(tmp_a);
+			ObjPrim_SetVertexPosition(obj, i*2+1, vx2, vy2, 0);
+		}
+		ObjRender_SetColor(obj, 255*alpha, 255*alpha, 255*alpha);
+		ObjRender_SetPosition(obj, x, y, 0);
+		ObjRender_SetAngleZ(obj, angle);
+	}
+}

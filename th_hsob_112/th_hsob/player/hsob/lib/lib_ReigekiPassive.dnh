@@ -1,0 +1,174 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　自機霊撃の特殊効果関連
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+#include "./lib_ReigekiPassive_Red.dnh"
+#include "./lib_ReigekiPassive_Purple.dnh"
+#include "./lib_ReigekiPassive_Blue.dnh"
+#include "./lib_ReigekiPassive_Aqua.dnh"
+#include "./lib_ReigekiPassive_Green.dnh"
+#include "./lib_ReigekiPassive_Yellow.dnh"
+#include "./lib_ReigekiPassive_Orange.dnh"
+#include "./lib_ReigekiPassive_Black.dnh"
+#include "./lib_ReigekiPassive_White.dnh"
+#include "./lib_ReigekiPassive_Rainbow.dnh"
+
+//　指定obj(v_obj)へ状態異常系属性付与
+task SetAttribute( v_obj, v_attribute ){
+	SetAttributeEx( v_obj, v_attribute, 5, 1 );
+}
+// フレーム設定、付与値設定追加
+task SetAttributeEx( v_obj, v_attribute, v_frame, v_value ){
+	let t = 0;
+	while( !Obj_IsDeleted(v_obj) ){
+		if (t > 0)
+		{
+			let colArray = ObjCol_GetListOfIntersectedEnemyID( v_obj );
+			ascent( i in 0..length(colArray) ){
+				alternative( v_attribute )
+				case( "FIRE" ){ SetFireDamage( colArray[i] ); }
+				case( "SPLASH" ){ SetSplashDamage( colArray[i] ); }
+				case( "ICE" ){ SetIceDamage( colArray[i], v_value ); }
+			}
+			if( v_attribute == "MIRROR" ){ SetMirrorShot( v_obj ); }
+			if (length(colArray) > 0) { t = -v_frame-1; }	// 効果発動したらちょっと間隔空ける
+		}
+		t++;
+		yield;
+	}
+}
+function GetAttribute( v_color ){
+	alternative( v_color )
+	case( WEAPON_RED )  { return("FIRE"); }
+	case( WEAPON_PURPLE )  { return("MIRROR"); }
+	case( WEAPON_BLUE ) { return("ICE"); }
+	case( WEAPON_SKY )  { return("SPLASH"); }
+	others              { return(""); }
+}
+
+task SetReigekiPassive( v_obj, v_playerNo, v_color ){
+	
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_ZITEM_MULTI", 1);	// Zボムゲージ倍率
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_ITEM_MULTI", 1);	// ボムゲージ倍率
+	SetAreaCommonData(CAREA_SYSTEM, "ITEM_LEGACY", false );
+	SetAreaCommonData(CAREA_SYSTEM, "ITEM_LEGACY_MAX", 300 );
+
+	alternative( v_color )
+	case( WEAPON_RED )	{ InitRed( v_obj, v_playerNo ); }
+	case( WEAPON_PURPLE )	{ InitPurple( v_obj, v_playerNo ); }
+	case( WEAPON_BLUE )	{ InitBlue( v_obj, v_playerNo ); }
+	case( WEAPON_SKY )	{ InitAqua( v_obj, v_playerNo ); }
+	case( WEAPON_GREEN )	{ InitGreen( v_obj, v_playerNo ); }
+	case( WEAPON_YELLOW )	{ InitYellow( v_obj, v_playerNo ); }
+	case( WEAPON_ORANGE )	{ InitOrange( v_obj, v_playerNo ); }
+//	case( WEAPON_RAINBOW )	{ InitRainbow( v_obj, v_playerNo ); }
+	case( WEAPON_WHITE )	{ InitWhite( v_obj, v_playerNo ); }
+	case( WEAPON_BLACK )	{ InitBlack( v_obj, v_playerNo ); }
+
+	// 虹効果は他と重複する
+	if (IsRainbow())	{ InitRainbow( v_obj, v_playerNo ); }
+}
+
+task SetReigekiMessage( v_color )
+{
+	let isFirst = GetAreaCommonData(CAREA_STAGE, "FirstMessage", true);
+	SetAreaCommonData(CAREA_STAGE, "FirstMessage", false);
+
+	if ((!isFirst || (isFirst && IsFirstStage && GetPlayMode() == GAME_MAIN))
+		&& v_color == GetPlayerRealWeapon())
+	{
+		if (isFirst) {
+			SetSystemAscii02(0.66, [255,255,0], 240, "EQUIPMENT  SET    ");
+		} else {
+			SetSystemAscii02(0.66, [255,255,0], 240, "EQUIPMENT  CHANGED    ");
+		}
+
+		alternative(GetPlayerRealWeapon())
+		case ( WEAPON_RED )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  RED");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SHOT EFFECT  /  FIRE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  FIRE");
+		}
+		case ( WEAPON_PURPLE )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  PURPLE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SHOT EFFECT  /  GAPS");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  BARRIER");
+		}
+		case ( WEAPON_BLUE )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  BLUE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SHOT EFFECT  /  FREEZE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  FREEZE");
+		}
+		case ( WEAPON_SKY )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  AQUA");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SHOT EFFECT  /  SPLASH");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  SPLASH");
+		}
+		case ( WEAPON_GREEN )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  GREEN");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPEED  UP");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  FOLLOW");
+		}
+		case ( WEAPON_YELLOW )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  YELLOW");
+			SetSystemAscii02(0.66, [255,255,0], 240, "ADDITIONAL  OPTION");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  NONE");
+		}
+		case ( WEAPON_ORANGE )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  ORANGE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "GRAZE  COUNTER");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  NONE");
+		}
+		case ( WEAPON_BLACK )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  BLACK");
+			SetSystemAscii02(0.66, [255,255,0], 240, "Z SPELL GAIN / DISABLED");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL GAIN / DISABLED");
+		}
+		case ( WEAPON_WHITE )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  WHITE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "Z SPELL GAIN / DISABLED");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL / STRENGTHEN");
+		}
+		case ( WEAPON_RAINBOW )
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  RAINBOW");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  Z SPELL");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SUB COLOR");
+			let all_wp = GetAllPlayerSubWeapon();
+			ascent(i in 0 .. length(all_wp))
+			{
+				alternative(i)
+				case(WEAPON_RED)	{ SetSystemAscii02(0.66, [255,255,0], 240, "RED /     FIRE"); }
+				case(WEAPON_PURPLE)	{ SetSystemAscii02(0.66, [255,255,0], 240, "PURPLE /     GAPS"); }
+				case(WEAPON_BLUE)	{ SetSystemAscii02(0.66, [255,255,0], 240, "BLUE /   FREEZE"); }
+				case(WEAPON_SKY)	{ SetSystemAscii02(0.66, [255,255,0], 240, "SKY /   SPLASH"); }
+				case(WEAPON_GREEN)	{ SetSystemAscii02(0.66, [255,255,0], 240, "GREEN / SPEED UP"); }
+				case(WEAPON_YELLOW)	{ SetSystemAscii02(0.66, [255,255,0], 240, "YELLOW /  ADD OPT"); }
+				case(WEAPON_ORANGE)	{ SetSystemAscii02(0.66, [255,255,0], 240, "ORANGE /  COUNTER"); }
+				others { SetSystemAscii02(0.66, [255,255,0], 240, "ERROR"); }
+			}
+		}
+		others
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "COLOR  /  NONE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SHOT EFFECT  /  NONE");
+			SetSystemAscii02(0.66, [255,255,0], 240, "SPELL EFFECT  /  NONE");
+		}
+		if (isFirst)
+		{
+			SetSystemAscii02(0.66, [255,255,0], 240, "     ");
+			SetSystemAscii02(0.66, [255,255,0], 240, "     ");
+		}
+	}
+}

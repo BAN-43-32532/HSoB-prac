@@ -1,0 +1,32 @@
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+//Å@í èÌóÉ
+task SetNormalWings(v_obj, v_vertex, v_rect){
+	ObjPrim_SetPrimitiveType(v_obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(v_obj, v_vertex*2+2);
+	ascent( let i in 0..v_vertex+1 ){
+		let rectX = i * ( v_rect[0] / v_vertex );
+		ObjPrim_SetVertexPosition(v_obj, 0 + i*2, rectX, v_rect[1]/-2, 0);
+		ObjPrim_SetVertexPosition(v_obj, 1 + i*2, rectX, v_rect[1]/2, 0);
+		ObjPrim_SetVertexUVT(v_obj, 0 + i*2, rectX, 0);
+		ObjPrim_SetVertexUVT(v_obj, 1 + i*2, rectX, v_rect[1]);
+	}
+}
+
+//Å@âHÇŒÇΩÇ´
+task NormalWingFlap(v_obj, v_vertex, v_rectArray, v_flap){
+	let angle = 0;
+	let i;
+	while( !Obj_IsDeleted(v_obj) ){
+		let frame = trunc(GetAreaCommonData(CAREA_STAGE, "HOROU_OPT_FR", 0)/2)*2;
+		ascent( i in 0..v_vertex+1 ){
+			let rectX = i * ( v_rectArray[0] / v_vertex );
+			ObjPrim_SetVertexPosition(v_obj, 0 + i*2, rectX*cos((i+4)*angle), v_rectArray[1]/-2+((i+1)*v_flap)*sin((i+1)*angle), 0);
+			ObjPrim_SetVertexPosition(v_obj, 1 + i*2, rectX*cos((i+1)*angle), v_rectArray[1]/2+((i+1)*v_flap)*sin((i+1)*angle), 0);
+		}
+		
+		angle = 8 * sin( -frame*3 );
+		
+		yield;
+	}
+}

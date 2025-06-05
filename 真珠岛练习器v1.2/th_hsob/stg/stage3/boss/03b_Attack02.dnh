@@ -1,0 +1,157 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ひかり子通常1"]
+#Text["ひかり子通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Hikariko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2400);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	// アイテム数
+	bossDropItem = 50;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HIKARIKO);	//ボスセット
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 2, CHAPTER_BOSS);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 160, 60);
+	SetAction(objEnemy, ACT_SHOT2, 180);
+	BossCharge(objEnemy);
+	waitObj(objEnemy, 60);
+	
+	let way = [5, 6, 7, 7][Difficult];
+	let wt = [330, 300, 240, 180][Difficult];
+	
+	let t = 0;
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		if (t > 0) { SetAction(objEnemy, ACT_SHOT2, 90); }
+		/*
+		if (Difficult == D_LUNA)
+		{
+			ascent(i in 0 .. way)
+			{
+				if (!eAlive) { return; }
+				let sa = 90 + (i-way+2.5)*18*muki;
+				let ss = 3 - i/way;
+				let oa = 45 * muki;
+				SetFamilier01(ObjMove_GetX(objEnemy)+32*cos(sa), ObjMove_GetY(objEnemy)+32*sin(sa),
+					ss, sa, oa);
+				CallSound(sndShot2);
+				waitObj(objEnemy, 8);
+			}
+		}
+		else
+		{
+		*/
+			ascent(i in 0 .. way)
+			{
+				if (!eAlive) { return; }
+				let sa = 90 + (i-way+2.5)*15*muki;
+				let ss = 3 - i/way;
+				let oa = 45 * muki;
+				SetFamilier01(ObjMove_GetX(objEnemy)+32*cos(sa), ObjMove_GetY(objEnemy)+32*sin(sa),
+					ss, sa, oa);
+				CallSound(sndShot2);
+				waitObj(objEnemy, 8);
+			}
+		/*
+		}
+		*/
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 160, 32);
+		waitObj(objEnemy, wt-8*way-90);
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT1, 90);
+		waitObj(objEnemy, 90);
+		muki = -muki;
+		t++;
+	}
+}
+
+
+// 人魂
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 120, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.8);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, iniAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		Enemy_SetPatternA2(objFamilier, 0, 0, iniAngle, iniSpeed/30, 0, iniSpeed);
+		Enemy_SetPatternA2(objFamilier, 30, NO_CHANGE, NO_CHANGE, -iniSpeed/60, 0, iniSpeed/6);
+		Enemy_SetPatternB2(objFamilier, 60, NO_CHANGE, NO_CHANGE, 0, -0.02, NO_CHANGE, -12);
+		TCheckDispINOut(objFamilier, 32);
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, 60);
+		
+		let speed = [1, 1.5, 1.75, 2][Difficult];
+		let way = [1, 2, 2, 2][Difficult];
+		let wt = [12, 12, 8, 8][Difficult];
+		let st_rate = [5, 5, 8, 8][Difficult];
+		let timer = 300;
+		
+		let st = 0;
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+			let sa = iniAngle + iniValue + rand(-5,5);
+			let graphic = BGW_BALL_BS_BLUE;
+			if (st > st_rate || st%2 == 0)
+			{
+				if (ObjMove_GetY(objEnemy) > GetPlayerY) { sa = 180-sa; }
+				CreateShotWayA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					0, sa, speed/120, speed, graphic, 30, way, 45, 0);
+				CallSound(sndShot5);
+			}
+			waitObj(objFamilier, wt);
+			st++;
+			t += wt;
+		}
+	}
+}

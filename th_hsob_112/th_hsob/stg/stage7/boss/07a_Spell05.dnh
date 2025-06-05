@@ -1,0 +1,194 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["「完全なる墨染の翼 -烏羽玉-」"]
+#Text["「完全なる墨染の翼 -烏羽玉-」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../stage6/boss/lib_Horou.dnh"
+#include"./../Road07_lib.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2200);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(24);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 85;
+	let SPELL_NAME = 20;
+
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 300; }
+	else			{ bossDropItem = 150; }
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HOROU);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"boss/06bex_Background.dnh",
+			GetBossTexture(objEnemy, I_NORMAL), 0.7, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	InitHorou();
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL)
+	{
+		standBy(objEnemy, CenX, 180, 60);
+	} else {
+		ObjMove_SetPosition(objEnemy, CenX, 180);
+		SetEnemyVisible(objEnemy, false);
+		waitObj(objEnemy, 15);
+		SetEnemyVisible(objEnemy, true);
+	}
+
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 60);
+	
+	local
+	{
+		let way = [14, 8, 14][DifficultEx()];
+		SetAction(objEnemy, ACT_SHOT1, 120);
+		CallSound(sndPower2);
+		TShot_sub2(way);
+	}
+	waitObj(objEnemy, phaseExEnemy(8));
+	
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		loop(2)
+		{
+			if (!eAlive) { return; }
+			TShot_sub3(GetAngleToPlayer(objEnemy)+60*muki, muki);
+			CallSound(sndShot2);
+			waitObj(objEnemy, phaseExEnemy(2));
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 160, 32);
+			waitObj(objEnemy, phaseExEnemy(2));
+			muki = -muki;
+		}
+		waitObj(objEnemy, phaseExEnemy(8));
+		local
+		{
+			if (!eAlive) { return; }
+			let way = [14, 8, 14][DifficultEx()];
+			SetAction(objEnemy, ACT_SHOT1, 120);
+			CallSound(sndPower2);
+			TShot_sub2(way);
+			CallSound(sndShot2);
+		//	waitObj(objEnemy, phaseExEnemy(4));
+		//	waitObj(objEnemy, phaseExEnemy(4));
+		}
+		muki = -muki;
+		t++;
+	}
+	
+}
+
+// でっかい弾
+task TShot_sub2(way)
+{
+	let speed = 1;
+	let angle = GetAngleToPlayer(objEnemy);
+//	let way = 8;
+	let way2 = [8, 6, 8][DifficultEx()];
+	let graphic = BGW_WING_WHITE;
+	
+	
+	ascent(j in 0 .. way2)
+	{
+		if (!eAlive) { return; }
+		ascent(i in 0 .. way)
+		{
+			ascent(k in 0 .. 5)
+			{
+				let ss1 = speed * (1+0.1*j) * (1-absolute(k-2)*0.1);
+				let ss2 = speed * (2+0.5*j) * (1-absolute(k-2)*0.1);
+				let to_ss = 0.75 + j/way2*0.75;
+				let sa = angle + i*360/way + (k-2)*3;
+				WingShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ss1, ss2, sa, graphic, 15, to_ss);
+			}
+		}
+		CallSound(sndShot2);
+	//	waitObj(objEnemy, 5);
+	}
+	
+	task WingShot(x, y, ss1, ss2, angle, graphic, delay, to_ss)
+	{
+		let obj = My_CreateShotA1(x, y, ss1, angle, graphic, delay);
+		ObjMove_AddPatternA2(obj, 75, NO_CHANGE, NO_CHANGE, (ss2-ss1)/30, 0, ss2);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		CallSoundDelay(sndShot2, 60, obj);
+		if (sin(angle) > 0) { return; }
+		while(!Obj_IsDeleted(obj))
+		{
+			if (ObjMove_GetY(obj) < MinY)
+			{
+				let ss = to_ss;
+				let sa = angle+180 + rand(-75,75);
+				My_CreateShotB2(ObjMove_GetX(obj), ObjMove_GetY(obj),
+					ss*cos(sa), ss*sin(sa), 0, 0.02, 0, ss, BGB_RICE_S_WHITE, 15);
+				CallSound(sndBulletBreak);
+				break;
+			}
+			yield;
+		}
+	}
+}
+
+// ぐるんぐるん
+task TShot_sub3(angle, muki)
+{
+	let speed = 1;
+	let way = 3;
+	let way2 = 3;
+	let way3 = 5;
+	let graphic = BGW_BUTTERFLY_WHITE;
+	
+	ascent(k in 0 .. way3)
+	{
+		let rotate_ba = 90;
+		ascent(j in 0 .. way2)
+		{
+			ascent(i in 0 .. way)
+			{
+				let ss1 = speed * (1+0.75*k);
+				let ss2 = speed;
+				let ss3 = speed * (1+0.5*i);
+				let angle2 = angle + j*120 - k*15*muki;
+				let add_a = 180*muki/120;
+				
+				let obj = My_CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ss1, angle, -ss1/120, 0, graphic, 15);
+				ObjMove_AddPatternA2(obj, 120, NO_CHANGE, angle2, ss2/120, add_a, ss2);
+				ObjMove_AddPatternA2(obj, 240, NO_CHANGE, NO_CHANGE, (ss3-ss2)/30, 0, ss3);
+				CallSoundDelay(sndShot2, 120, obj);
+				CallSoundDelay(sndShot2, 240, obj);
+			}
+		}
+	}
+}

@@ -1,0 +1,409 @@
+// 画像の種別
+// 番号0～99は画像連番直接指定（立ち絵開始配列番号[3]が0番になる）
+let I_NONE	= 10000;
+let I_CUTIN	= 100;
+let I_CUTIN2	= 101;
+let I_CUTIN3	= 102;
+let I_NORMAL	= 110;
+let I_NORMAL2	= 111;
+let I_NORMAL3	= 112;
+let I_NORMAL4	= 113;
+let I_NORMAL5	= 114;
+let I_NORMAL6	= 115;
+let I_SMILE	= 120;
+let I_SMILE2	= 121;
+let I_SMILE3	= 122;
+let I_SMILE4	= 123;
+let I_ANGER	= 130;
+let I_ANGER2	= 131;
+let I_ANGER3	= 132;
+let I_ANGER_SMILE	= 140;
+let I_ANGER_SMILE2	= 141;
+let I_UPSET	= 150;
+let I_UPSET2	= 151;
+let I_UPSET3	= 152;
+let I_UPSET4	= 153;
+let I_UPSET5	= 154;
+let I_UPSET_SMILE	= 160;
+let I_UPSET_SMILE2	= 161;
+let I_DOYA	= 170;
+let I_DOYA2	= 171;
+let I_DOYA3	= 172;
+let I_NOTICE	= 180;
+let I_NOTICE2	= 181;
+let I_SURPRISE	= 190;
+let I_SURPRISE2	= 191;
+let I_WORRY	= 200;
+let I_WORRY2	= 201;
+let I_WORRY3	= 202;
+let I_WORRY4	= 203;
+let I_WORRY5	= 204;
+let I_QUESTION	= 210;
+let I_QUESTION2	= 211;
+let I_CALM	= 220;
+let I_CALM2	= 221;
+let I_CALM3	= 222;
+let I_SPECIAL	= 230;
+let I_SPECIAL2	= 231;
+let I_BORO1	= 300;
+let I_BORO2	= 301;
+let I_BORO3	= 302;
+
+// ---------------------- 各キャラの定数を取得するライブラリ
+
+// ボスのドット絵画像ファイル
+function Boss_GetBossImage(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_RANRAN)	{ return(imgCharaRanran[0]); }
+	case(BOSS_ID_CHII)	{ return(imgCharaChii[0]); }
+	case(BOSS_ID_HIKARIKO)	{ return(imgCharaHikariko[0]); }
+	case(BOSS_ID_SIRAN)	{ return(imgCharaSiran[0]); }
+	case(BOSS_ID_MYSTIA)	{ return(imgCharaMystia[0]); }
+	case(BOSS_ID_NEBET)	{ return(imgCharaNebet[0]); }
+	case(BOSS_ID_SET)	{ return(imgCharaSet[0]); }
+	case(BOSS_ID_HOROU)	{ return(imgCharaHorou[0]); }
+	case(BOSS_ID_MUMEI)	{ return(imgCharaMumei[0]); }
+	case(BOSS_ID_MUMEI2)	{ return(imgCharaMumei[13]); }
+	others { return(""); }	//仮画像
+}
+
+// スペカ名の画像ファイル
+function Boss_GetSpellCardImage(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_RANRAN)	{ return(imgCharaRanran[1]); }
+	case(BOSS_ID_CHII)	{ return(imgCharaChii[1]); }
+	case(BOSS_ID_HIKARIKO)	{ return(imgCharaHikariko[1]); }
+	case(BOSS_ID_SIRAN)	{ return(imgCharaSiran[1]); }
+	case(BOSS_ID_MYSTIA)	{ return(imgCharaMystia[1]); }
+	case(BOSS_ID_NEBET)	{ return(imgCharaNebet[1]); }
+	case(BOSS_ID_SET)	{ return(imgCharaSet[1]); }
+	case(BOSS_ID_HOROU)	{ return(imgCharaHorou[1]); }
+	case(BOSS_ID_MUMEI)	{ return(imgCharaMumei[1]); }
+	others { return(""); }
+}
+
+// ボスネームの画像ファイル
+function Boss_GetBossNameImage(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_RANRAN)	{ return(imgCharaRanran[2]); }
+	case(BOSS_ID_CHII)	{ return(imgCharaChii[2]); }
+	case(BOSS_ID_HIKARIKO)	{ return(imgCharaHikariko[2]); }
+	case(BOSS_ID_SIRAN)	{ return(imgCharaSiran[2]); }
+	case(BOSS_ID_MYSTIA)	{ return(imgCharaMystia[2]); }
+	case(BOSS_ID_NEBET)	{ return(imgCharaNebet[2]); }
+	case(BOSS_ID_SET)	{ return(imgCharaSet[2]); }
+	case(BOSS_ID_HOROU)	{ return(imgCharaHorou[2]); }
+	case(BOSS_ID_MUMEI)	{ return(imgCharaMumei[2]); }
+	others { return(""); }	//仮画像
+}
+
+// ボス画像ファイルを画像種別ID指定で取得
+function GetBossTexture(obj, imgType)
+{
+	let tmpPath;
+	alternative(GetBossID(obj))
+	case(BOSS_ID_RANRAN)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaRanran)); }
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaRanran[4]); }
+		case(I_DOYA) { return(imgCharaRanran[5]); }
+		case(I_SMILE) { return(imgCharaRanran[6]); }
+		case(I_WORRY) { return(imgCharaRanran[7]); }
+		case(I_BORO1) { return(imgCharaRanran[8]); }
+		case(I_BORO2) { return(imgCharaRanran[9]); }
+		case(I_NORMAL2) { return(imgCharaRanran[10]); }
+		case(I_DOYA2) { return(imgCharaRanran[11]); }
+		case(I_SMILE2) { return(imgCharaRanran[12]); }
+		case(I_WORRY2) { return(imgCharaRanran[13]); }
+	}
+	case(BOSS_ID_CHII)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaChii)); }
+		alternative(imgType)
+		case(I_NORMAL) { return(imgCharaChii[4]); }
+		case(I_DOYA) { return(imgCharaChii[5]); }
+		case(I_WORRY) { return(imgCharaChii[6]); }
+		case(I_BORO1) { return(imgCharaChii[7]); }
+		case(I_CUTIN) { return(imgCharaChii[8]); }
+	}
+	case(BOSS_ID_HIKARIKO)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaHikariko)); }
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaHikariko[4]); }
+		case(I_SMILE) { return(imgCharaHikariko[5]); }
+		case(I_ANGER) { return(imgCharaHikariko[6]); }
+		case(I_UPSET) { return(imgCharaHikariko[7]); }
+		case(I_BORO1) { return(imgCharaHikariko[8]); }
+	}
+	case(BOSS_ID_SIRAN)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaSiran)); }
+		alternative(imgType)
+		case(I_CUTIN) { return(imgCharaSiran[4]); }
+		case(I_NORMAL) { return(imgCharaSiran[5]); }
+		case(I_DOYA) { return(imgCharaSiran[6]); }
+		case(I_SMILE) { return(imgCharaSiran[7]); }
+		case(I_WORRY) { return(imgCharaSiran[8]); }
+		case(I_NORMAL2) { return(imgCharaSiran[9]); }
+		case(I_ANGER) { return(imgCharaSiran[10]); }
+		case(I_ANGER2) { return(imgCharaSiran[11]); }
+		case(I_UPSET) { return(imgCharaSiran[12]); }
+		case(I_SPECIAL) { return(imgCharaSiran[13]); }
+		case(I_BORO1) { return(imgCharaSiran[14]); }
+	}
+	case(BOSS_ID_MYSTIA)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaMystia)); }
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaMystia[4]); }
+	}
+	case(BOSS_ID_NEBET)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaNebet)); }
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaNebet[4]); }
+	}
+	case(BOSS_ID_SET)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaSet)); }
+		alternative(imgType)
+		case(I_CUTIN, I_SPECIAL) { return(imgCharaSet[4]); }
+		case(I_NORMAL) { return(imgCharaSet[5]); }
+		case(I_DOYA) { return(imgCharaSet[6]); }
+		case(I_NORMAL2) { return(imgCharaSet[7]); }
+		case(I_SURPRISE) { return(imgCharaSet[8]); }
+		case(I_WORRY) { return(imgCharaSet[9]); }
+		case(I_SMILE) { return(imgCharaSet[10]); }
+		case(I_UPSET) { return(imgCharaSet[11]); }
+		case(I_BORO1) { return(imgCharaSet[12]); }
+	}
+	case(BOSS_ID_HOROU)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaHorou)); }
+		alternative(imgType)
+		case(I_CUTIN) { return(imgCharaHorou[4]); }
+		case(I_NORMAL) { return(imgCharaHorou[5]); }
+		case(I_WORRY) { return(imgCharaHorou[6]); }
+		case(I_SURPRISE) { return(imgCharaHorou[7]); }
+		case(I_NORMAL2) { return(imgCharaHorou[8]); }
+		case(I_DOYA) { return(imgCharaHorou[9]); }
+		case(I_UPSET) { return(imgCharaHorou[10]); }
+		case(I_DOYA2) { return(imgCharaHorou[11]); }
+		case(I_ANGER) { return(imgCharaHorou[12]); }
+		case(I_QUESTION) { return(imgCharaHorou[13]); }
+		case(I_SPECIAL) { return(imgCharaHorou[14]); }
+	}
+	case(BOSS_ID_MUMEI)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaMumei)); }
+		alternative(imgType)
+		case(I_CUTIN) { return(imgCharaMumei[4]); }
+		case(I_NORMAL) { return(imgCharaMumei[5]); }
+		case(I_NORMAL2) { return(imgCharaMumei[6]); }
+		case(I_ANGER) { return(imgCharaMumei[7]); }
+		case(I_UPSET) { return(imgCharaMumei[8]); }
+		case(I_SURPRISE) { return(imgCharaMumei[9]); }
+		case(I_BORO1) { return(imgCharaMumei[10]); }
+		case(I_BORO2) { return(imgCharaMumei[11]); }
+	}
+	case(BOSS_ID_REIMU)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaReimu)); }
+		alternative(imgType)
+		case(I_NORMAL) { return(imgCharaReimu[4]); }
+		case(I_SURPRISE) { return(imgCharaReimu[5]); }
+		case(I_SMILE) { return(imgCharaReimu[6]); }
+		case(I_NORMAL2) { return(imgCharaReimu[7]); }
+		case(I_SMILE2) { return(imgCharaReimu[8]); }
+		case(I_ANGER) { return(imgCharaReimu[9]); }
+		case(I_UPSET) { return(imgCharaReimu[10]); }
+		case(I_UPSET2) { return(imgCharaReimu[11]); }
+		case(I_NORMAL3) { return(imgCharaReimu[12]); }
+		case(I_NOTICE) { return(imgCharaReimu[13]); }
+		case(I_CALM) { return(imgCharaReimu[14]); }
+		case(I_CALM2) { return(imgCharaReimu[15]); }
+		case(I_SPECIAL) { return(imgCharaReimu[16]); }
+		case(I_WORRY) { return(imgCharaReimu[17]); }
+		case(I_WORRY2) { return(imgCharaReimu[18]); }
+		case(I_ANGER_SMILE) { return(imgCharaReimu[19]); }
+		case(I_ANGER_SMILE2) { return(imgCharaReimu[20]); }
+		case(I_WORRY3) { return(imgCharaReimu[21]); }
+		case(I_DOYA) { return(imgCharaReimu[22]); }
+		case(I_DOYA2) { return(imgCharaReimu[23]); }
+		case(I_DOYA3) { return(imgCharaReimu[24]); }
+		case(I_UPSET_SMILE) { return(imgCharaReimu[25]); }
+		case(I_CUTIN) { return(imgCharaReimu[26]); }
+		case(I_CUTIN2) { return(imgCharaReimu[27]); }
+	}
+	case(BOSS_ID_MARISA)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaMarisa)); }
+		alternative(imgType)
+		case(I_DOYA2) { return(imgCharaMarisa[4]); }
+		case(I_SMILE) { return(imgCharaMarisa[5]); }
+		case(I_QUESTION) { return(imgCharaMarisa[6]); }
+		case(I_QUESTION2) { return(imgCharaMarisa[7]); }
+		case(I_NOTICE) { return(imgCharaMarisa[8]); }
+		case(I_WORRY) { return(imgCharaMarisa[9]); }
+		case(I_WORRY2) { return(imgCharaMarisa[10]); }
+		case(I_NORMAL) { return(imgCharaMarisa[11]); }
+		case(I_UPSET2) { return(imgCharaMarisa[12]); }
+		case(I_UPSET) { return(imgCharaMarisa[13]); }
+		case(I_NOTICE2) { return(imgCharaMarisa[14]); }
+		case(I_ANGER) { return(imgCharaMarisa[15]); }
+		case(I_CALM) { return(imgCharaMarisa[16]); }
+		case(I_SMILE2) { return(imgCharaMarisa[17]); }
+		case(I_DOYA) { return(imgCharaMarisa[18]); }
+		case(I_SMILE3) { return(imgCharaMarisa[19]); }
+		case(I_CUTIN) { return(imgCharaMarisa[20]); }
+		case(I_CUTIN2) { return(imgCharaMarisa[21]); }
+	}
+	case(BOSS_ID_SAKUYA)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaSakuya)); }
+		alternative(imgType)
+		case(I_NOTICE) { return(imgCharaSakuya[4]); }
+		case(I_CALM) { return(imgCharaSakuya[5]); }
+		case(I_NORMAL2) { return(imgCharaSakuya[6]); }
+		case(I_SURPRISE2) { return(imgCharaSakuya[7]); }
+		case(I_CUTIN, I_NORMAL) { return(imgCharaSakuya[8]); }
+		case(I_DOYA) { return(imgCharaSakuya[9]); }
+		case(I_SURPRISE) { return(imgCharaSakuya[10]); }
+		case(I_WORRY) { return(imgCharaSakuya[11]); }
+		case(I_CALM2) { return(imgCharaSakuya[12]); }
+		case(I_CALM3) { return(imgCharaSakuya[13]); }
+		case(I_DOYA2) { return(imgCharaSakuya[14]); }
+		case(I_DOYA3) { return(imgCharaSakuya[15]); }
+		case(I_NORMAL3) { return(imgCharaSakuya[16]); }
+		case(I_SMILE2) { return(imgCharaSakuya[17]); }
+		case(I_SMILE) { return(imgCharaSakuya[18]); }
+		case(I_NOTICE2) { return(imgCharaSakuya[19]); }
+		case(I_UPSET_SMILE) { return(imgCharaSakuya[20]); }
+		case(I_WORRY2) { return(imgCharaSakuya[21]); }
+		case(I_UPSET) { return(imgCharaSakuya[22]); }
+		case(I_UPSET2) { return(imgCharaSakuya[23]); }
+		case(I_ANGER) { return(imgCharaSakuya[24]); }
+	}
+	case(BOSS_ID_KAGUYA)
+	{
+		if (imgType < 100) {return(GetTextureForID(imgCharaKaguya)); }
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaKaguya[4]); }
+		case(I_NORMAL2) { return(imgCharaKaguya[5]); }
+		case(I_SMILE2) { return(imgCharaKaguya[6]); }
+		case(I_NORMAL3) { return(imgCharaKaguya[7]); }
+		case(I_WORRY) { return(imgCharaKaguya[8]); }
+		case(I_UPSET) { return(imgCharaKaguya[9]); }
+		case(I_UPSET2) { return(imgCharaKaguya[10]); }
+		case(I_SMILE4) { return(imgCharaKaguya[11]); }
+		case(I_NOTICE) { return(imgCharaKaguya[12]); }
+		case(I_QUESTION) { return(imgCharaKaguya[13]); }
+		case(I_SURPRISE) { return(imgCharaKaguya[14]); }
+		case(I_CALM) { return(imgCharaKaguya[15]); }
+		case(I_CALM2) { return(imgCharaKaguya[16]); }
+		case(I_SMILE) { return(imgCharaKaguya[17]); }
+		case(I_DOYA2) { return(imgCharaKaguya[18]); }
+		case(I_ANGER2) { return(imgCharaKaguya[19]); }
+		case(I_ANGER) { return(imgCharaKaguya[20]); }
+		case(I_UPSET3) { return(imgCharaKaguya[21]); }
+		case(I_DOYA) { return(imgCharaKaguya[22]); }
+		case(I_WORRY2) { return(imgCharaKaguya[23]); }
+		case(I_ANGER3) { return(imgCharaKaguya[24]); }
+		case(I_WORRY3) { return(imgCharaKaguya[25]); }
+		case(I_WORRY4) { return(imgCharaKaguya[26]); }
+		case(I_NORMAL4) { return(imgCharaKaguya[27]); }
+		case(I_NORMAL5) { return(imgCharaKaguya[28]); }
+		case(I_UPSET5) { return(imgCharaKaguya[29]); }
+		case(I_CALM3) { return(imgCharaKaguya[30]); }
+		case(I_WORRY5) { return(imgCharaKaguya[31]); }
+		case(I_UPSET_SMILE) { return(imgCharaKaguya[32]); }
+		case(I_ANGER_SMILE) { return(imgCharaKaguya[33]); }
+		case(I_SMILE3) { return(imgCharaKaguya[34]); }
+		case(I_DOYA3) { return(imgCharaKaguya[35]); }
+		case(I_UPSET4) { return(imgCharaKaguya[36]); }
+		case(I_NORMAL6) { return(imgCharaKaguya[37]); }
+	}
+	return("");
+	
+	function GetTextureForID(imgChara) { return(imgChara[4 + imgType%(length(imgChara)-4)]); }
+}
+
+// ボスのチャージえへくと
+task BossCharge(objTarget)
+{
+	alternative(GetBossID(objTarget))
+	case(BOSS_ID_RANRAN)
+	{
+		EffectChargeSetA(objTarget, EFF_RED, 90);
+		CallSound(sndPower2);
+		waitObj(objTarget, 60);
+		if (!Obj_IsDeleted(objTarget)) { CallSound(sndPower3); }
+	}
+	case(BOSS_ID_CHII)
+	{
+		EffectChargeSetA(objTarget, EFF_WHITE, 90);
+		CallSound(sndPower2);
+		waitObj(objTarget, 60);
+		if (!Obj_IsDeleted(objTarget)) { CallSound(sndPower3); }
+	}
+	case(BOSS_ID_HIKARIKO)
+	{
+		EffectChargeSetA(objTarget, EFF_BLUE, 90);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_SIRAN)
+	{
+		EffectChargeSetA(objTarget, EFF_PURPLE, 90);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_MYSTIA)
+	{
+		EffectChargeSetA(objTarget, EFF_PURPLE, 90);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_NEBET)
+	{
+		EffectChargeSetA(objTarget, EFF_YELLOW, 90);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_SET)
+	{
+		EffectChargeSetA(objTarget, EFF_PURPLE, 90);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_HOROU)
+	{
+		EffectChargeSetA(objTarget, EFF_WHITE, 90);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_MUMEI)
+	{
+		EffectChargeSetA(objTarget, EFF_WHITE, 90);
+		CallSound(sndPower2);
+	}
+	others
+	{
+	//	EffectChargeSetB(objTarget, EFF_PURPLE, 75);
+		CallSound(sndPower2);
+	}
+}
+
+
+// ボスのオーラカラー
+function Boss_InitAura(obj, isBoss)
+{
+
+	// ゆがみえへくと→廃止（OMOI!）→大 復 活
+	if (IsDrawEffect() >= 4) {
+		TShaderDistortion();
+	}
+	//オーラ
+	if (IsDrawEffect() >= 1) {
+		InitAura( [ [ 128, 64, 64 ], [ 32, 32, 16 ] ] );
+	}
+}

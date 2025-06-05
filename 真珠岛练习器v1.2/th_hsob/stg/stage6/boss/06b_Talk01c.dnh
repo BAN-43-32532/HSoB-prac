@@ -1,0 +1,314 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["6面　会話前半"]
+#Text["6面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HOROU);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_HOROU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "大小姐……是很闲吗。[r]总之塔塌了之后，时间停止之术似乎也解除了。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "看样子很快整个幻想乡的时间也会开始流动。[r]那么，之后就只剩下惩治黑幕了呢。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetTalkEx2(cutinBoss1, "咝——！ ", -48-12, -280);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "为什么会知道我就是黑幕！？ ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "明明用七色的翅膀扭曲光线藏起来了才对，[r]应该一点都不黑的！ ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx2(cutinPlayer1, "那种故意装傻等吐槽的话我就无视好了…… ", 32, -32);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "看起来没什么异国情调啊。[r]你是怎么认识埃及的神明的？ ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "哎呀，赛特君给了我一本什么书嘛。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "我似乎最适合做某个叫托特酱的神明[r]的继承人的样子。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "要是能出去外面世界，[r]我要不要从佐渡搬家到东京呢，哎嘿嘿。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx2(cutinPlayer1, "故意装傻等吐槽的话我就无视好了……", 32, -32);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "我懂了。[r]那个濑户物为了把托特神的力量占为己有，[r]让身为朱鹮的你去继承《托特之书》，对吧。 ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "赛特君那边，似乎没有能继承的朱鹮了呢。[r]很可怜不是吗。 ");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "据说是19世纪灭绝了。[r]那个年代对吸血鬼来说倒是个好时代啊。 ");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "但是佐渡现在也一样了。很危险的，现在。[r]这种时候我怎么能躲在幻想乡里。 ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "为了从内侧穿出幻想乡的结界[r]而停止了时间吗……原来如此。 ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "居然有人的时间不会被停止啊，我很惊讶。 ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "赛特君和上人也肯定会惊讶，[r]那么就是三倍的惊讶了。 ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "但是，我不会让你妨碍我的。 ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "这可是我和上人还有其他鸟们一起，[r]通过噪特齐心协力才做到今天这步的！ ");
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "所以我不会停下的！ ");
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "在停止的时间完全恢复之前，[r]我要从幻想乡回到佐渡去！ ");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "使幻想乡得以成立的真正的力量，[r]乃是人类的意志。 ");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "能在幻想乡变为人类的样子，[r]说明外面世界的你已经…… ");
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "我不是一个人！ ");
+		}
+		case(25)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "有我在，有赛特君给我的力量，[r]还有那么多鸟们给我的力量。也就是三倍！ ");
+		}
+		case(26)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "然后还有羽毛变成七色的我的力量，[r]古代的魔法，以及科学之力（Saezwtter）的伟大融合。 ");
+		}
+		case(27)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "换句话说，我比平时要伟大无数无数倍！ ");
+		}
+		case(28)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "你只是个妖怪，不是圣人也不是大怨灵，[r]更不是古代的王，连魔导书的神灵都不是。 ");
+		}
+		case(29)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "让你白白死掉有点…… ");
+		}
+		case(30)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "不，既然你是异变的犯人，[r]我也不好就这样放过你。 ");
+		}
+		case(31)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "岂有人生来便是英雄的吗？ ");
+		}
+		case(32)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "背负着大家的愿望，[r]去实现它们的，才是英雄。 ");
+		}
+		case(33)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "我要跨越幻想乡的境界，[r]我要打破妖怪的界限！ ");
+			
+			// BGM
+			PlayMusicWithName( 13, 30, 30 );
+		}
+		case(34)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "妖怪吃人才是真正的下克上！[r]就是现在，妖怪的杀手锏将从佐渡岛诞生！ ");
+		}
+		case(35)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			// 吹き出しリセット
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_NORMAL);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_NORMAL);
+			// 吹き出し削除
+			DeleteAllFukidashi();
+			// 会話
+			_SetTalk(cutinPlayer1, "来吧，你的妄想（Delusion）就到此为止！ ", -24, -16);
+//			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+			_SetTalk(cutinBoss1, "来吧，你也和我一起融合（Fusion）吧！ ", 32, 48);
+//			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+			// カットインを前面に出す
+			ChangeImageFowardEx([cutinPlayer1, cutinBoss1]);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

@@ -1,0 +1,75 @@
+//#東方弾幕風[Plural]
+#ScriptVersion[3]
+#Title["6面 連続再生"]
+#Text[""]
+#System["./../../../system/System.dnh"]
+
+
+#include"./../../../lib/lib_Boss.dnh"
+#include"./../lib_World06_BackGround01a.dnh"
+
+let objBossScene;
+let objTalkScene02;
+let dir = GetCurrentScriptDirectory();
+
+@Initialize
+{
+	TPlural();
+}
+
+@Event
+{
+	alternative( GetEventType() )
+	//　ボス登場イベント
+	case( ev_ResistBoss2 )
+	{
+		ResistSceneScript();
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// 裏でボスシーンをロード（めっちゃウェイトかけつつ）
+task TPlural
+{
+	// ボスシーンを作成します。
+	objBossScene = ObjEnemyBossScene_Create();
+	
+	// ボスシーンの初期設定
+	BossScene_SetInit(objBossScene,
+		BOSS_ID_HOROU,	// ボスID
+		[MaxX+32, -128],		// 初期座標
+	);
+
+	// 会話
+	// ボスの攻撃
+	ObjEnemyBossScene_Add(objBossScene, 6, dir ~ "06b_Spell07.dnh");
+	ObjEnemyBossScene_LoadInThread(objBossScene);
+
+//	SetBackGround( objBossScene );//ここね
+}
+
+// ボスシーンの起動
+task ResistSceneScript
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+	
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+
+	// 連続再生終了通知
+	FinalizePlural();
+
+	//スクリプト終了
+	CloseScript(GetOwnScriptID());
+}

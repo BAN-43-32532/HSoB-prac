@@ -1,0 +1,98 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　オプション作成　咲夜用
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+//　オプション作成
+function CreateOptionPl03( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ){
+	let obj = [
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+	];
+	let blend = [
+		BLEND_ALPHA,
+		BLEND_ADD_ARGB,
+	];
+	let color = [
+		[ 255, 255, 255, 192 ],
+		[ 128, 255, 255, 192 ],
+	];
+
+	if (IsRainbow())
+	{
+		alternative(GetPlayerWeapon())
+		case(WEAPON_RED)	{ color = [[255,255,255,192], [255,32,32,192]]; }
+		case(WEAPON_PURPLE)	{ color = [[255,255,255,192], [255,32,255,192]]; }
+		case(WEAPON_BLUE)	{ color = [[255,255,255,192], [32,32,255,192]]; }
+		case(WEAPON_SKY)	{ color = [[255,255,255,192], [32,255,255,192]]; }
+		case(WEAPON_GREEN)	{ color = [[255,255,255,192], [32,255,32,192]]; }
+		case(WEAPON_YELLOW)	{ color = [[255,255,255,192], [255,255,32,192]]; }
+		case(WEAPON_ORANGE)	{ color = [[255,255,255,192], [255,144,32,192]]; }
+	}
+	
+	ascent( let i in 0..length(obj) ){
+		OptionUpdate( obj[i], v_distNormal, v_distSlow, v_angleNormal, v_angleSlow );
+		OptionDrawCard( obj[i], blend[i], 0.7 + i*0.2, color[i] );
+		SetVisible( obj[i] );
+	}
+	SetSpin( obj[1], 4 );
+	
+	SetAlpha( obj[1], [ 192, 64 ], 8 );
+	
+	return obj[0];
+}
+
+//　皇用オプション作成
+function CreateYellowOptionPl03( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ){
+	let obj = [
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+	];
+	let blend = [
+		BLEND_ALPHA,
+		BLEND_ADD_ARGB,
+	];
+	let color = [
+		[ 255, 255, 255, 192 ],
+		[ 255, 255, 32, 192 ],
+	];
+	
+	ascent( let i in 0..length(obj) ){
+		OptionUpdate( obj[i], v_distNormal, v_distSlow, v_angleNormal, v_angleSlow );
+		OptionDrawCard( obj[i], blend[i], 0.7 + i*0.2, color[i] );
+		SetVisible( obj[i] );
+	}
+	SetSpin( obj[1], 4 );
+	
+	SetAlpha( obj[1], [ 192, 64 ], 8 );
+	
+	return obj[0];
+}
+
+//　素用オプション作成
+function CreateWhiteOptionPl03( v_distNormal, v_distSlow, v_angleNormal, v_angleSlow ){
+	let obj = [
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+	];
+	let blend = [
+		BLEND_ALPHA,
+		BLEND_ADD_ARGB,
+	];
+	let color = [
+		[ 255, 255, 255, 128 ],
+		[ 255, 255, 255, 192 ],
+	];
+	
+	ascent( let i in 0..length(obj) ){
+		OptionUpdate( obj[i], v_distNormal, v_distSlow, v_angleNormal, v_angleSlow );
+		OptionDrawCard( obj[i], blend[i], 0.7 + i*0.2, color[i] );
+		SetVisible( obj[i] );
+	}
+	SetSpin( obj[1], 4 );
+	
+	SetAlpha( obj[1], [ 192, 64 ], 8 );
+	
+	return obj[0];
+}

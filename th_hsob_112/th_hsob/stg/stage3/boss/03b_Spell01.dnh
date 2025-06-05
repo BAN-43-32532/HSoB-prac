@@ -1,0 +1,284 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ひかり子スペカ1"]
+#Text["ひかり子スペカ1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Hikariko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(260);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(45);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 22;
+	let SPELL_NAME = [1, 1, 2, 3][Difficult];
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	// アイテム数
+	bossDropItem = 150;
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_HIKARIKO);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"03a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	waitObj(objEnemy, 60);
+
+	CallSpellCard(true);	//スペカ起動
+	
+	let way = [6, 7, 7, 7][Difficult];
+	let muki = rand_dir();
+	let wt = [150, 90, 60, 75][Difficult];
+	
+	let t = 0;
+	while(eAlive)
+	{
+		SetAction(objEnemy, ACT_SHOT1, 60);
+		BossCharge(objEnemy);
+		waitObj(objEnemy, 60);
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT2, 180);
+		descent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let tmp = (i/(way-1)-0.5)*muki;
+			let ss = 3;
+			let sa = 90 - (tmp-0.6*muki)*30;
+			let sx = CenX + GetClipWidth*tmp;
+			SetFamilier01(sx, MinY, ss, sa, -muki);
+			waitObj(objEnemy, 30);
+		}
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 160, 32);
+		waitObj(objEnemy, wt-60);
+		muki = -muki;
+	}
+}
+
+// 人魂
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	let iniMuki = [1, -1][iniValue < 0];
+	
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 100, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.8);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, iniAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		Enemy_SetPatternA2(objFamilier, 0, 0, iniAngle, iniSpeed/30, 0, iniSpeed);
+		Enemy_SetPatternA2(objFamilier, 30, NO_CHANGE, NO_CHANGE, -iniSpeed/120, 0, iniSpeed/6);
+		Enemy_SetPatternB2(objFamilier, 90, NO_CHANGE, NO_CHANGE, 0, -0.02, NO_CHANGE, -12);
+		TCheckDispINOut(objFamilier, 32);
+		/*
+		let ex = iniX;
+		let ey = iniY;
+		let es = 0;
+		let er = 0;
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (ey > MaxY+32) { EraseEnemy(objFamilier); break; }
+			ObjMove_SetPosition(objFamilier, ex, ey);
+			er = GetCurve(min(t,360)/360);
+			ex = iniX + sin(t*iniMuki*2)*er*64;
+			ey += es;
+			es = min(iniSpeed, es+iniSpeed/360);
+			t++;
+			waitObj(objFamilier, 1);
+		}
+		*/
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, 60);
+		
+		let speed = [1.25, 1.5, 1.5, 1.5][Difficult];
+		let graphics = [ADD_BGW_BALL_M_WHITE, ADD_BGW_BALL_M_SKY, ADD_BGW_BALL_M_SKY];
+		let graphics2 = [BGW_FIRE_BLUE];
+		let way = [1, 1, 2, 1][Difficult];
+		let wt = [5, 5, 5, 5][Difficult];
+		let timer = [210, 300, 300, 120+1][Difficult];
+		
+		if (Difficult == D_HARD)
+		{
+			graphics = [ADD_BGW_BALL_M_WHITE, ADD_BGW_BALL_M_YELLOW, ADD_BGW_BALL_M_YELLOW];
+			graphics2 = [BGW_STAR_M_BLUE, BGW_STAR_M_SKY];
+		}
+		if (Difficult == D_LUNA)
+		{
+			graphics = [ADD_BGW_BALL_M_WHITE, ADD_BGW_BALL_M_WHITE, ADD_BGW_BALL_M_WHITE];
+			graphics2 = [BGW_BALL_BS_BLUE, BGW_BALL_BS_WHITE];
+		}
+		
+		let st = 0;
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < 120)
+		{
+			let ss = speed;
+			let sa = Obj_GetValueD(objFamilier, "E_ANGLE", 0) + 180 + rand(-2,2);
+			CreateRefrectShotA2_Top(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				ss*3, sa, -ss/30, ss, graphics[st%length(graphics)], 15);
+			CallSound(sndShot2);
+			t += wt;
+			st++;
+			waitObj(objFamilier, wt);
+		}
+		
+		wt *= 2;
+		
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+			if (Difficult == D_LUNA)
+			{
+				let ss = speed*0.8;
+				let sa = GetAngleToPlayer(objFamilier) + rand(-5,5);
+				ascent(i in 0 .. 2)
+				{
+					DennoShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+						0, sa, ss/120, ss, graphics2[st%length(graphics2)], 15, graphics2[i]);
+				}
+				CallSound(sndShot2);
+			}
+			else
+			{
+				let ss = speed;
+				let sa = Obj_GetValueD(objFamilier, "E_ANGLE", 0) + 180 + rand(-2,2);
+				let tmp_way = [1, way][st%2];
+				CreateShotWayA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					0, sa, ss/30, ss, graphics2[st%length(graphics2)], 15, tmp_way, 45, 0);
+				CallSound(sndShot2);
+			}
+			t += wt;
+			st++;
+			waitObj(objFamilier, wt);
+		}
+	}
+}
+
+// 上反射弾
+task CreateRefrectShotA2_Top(x, y, speed, angle, add_s, max_s, graphic, delay)
+{
+	let obj = My_CreateShotA2(x, y, speed, angle, add_s, max_s, graphic, delay);
+//	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	if (y < 0 || x < 0 || x > GetStgFrameWidth) { return; }
+	
+	while(!Obj_IsDeleted(obj))
+	{
+		if (ObjMove_GetY(obj) < MinY)
+		{
+			if (Difficult == D_LUNA)
+			{
+				TweetShot(ObjMove_GetX(obj), max_s, 90, graphic, delay);
+			}
+			else
+			{
+				My_CreateShotA2(ObjMove_GetX(obj), MinY*2-ObjMove_GetY(obj),
+					ObjMove_GetSpeed(obj), 90, add_s, max_s, graphic, 0);
+			}
+			CallSound(sndBulletBreak);
+			break;
+		}
+		wait(1);
+	}
+	Obj_Delete(obj);
+}
+
+task TweetShot(x, speed, angle, graphic, delay)
+{
+	let objEff = CreateLooseLaserA1(x, MinY-16, 48, angle, 240, 8, BGW_THUNDER_BLUE, 0);
+	ObjRender_SetColor(objEff, 32, 96, 32);
+	SetShotDisabled(objEff);
+	wait(30);
+	if (eAlive)
+	{
+		My_CreateShotA2(x, MaxY+16, 0, angle+180, speed/120, speed, graphic, delay);
+	}
+}
+task DennoShot(x, y, speed, angle, add_s, max_s, graphic, delay, graphic2)
+{
+	let obj = CreateShotA2(x, y, speed, angle, add_s, max_s, graphic, delay);
+	Obj_SetVisible(obj, false);
+	SetShotDisabled(obj);
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t%5 == 0)
+		{
+			let sx = round((ObjMove_GetX(obj)+rand(-24,24))/12) * 12;
+			let sy = round((ObjMove_GetY(obj)+rand(-24,24))/12) * 12;
+			DennoSingle(sx, sy, graphic2);
+		}
+		t++;
+		wait(1);
+	}
+	
+	task DennoSingle(x, y, grpahic2)
+	{
+		let objEff = CreateShotA1(x, y, 0, 90, grpahic2, 0);
+		ObjRender_SetBlendType(objEff, BLEND_ADD_ARGB);
+		ObjRender_SetColor(objEff, 0, 0, 255);
+		SetShotDisabled(objEff);
+		Obj_SetRenderPriorityI(objEff, GetShotRenderPriorityI-1);
+		ascent(t in 0 .. 60)
+		{
+			if (Obj_IsDeleted(objEff)) { return; }
+			let tmp = (t+1)/60;
+			ObjRender_SetAlpha(objEff, tmp*255);
+			yield;
+		}
+		if (!Obj_IsDeleted(objEff))
+		{
+			let newobj = My_CreateShotA1Ex(x, y, 0, 90, grpahic2, 15, DELAY_ADD);
+			ObjShot_SetDeleteFrame(newobj, 180);
+			ObjShot_FadeDelete(objEff);
+		}
+	}
+}

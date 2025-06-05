@@ -1,0 +1,229 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　会話前半"]
+#Text["3面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HIKARIKO);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_HIKARIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "ここは大蝦蟇の池…[r]あの氷の妖精が、蛙を凍らせているという。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "今はもっと大きな力で、[r]時間ごと凍り付いてしまったわね。");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx2(cutinBoss1, "…………", -48, -280);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "…………");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "鬼火を操る妖怪。今は貴方が氷精を[r]溶かし、池の生態系を束ねているのね");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "…そうでは無い");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "では、大蝦蟇の操る水には負けるが、[r]彼らの天敵の氷精を溶かす…三すくみ？");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "…そうでも無く…");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "実はたまたま私と遭遇しただけ、ですね");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "…喋るのは得意ではない、[r]説明が要らぬのは有難い");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA3);
+			SetTalkEx(cutinPlayer1, "そうは行かないわ。");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetTalkEx(cutinPlayer1, "妖怪がなぜ動いているか、黒幕は[r]何者なのか、聞きたい事が沢山あるの。");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "大人しく答えるなら[ruby rb=\"　妖剣　\" rt=\"シルバーブレード\"]で[r]手厚く倒す、答えないなら無慈悲に倒す");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "…そのような者は力ずくで勧請せよ…[r]上人さまよりサエズッターで仰せつかっている");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "上人さまより賜った[r]この[ruby rb=\"　　　　SNS　　　　\" rt=\"サエズリ・ネットワーキング・システム\"]", -80, -30);
+			WaitNextEx(15);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx3(cutinBoss1, "…喋るのが苦手な私でも、[r]ここではありのままの自分を曝け出せる。", -50, -40);
+			WaitNextEx(15);
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx3(cutinBoss1, "…私はこの世界を…守らねばならない", 0, 30);
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "生憎、私も主の世界を守らねばならないの。[r]メイドの仕事ですから",);
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "…正義の逆は悪ではなく、[r]また別の正義である。", -80, -30);
+			WaitNextEx(15);
+			SetTalkEx3(cutinBoss1, "そして正義と正義の戦いは、[r]しばしば苛烈を極めるという。", -50, -40);
+			WaitNextEx(15);
+			SetTalkEx3(cutinBoss1, "力で我らに敵わぬ人間は、[ruby rb=\"不平等な了解\" rt=\"スペルカードルール\"]という[r]独善的な正義を我らに押しつけて来た。", 0, 30);
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "…ふふ、サエズッターの中の威風堂々で完璧な[r]私を想像したら、立ち向かう勇気が湧いて来た", -40, -20);
+
+			PlayMusicWithName( 7, 30, 30 );
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx3(cutinBoss1, "[ruby rb=\"悪法に縛られた世界\" rt=\"　　デ　ィ　ス　ト　ピ　ア\"]など！", -50, -10);
+			WaitNextEx(15);
+			SetTalkEx3(cutinBoss1, "  [ruby rb=\" 調和\" rt=\"ハルモニア\"]を告げる[ruby rb=\"　裁きの炎　\" rt=\"イノセント・シャイン\"]で[r]  [ruby rb=\" 浄化 \" rt=\"ピュリファイ\"]してくれよう！", 0, 30);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

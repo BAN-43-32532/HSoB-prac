@@ -1,0 +1,116 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["1面　会話後半"]
+#Text["1面　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_RANRAN);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_RANRAN, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinBoss1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "真过分啊[r]居然想用我的血把世界染色。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "很遗憾，染成红色[r]是我们家大小姐的专利呢。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "大小姐……单单一个手下就这么强了吗……[r]幻想乡还真是广阔。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
+			SetTalkEx(cutinPlayer1, "这就是女仆的礼物，给我记牢了。 ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

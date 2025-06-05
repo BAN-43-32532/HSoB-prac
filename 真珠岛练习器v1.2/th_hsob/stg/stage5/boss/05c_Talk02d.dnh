@@ -1,0 +1,151 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　ボス会話後半"]
+#Text["5面　ボス会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include "./../../../lib/lib_Stage.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SET);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SET, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_KAGUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
+			SetTalkEx(cutinPlayer1, "……此时此刻，这根绳子毫无杂质，[r]拥有的是最高的强度…… ");
+		}
+		case(1)
+		{
+			SetTalkEx(cutinBoss1, "够了，我再不吭气你要说到什么时候去啊。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "嘛，简单说就是费米最强就对了。 ");
+		}
+		case(3)
+		{
+			SetTalkEx(cutinBoss1, "我居然输给了这种家伙吗，人生真是空虚。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CALM2);
+			SetTalkEx(cutinPlayer1, "你一定有那种，[r]尊重别人善于聆听的才能呢。 ");
+		}
+		case(5)
+		{
+			SetTalkEx(cutinBoss1, "事到如今再搞这种少到等于没有的吹捧也迟了。[r]我要把你打落地底…… ");
+		}
+		case(6)
+		{
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx3(cutinBoss1, "崩的一声！ ", -86, -86);
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_QUESTION);
+			SetTalkEx(cutinPlayer1, "……崩的一声？ ");
+		}
+		case(8)
+		{
+			SetTalkEx(cutinBoss1, "发动对盗墓者的裁决（Trap Switch）！[r]禁咒塔的自爆装置！ ");
+		}
+		case(9)
+		{
+			SetTalkEx(cutinBoss1, "你逃不掉的，[r]就在这里和我（临时的肉体）一起灭亡吧！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "救……救救我永琳！救救我永琳！ ");
+
+			// 背景チェンジ！
+			NextStageScene();
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

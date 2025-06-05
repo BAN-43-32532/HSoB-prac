@@ -1,0 +1,606 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["スペカ8"]
+#Text["スペカ8"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(475);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 98;
+	let SPELL_NAME = 7;
+	
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 400; }
+	else			{ bossDropItem = 150; }
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	//防御率再計算
+	SetMumeiDefence2();
+
+	//初期設定
+	Boss_Init();
+
+	InitMumei();
+	// 終了後えへくと自壊
+	MumeiEffect_SetDeleteMotion(true);
+
+	objEnemy = CreateBoss(BOSS_ID_MUMEI);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"07b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+	
+	// バーリアーｗｗｗｗｗ
+	TBombBarrierEx(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	let isPrac = (GetPlayMode() == GAME_SPELL || GetPlayMode() == GAME_NONE);
+
+	if (isPrac)
+	{
+		standBy(objEnemy, CenX, CenY-80, 60);
+		MumeiEffect_SetDeleteMotion(true);	// 背負いもの削除モーション付き
+		SetMumeiEffect(objEnemy, true);
+		SetMumeiEffect_v2(objEnemy, true, 60);
+		waitObj(objEnemy, 60);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, CenY-80, 150);
+		MumeiEffect_SetDeleteMotion(true);	// 背負いもの削除モーション付き
+		SetMumeiEffect(objEnemy, true);
+		SetMumeiEffect_v2(objEnemy, true, 60);
+		waitObj(objEnemy, 60);
+		SaraSword_First();
+		waitObj(objEnemy, 90);
+		DisplayShake(30, 18);
+	}
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 60);
+	
+	let move_rate = [1, 0.66, 1][DifficultEx()];
+	let add_wt = [0, 30, 0][DifficultEx()];
+	let offset_blue = [0, 90, 0][DifficultEx()];
+	
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		local
+		{
+			BossChargeFire(objEnemy);
+			SetAction(objEnemy, ACT_SHOT4, 150);
+			CallSound(sndPower1);
+			waitObj(objEnemy, 60);
+			local
+			{
+				if (!eAlive) { return; }
+				let base_angle = GetAngleToPlayer(objEnemy);
+				let wt = [300, 240][t > 0];
+				let smuki = -muki;
+				let sa = base_angle + muki * 120;
+				let lcol = 0;
+				let llen = 128;
+				let lang = 360;
+				let loffset = 0;
+				let lpow = 3;
+				let ldelay = 60;
+				SWORD(sa, smuki, [lcol, llen, lang, loffset, lpow, ldelay]);
+				if (t > 0)
+				{
+					MoveToSlowdown(objEnemy, CenX, MinY+64, 60);
+					SetAction(objEnemy, ACT_MOVE_L, 60);
+					waitObj(objEnemy, 60);
+					if (!eAlive) { return; }
+					SetAction(objEnemy, ACT_SHOT2, wt-60);
+					waitObj(objEnemy, wt-60);
+				}
+				else
+				{
+					waitObj(objEnemy, 90);
+					if (!eAlive) { return; }
+					SetAction(objEnemy, ACT_SHOT2, wt-60);
+					waitObj(objEnemy, wt-90);
+				}
+			}
+		}
+		waitObj(objEnemy, add_wt);
+		if (!eAlive) { return; }
+		if (t == 0)
+		{
+			BossChargeFire(objEnemy);
+			SetAction(objEnemy, ACT_SHOT4, 150);
+			CallSound(sndPower1);
+			waitObj(objEnemy, 60);
+			ascent(i in 0 .. 2)
+			{
+				if (!eAlive) { return; }
+				let base_angle = GetAngleToPlayer(objEnemy);
+				let wt = [15, 150-90][i];
+				let smuki = [muki, -muki][i];
+				let sa = base_angle + muki * [-75, 45][i];
+				let lcol = 0;
+				let llen = 128;
+				let lang = 360;
+				let loffset = [-75, -75][i];
+				let lpow = 2;
+				let ldelay = 60;
+				SWORD(sa, smuki, [lcol, llen, lang, loffset, lpow, ldelay]);
+				waitObj(objEnemy, wt);
+			}
+			if (!eAlive) { return; }
+			SetAction(objEnemy, ACT_SHOT2, 90);
+			waitObj(objEnemy, 90);
+		}
+		waitObj(objEnemy, add_wt);
+
+		if (!eAlive) { return; }
+		BossChargeFire(objEnemy);
+		CallSound(sndPower1);
+		if (t == 0)
+		{
+			MoveToSlowdown(objEnemy, CenX, MinY+64, 60);
+			SetAction(objEnemy, ACT_MOVE_L, 60);
+		}
+		else
+		{
+			SetAction(objEnemy, ACT_SHOT3, 90);
+		}
+		waitObj(objEnemy, 60+add_wt);
+		
+		ascent(i in 0 .. 5)
+		{
+			if (!eAlive) { return; }
+			let base_angle = GetAngleToPlayer(objEnemy);
+			let wt = [30, 30, 30, 150, 120][i];
+			let smuki = [muki, -muki][i%2];
+			let sa = base_angle + muki * [-120, 120, -135, 135, 180+offset_blue][i];
+			let lcol = [0, 1, 2, 3, 4][i];
+			let llen = [128, 128, 128, 128, 144][i];
+			let lang = 360;
+			let loffset = [105, 105, 75, 75, 0][i];
+			let lpow = [0, 0, 0, 0, 3][i];
+			let ldelay = [60, 60, 60, 60, 180][i];
+			SWORD(sa, smuki, [lcol, llen, lang, loffset, lpow, ldelay]);
+			
+			let ma = base_angle + 45*smuki;
+			if (i == 4)
+			{
+				ma = base_angle;
+				SetAction(objEnemy, ACT_SHOT2, 120);
+			}
+			let mr = [48, 48, 48, 48, 64][i];
+			mr *= move_rate;
+			DelayMove(mr*cos(ma), mr*sin(ma), 30, 45);
+			waitObj(objEnemy, wt);
+		}
+		waitObj(objEnemy, add_wt);
+		if (!eAlive) { return; }
+		CallSound(sndPower1);
+		SetAction(objEnemy, ACT_SHOT4, 120);
+		waitObj(objEnemy, 180);
+
+		local
+		{
+			ascent(i in 0 .. 2)
+			{
+				if (!eAlive) { return; }
+				let base_angle = GetAngleToPlayer(objEnemy);
+				let smuki = [muki, -muki][i];
+				let sa = base_angle + muki * [-120, 120][i];
+				let lcol = 4;
+				let llen = 128;
+				let lang = 360;
+				let loffset = [45, 45][i];
+				let lpow = 1;
+				let ldelay = 60;
+				SWORD(sa, smuki, [lcol, llen, lang, loffset, lpow, ldelay]);
+			}
+			SetAction(objEnemy, ACT_SHOT4, 90);
+		}
+		waitObj(objEnemy, 45);
+		
+		if (!eAlive) { return; }
+		MoveToSlowdown(objEnemy, CenX, CenY-80, 30);
+		waitObj(objEnemy, 120+add_wt);
+		
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT4, 120);
+		BossChargeFire(objEnemy);
+		CallSound(sndPower1);
+		waitObj(objEnemy, 60);
+		
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT3, 90);
+		ascent(i in 0 .. 4)
+		{
+			if (!eAlive) { return; }
+			let base_angle = GetAngleToPlayer(objEnemy);
+			let wt = [15, 15, 15, 15, 60][i];
+			let smuki = [muki, -muki][i%2];
+			let sa = base_angle + muki * [-120, 120, -150, 150, 180][i];
+			let lcol = [4, 3, 2, 1, 0][i];
+			let llen = 128;
+			let lang = 360;
+			let loffset = [90, 90, -150, -150, 150][i];
+			let lpow = [0, 0, 0, 0, 0][i];
+			let ldelay = [60, 60, 60, 60, 60][i];
+			SWORD(sa, smuki, [lcol, llen, lang, loffset, lpow, ldelay]);
+			waitObj(objEnemy, wt);
+		}
+
+		muki = -muki;
+		t++;
+	}
+	
+	task DelayMove(ox, oy, frame, delay)
+	{
+		waitObj(objEnemy, delay);
+		if (!eAlive) { return; }
+		MoveToSlowdown(objEnemy, ObjMove_GetX(objEnemy)+ox, ObjMove_GetY(objEnemy)+oy, frame);
+		SetAction(objEnemy, ACT_MOVE, frame);
+	}
+}
+
+task SWORD(BASE_ANGLE, BASE_MUKI, SHOT_TYPE)
+{
+	let SHOT_COLOR = SHOT_TYPE[0];
+	let SHOT_LENGTH = SHOT_TYPE[1];
+	let SHOT_ANGLE = SHOT_TYPE[2];
+	let SHOT_OFFSET = SHOT_TYPE[3];
+	let SHOT_POWER = SHOT_TYPE[4];
+	let SHOT_DELAY = SHOT_TYPE[5];
+	
+	let size = SHOT_LENGTH;
+	let size_w = 48;
+	let add_angle = SHOT_ANGLE * BASE_MUKI;
+	
+	let BASE_R = 0;
+	let BASE_L = size;
+	let BASE_W = size_w * BASE_MUKI;
+	let BASE_A = BASE_ANGLE;
+	
+	let objSword = CreateSaraSword(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), BASE_A, BASE_L, BASE_W);
+	Obj_SetValue(objSword, "SIZE_W", BASE_W);
+	STAY(15);
+	T_ChangeWidth(BASE_W, BASE_W/2, 15);
+	if (eAlive) { CallSound(sndMetal); }
+	STAY(30);
+	if (eAlive) { CallSound(sndShot4); }
+	SLASH(add_angle, 30);
+	Obj_Delete(objSword);
+
+	function STAY(timer)
+	{
+		loop(timer)
+		{
+			if (!eAlive) { break; }
+			ObjMove_SetPosition(objSword, ObjMove_GetX(objEnemy)+BASE_R*cos(BASE_A), ObjMove_GetY(objEnemy)+BASE_R*sin(BASE_A));
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	function SLASH(move_angle, timer)
+	{
+		let frame_ct =	[2, 2, 2, 3][SHOT_POWER];
+		let way =	[4, 6, 4, 6][SHOT_POWER];
+		let way2 =	[1, 1, 2, 2][SHOT_POWER];
+		let speed = 1;
+		let add_a = SHOT_OFFSET*BASE_MUKI;
+		let l_graphic = BGW_FUGU_WHITE;
+		let l_color = [[180,128,32], [240,108,32], [255,80,32], [224,32,144], [64,32,255]][SHOT_COLOR];
+		let graphic = [BGW_FUGU_YELLOW, BGW_FUGU_ORANGE, BGW_FUGU_RED, BGW_FUGU_PURPLE, BGW_FUGU_BLUE][SHOT_COLOR];
+		let delay = SHOT_DELAY;
+		
+		if (DifficultEx() == D_EX_EASY)
+		{
+			frame_ct =	[2, 2, 2, 2][SHOT_POWER];
+			way =		[3, 4, 3, 4][SHOT_POWER];
+			way2 =		[1, 1, 1, 1][SHOT_POWER];
+			speed =		0.75;
+		}
+
+		let st = 0;
+		let add_angle = 0;
+		let t_count = timer*frame_ct;
+		ascent(t in 0 .. t_count)
+		{
+			if (!eAlive) { break; }
+			let tmp = t/(t_count-1);
+
+		//	let ba_base = tmp*move_angle;
+		//	let ba = atan2(sin(ba_base)*3, cos(ba_base));
+			let ba = tmp*move_angle;
+
+			let vx = BASE_L * cos(ba);
+			let vy = BASE_L/3 * sin(ba);
+			add_angle = atan2(vy, vx);
+			let sl = (vx^2 + vy^2)^0.5;
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			let sa = BASE_A + add_angle;
+
+			Obj_SetValue(objSword, "SIZE", sl);
+			ObjMove_SetAngle(objSword, sa);
+			ObjMove_SetPosition(objSword, sx, sy);
+			
+			// ショット部分
+			local
+			{
+				let to_ss = speed * sl/BASE_L;
+				let to_sa = sa + add_a;
+				let vpos = Rotate2D_XY(vx, vy, BASE_A);
+				let ssx = sx + vpos[0]/4;
+				let ssy = sy + vpos[1]/4;
+				let ssl = sl*3.5;
+				GhostShot(ssx, ssy, ssl, sa, l_graphic, l_color, 15,
+					delay, to_ss, to_sa, way, way2, graphic);
+			}
+			if (t%frame_ct == frame_ct-1) { st++; waitObj(objEnemy, 1); }
+		}
+		BASE_A += add_angle;
+	}
+	
+	task GhostShot(x, y, l_len, angle, graphic, color, delay, timer, to_speed, to_angle, to_way, to_way2, to_graphic)
+	{
+		let objEffect = CreateStraightLaserA1(x, y, angle, l_len, 128, 99999, graphic, 0);
+		ObjRender_SetColor(objEffect, color[0], color[1], color[2]);
+		ObjStLaser_SetSource(objEffect, false);
+		SetShotDisabled(objEffect);
+		ascent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ObjRender_SetAlpha(objEffect, tmp*128);
+			waitObj(objEnemy, 1);
+		}
+		waitObj(objEnemy, timer-30);
+		if (eAlive && !Obj_IsDeleted(objEffect))
+		{
+			ascent(i in 0 .. to_way)
+			{
+				let tmp = i/(to_way-1);
+				let sr = l_len*(0.2+0.4*tmp);
+				let sx = x + sr*cos(angle);
+				let sy = y + sr*sin(angle);
+				let ss = to_speed * (1+tmp*2);
+				let sa = to_angle;
+				ascent(j in 0 .. to_way2)
+				{
+					let sa_add = (j-(to_way2-1)/2)*(1+tmp*2)/3;
+					let objS = My_CreateShotA1Ex(sx, sy, ss*2, sa, to_graphic, delay, DELAY_ADD);
+					ObjMove_AddPatternA2(objS, 0, NO_CHANGE, NO_CHANGE, -(ss*2)/75, sa_add, ss/8);
+					ObjMove_AddPatternA2(objS, 60, NO_CHANGE, NO_CHANGE, ss/120, sa_add/2, ss*4);
+				}
+			}
+			CallSound(sndShot2);
+			ObjShot_FadeDelete(objEffect);
+		}
+	}
+	
+	task T_ChangeWidth(from_r, to_r, timer)
+	{
+		ascent(t in 0 .. timer)
+		{
+			if (!eAlive) { break; }
+			let tmp = GetCurve_ad(t/(timer-1));
+			BASE_W = from_r*(1-tmp) + to_r*tmp;
+			Obj_SetValue(objSword, "SIZE_W", BASE_W);
+			waitObj(objEnemy, 1);
+		}
+	}
+
+	task T_ChangeAngle(from_a, to_a, timer)
+	{
+		ascent(t in 0 .. timer)
+		{
+			if (!eAlive) { break; }
+			let tmp = GetCurve_d(t/(timer-1));
+			BASE_A = from_a*(1-tmp) + to_a*tmp;
+			ObjMove_SetAngle(objSword, BASE_A);
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	task RefrectShot(x, y, speed, angle, graphic, delay, to_speed, to_graphic)
+	{
+		let objS = My_CreateShotA1(x, y, speed, angle, graphic, delay);
+		if (ObjMove_GetY(objS) < MinY || ObjMove_GetY(objS) > MaxY || ObjMove_GetX(objS) < MinX || ObjMove_GetX(objS) > MaxX) { return; }
+		
+		while(!Obj_IsDeleted(objS))
+		{
+			if (ObjMove_GetY(objS) < MinY)
+			{
+				My_CreateShotA2(ObjMove_GetX(objS), MinY*2-ObjMove_GetY(objS), to_speed*2, 360-angle, -to_speed/30, to_speed, to_graphic, delay);
+				CallSound(sndBulletBreak);
+				Obj_Delete(objS);
+				break;
+			}
+			else if (ObjMove_GetY(objS) > MaxY)
+			{
+				My_CreateShotA2(ObjMove_GetX(objS), MaxY*2-ObjMove_GetY(objS), to_speed*2, 360-angle, -to_speed/30, to_speed, to_graphic, delay);
+				CallSound(sndBulletBreak);
+				Obj_Delete(objS);
+				break;
+			}
+			else if (ObjMove_GetX(objS) < MinX)
+			{
+				My_CreateShotA2(MinX*2-ObjMove_GetX(objS), ObjMove_GetY(objS), to_speed*2, 180-angle, -to_speed/30, to_speed, to_graphic, delay);
+				CallSound(sndBulletBreak);
+				Obj_Delete(objS);
+				break;
+			}
+			else if (ObjMove_GetX(objS) > MaxX)
+			{
+				My_CreateShotA2(MaxX*2-ObjMove_GetX(objS), ObjMove_GetY(objS), to_speed*2, 180-angle, -to_speed/30, to_speed, to_graphic, delay);
+				CallSound(sndBulletBreak);
+				Obj_Delete(objS);
+				break;
+			}
+			yield;
+		}
+	}
+}
+
+function CreateSaraSword(x, y, angle, size, size_w)
+{
+	let objDummy = CreateShotA1(x, y, 0, angle, BGW_BALL_S_WHITE, 0);
+	SetShotDisabled(objDummy);
+	Obj_SetVisible(objDummy, false);
+	Obj_SetValue(objDummy, "SIZE", size);
+	Obj_SetValue(objDummy, "SIZE_W", size_w);
+	TMove(objDummy, size);
+	return(objDummy);
+	
+	task TMove(objDummy, size)
+	{
+		let objS = PorcelainShot(x, y, PORCELAIN_SWORD_L, size, 15);
+		ObjMove_SetAngle(objS, angle);
+		ObjShot_SetAutoDelete(objS, false);
+		Obj_SetValue(objS, "SIZE_W", Obj_GetValueD(objDummy, "SIZE_W", 0));
+		Obj_SetValue(objS, "SIZE", Obj_GetValueD(objDummy, "SIZE", 0));
+		Obj_SetValue(objS, "VISIBLE", false);	// 当たり判定なっしんぐ
+		let objImg = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+		ascent(i in 0 .. length(objImg))
+		{
+			Obj_SetRenderPriorityI(objImg[i], priorityBoss-1);
+			ObjRender_SetBlendType(objImg[i], BLEND_ADD_ARGB);
+			ObjRender_SetColor(objImg[i], 64, 64, 64);
+		}
+		
+		while(!Obj_IsDeleted(objDummy) && !Obj_IsDeleted(objS))
+		{
+			let r = Obj_GetValueD(objDummy, "SIZE", 0);
+			Obj_SetValue(objS, "SIZE_W", Obj_GetValueD(objDummy, "SIZE_W", 0));
+			Obj_SetValue(objS, "SIZE", Obj_GetValueD(objDummy, "SIZE", 0));
+			ObjMove_SetAngle(objS, ObjMove_GetAngle(objDummy));
+			ObjMove_SetPosition(objS, ObjMove_GetX(objDummy)+r*cos(ObjMove_GetAngle(objDummy)),
+						ObjMove_GetY(objDummy)+r*sin(ObjMove_GetAngle(objDummy)));
+			yield;
+		}
+		Obj_Delete(objS);
+	}
+}
+
+
+task SaraSword_First()
+{
+	let BASE_R = 48;
+	let BASE_L = 96;
+	let BASE_W = 48;
+	let BASE_A = 270;
+
+	let objSword = CreateSaraSwordB(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), BASE_A, BASE_L, BASE_W*0.5);
+	CallSound(sndBoon);
+	SetAction(objEnemy, ACT_SHOT4, 120);
+	ascent(i in 0 .. 15)
+	{
+		let r = BASE_L * (0.25 + i/15*1.5);
+		let to_x = ObjMove_GetX(objEnemy) + r*cos(BASE_A);
+		let to_y = ObjMove_GetY(objEnemy) + r*sin(BASE_A);
+		S08_EffectConcentrationPoint(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), to_x, to_y, [192, 128, 32], 1, 90);
+	}
+	STAY(90);
+	let objSword2 = CreateSaraSword(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), BASE_A, BASE_L, BASE_W);
+	Obj_Delete(objSword);
+	SetAction(objEnemy, ACT_SHOT2, 30);
+	CallSound(sndMetal);
+	EFF();
+	STAY(90);
+	Obj_Delete(objSword2);
+	
+	function STAY(timer)
+	{
+		loop(timer)
+		{
+			if (!eAlive) { break; }
+			ObjMove_SetPosition(objSword, ObjMove_GetX(objEnemy)+BASE_R*cos(BASE_A), ObjMove_GetY(objEnemy)+BASE_R*sin(BASE_A));
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	task EFF()
+	{
+		let timer = 30;
+		let size = 8;
+		ascent (i in 0 .. 15)
+		{
+			let bx = ObjMove_GetX(objEnemy);
+			let by = ObjMove_GetY(objEnemy);
+			_BossFinalExplodeB(bx, by,
+				randEffect(0,360), timer, randEffect(0,size^2)^0.5, randEffect(64,160), randEffect(64,160), randEffect(64,160));
+			waitObj(objEnemy, 1);
+		}
+	}
+}
+function CreateSaraSwordB(x, y, angle, size, size_w)
+{
+	let objDummy = CreateShotA1(x, y, 0, angle, BGW_BALL_S_WHITE, 0);
+	SetShotDisabled(objDummy);
+	Obj_SetVisible(objDummy, false);
+	Obj_SetValue(objDummy, "SIZE", size);
+	Obj_SetValue(objDummy, "SIZE_W", size_w);
+	TMove(objDummy, size);
+	return(objDummy);
+	
+	task TMove(objDummy, size)
+	{
+		let objS = PorcelainShot(x, y, PORCELAIN_SWORD, size, 15);
+		ObjMove_SetAngle(objS, angle);
+		ObjShot_SetAutoDelete(objS, false);
+		Obj_SetValue(objS, "SIZE_W", Obj_GetValueD(objDummy, "SIZE_W", 0));
+		Obj_SetValue(objS, "SIZE", Obj_GetValueD(objDummy, "SIZE", 0));
+		let objImg = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+		ascent(i in 0 .. length(objImg)) { Obj_SetRenderPriorityI(objImg[i], priorityBoss-1); }
+		
+		while(!Obj_IsDeleted(objDummy) && !Obj_IsDeleted(objS))
+		{
+			let r = size;
+			Obj_SetValue(objS, "SIZE_W", Obj_GetValueD(objDummy, "SIZE_W", 0));
+			Obj_SetValue(objS, "SIZE", Obj_GetValueD(objDummy, "SIZE", 0));
+			ObjMove_SetAngle(objS, ObjMove_GetAngle(objDummy));
+			ObjMove_SetPosition(objS, ObjMove_GetX(objDummy)+r*cos(ObjMove_GetAngle(objDummy)),
+						ObjMove_GetY(objDummy)+r*sin(ObjMove_GetAngle(objDummy)));
+			yield;
+		}
+		Obj_Delete(objS);
+	}
+}
+
+task S08_EffectConcentrationPoint(x, y, to_x, to_y, color, count, timer)
+{
+	let objDummy = CreateShotA1(to_x, to_y, 0, 0, BGW_BALL_S_WHITE, 0);
+	SetShotDisabled(objDummy);
+	ObjShot_SetDeleteFrame(objDummy, timer+60);
+	Obj_SetVisible(objDummy, false);
+	EffectConcentrationPoint(x, y, objDummy, color, count, timer);
+}

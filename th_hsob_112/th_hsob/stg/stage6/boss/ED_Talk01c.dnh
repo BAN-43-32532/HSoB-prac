@@ -1,0 +1,184 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["咲夜エンディング-Good"]
+#Text["咲夜エンディング-Good"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdGood[2][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 108, 255];
+	let COL2 = [255, 108, 108];
+	let COL3 = [192, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館。[r]幻想郷には色彩が戻って来たが、この館は相変わらず赤一色である。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "レミリア[r]「ところで咲夜、禁呪塔では危なかったわね」", COL2);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「ええお嬢様。不思議な幻に助けられましたが」", COL1);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "パチュリー[r]「それにしても最近多いわね。外の世界からの大物の来訪…まあうちに居るのは小さい奴だけど」", COL3);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "コリン[r]「へーぷし」", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "[r]幻想郷は全てを受け入れる、という言葉は有名であるが、実際は、ルールを守らず出入りしようとする者に寛容ではない。", COL0);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "[r]神様や妖怪への信仰が希薄化した外界との過度な接触は、そうした者たちの楽園である幻想郷にとって、劇薬となり得るからだ。", COL0);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]どうにも、ルールを無視して殴り込んで来る者たちは、有名すぎる者が多い故か、そこら辺の配慮が足りない。", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "パチュリー[r]「外の世界との接触は確実に増えている…。咲夜、館の外では、幻想郷はどんな変化をしている？」", COL3);
+		}
+		case(10)
+		{
+			TEndingImage(imgEdGood[2][1], 30);
+			SetTalkEx(cutinDescri, "咲夜[r]「そうですねぇ。付喪神たちが外の世界の道具となったり、鳥たちがSNS（サエズリ・ネットワーキング・システム）を使うようになったり…", COL1);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "レミリア[r]「ず、ずいぶん現代化して来たわねぇ。ど、どうせ私のような純粋な強者には敵わないのに」", COL2);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「お嬢様、声が震えております。弱き者なればこそ、新たな手段での生き残りを模索するのかも知れませんわ」", COL1);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "[r]山の上の神社移転以来、外の世界からの来訪者は俄かに増えつつある。", COL0);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r]そして、それは幻想郷に生きる人間や妖怪達に、緩やかな変化をもたらしつつある。", COL0);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]外の世界の力。霊的な存在を否定する科学の力。そこに妖怪や神々が手を出したならば…？[r]彼らは、そして幻想郷はどうなってしまうのだろうか。", COL0);
+		}
+		case(16)
+		{
+			TEndingImage(imgEdGood[2][2], 30);
+			SetTalkEx(cutinDescri, "レミリア[r]「私たちもパンドラの箱に手を出してみるか？　例えば不死なる機械の身体を持ったレミリアボーグ…」", COL2);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "パチュリー[r]「喘息と睡眠不足に悩まされないパチュリーボーグ…」", COL3);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「私は、生きているお嬢様の僕ですわ。あとパチュリー様は運動して下さい」", COL1);
+		}
+		case(19)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館。永き時を刻み続ける館。", COL0);
+		}
+		case(20)
+		{
+			SetTalkEx(cutinDescri, "[r]たとえ館や主がどのような未来を歩もうとも、咲夜は一生涯を共にする所存である。[r]もっとも、それが主にとって幸せな未来なら、であるが。", COL0);
+		}
+		case(21)
+		{
+			SetTalkEx(cutinDescri, "[r]さあ、まずは主の為に紅魔館の面子を保て！[r]エキストラで妖怪達の残党を掃討せよ！", COL0);
+		}
+		case(22)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.03　　そもそも君らも外来の敵でしょ", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

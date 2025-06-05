@@ -1,0 +1,453 @@
+#include "../../lib/lib_HighScore.dnh"
+
+// ぷれいやーでーた
+function ScenePlayerData()
+{
+	let D_ACIEVE = 99;	// 実績用
+	let imgValue = [PLAYER_REIMU_A, PLAYER_MARISA_A, PLAYER_SAKUYA_A];
+	let imgValue2 = [D_EASY, D_NORM, D_HARD, D_LUNA];
+//	let imgValue2 = [D_EASY, D_NORM, D_HARD, D_LUNA, D_EXTRA, D_ACIEVE];
+	let imgColor = [[255, 96, 96], [128, 128, 255], [80, 255, 255], [255, 255, 80]];
+	
+	let WEAPONS = [-1, WEAPON_RED, WEAPON_PURPLE, WEAPON_BLUE, WEAPON_SKY, WEAPON_GREEN, WEAPON_YELLOW, WEAPON_ORANGE, WEAPON_WHITE, WEAPON_BLACK];
+	let WEAPONS_EX = [-1, WEAPON_RAINBOW, WEAPON_WHITE, WEAPON_BLACK];
+
+	// 解禁ﾌﾗｸﾞ系
+	if (DEBUG_MODE || GetAreaCommonData(CAREA_SAVE, "PLAYER_KAGUYA", false ))
+		{ imgValue = [PLAYER_REIMU_A, PLAYER_MARISA_A, PLAYER_SAKUYA_A, PLAYER_KAGUYA_A]; }
+	if (DEBUG_MODE || GetAreaCommonData(CAREA_SAVE, "ExtraStandby", false ))
+		{ imgValue2 = [D_EASY, D_NORM, D_HARD, D_LUNA, D_EXTRA]; }
+
+	let selectMax = length(imgValue);
+	let selectMax2 = length(imgValue2);
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", 0);	// プレイヤー
+	Obj_SetValue(objParent, "VALUE2", 0);	// 難易度
+	Obj_SetValue(objParent, "VALUE3", 0);	// 装備
+
+	//メニュー配置
+	local
+	{
+		let mx = 64;
+		let my = 138;
+		TMenuItemPlayerData_Pl(objParent, 128, 128);
+		TMenuItemPlayerData_Diff(objParent, GetScreenWidth/2, 160);
+		TMenuItemPlayerData_Eq(objParent, GetScreenWidth/2+54, 160-4);
+		// チェック用タスク
+		TMenuItemPlayerData_Check(objParent);
+		// タイトル
+		MenuPartsFace(objParent, 7);
+		// 操作説明
+		TMenuItemSingle(objParent, [8,480-40], [0,192,512,256], 0.75, imgTtSelectPData);
+	}
+	wait(5);
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL, VK_USER1, VK_USER2]);
+		
+		alternative (downKey)
+		case (VK_UP)
+		{
+			let beforeSelect = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueEx(objParent, "VALUE2", -1, selectMax2);
+			let newSelect = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+			if (beforeSelect == D_EXTRA || newSelect == D_EXTRA)
+			{
+				Obj_SetValue(objParent, "VALUE3", 0);
+			}
+		}
+		case (VK_DOWN)
+		{
+			let beforeSelect = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueEx(objParent, "VALUE2", 1, selectMax2);
+			let newSelect = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+			if (beforeSelect == D_EXTRA || newSelect == D_EXTRA)
+			{
+				Obj_SetValue(objParent, "VALUE3", 0);
+			}
+		}
+		case (VK_LEFT)
+		{
+			if (imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)] == D_ACIEVE)
+			{
+				// 実績
+			}
+			else
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValueEx(objParent, "VALUE", -1, selectMax);
+			}
+		}
+		case (VK_RIGHT)
+		{
+			if (imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)] == D_ACIEVE)
+			{
+				// 実績
+			}
+			else
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValueEx(objParent, "VALUE", 1, selectMax);
+			}
+		}
+		case (VK_USER1)
+		{
+			let newSelect = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+			if (newSelect != D_EXTRA)
+			{
+				Menu_AddValueEx(objParent, "VALUE3", 1, length(WEAPONS));
+			}
+			else
+			{
+				Menu_AddValueEx(objParent, "VALUE3", 1, length(WEAPONS_EX));
+			}
+			CallSoundPackage(sndTtSelect);
+		}
+		case (VK_USER2)
+		{
+			let newSelect = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+			if (newSelect != D_EXTRA)
+			{
+				Menu_AddValueEx(objParent, "VALUE3", -1, length(WEAPONS));
+			}
+			else
+			{
+				Menu_AddValueEx(objParent, "VALUE3", -1, length(WEAPONS_EX));
+			}
+			CallSoundPackage(sndTtSelect);
+		}
+		case (VK_CANCEL)
+		{
+			// BGM流しなおし
+			CallSoundPackage(sndTtCancel);
+			break;
+		}
+		wait(2);	//適当に固定ディレイ
+	}
+	Obj_Delete(objParent);
+	
+	// メニュー選択時モーション
+	function MenuEnter(parent)
+	{
+//		CallSoundPackage(sndTtDecide);
+		Obj_SetValue(parent, "FLASH", 1);
+		wait(18);
+		Obj_SetValue(parent, "FLASH", 0);
+	}
+
+	task TMenuItemSingle(parent, pos, ipos, scale, path)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjPrim_SetTexture(objText, path);
+		ObjRender_SetPosition(objText, pos[0], pos[1], 0);
+		ObjSprite2D_SetSourceRect(objText, ipos[0], ipos[1], ipos[2], ipos[3]);
+		ObjSprite2D_SetDestRect(objText, 0, 0, (ipos[2]-ipos[0])*scale, (ipos[3]-ipos[1])*scale);
+		let alpha = 0;
+		while(!Obj_IsDeleted(parent))
+		{
+			if (alpha < 255)
+			{
+				alpha += 15;
+				ObjRender_SetAlpha(objText, alpha);
+			}
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+	// チェック用
+	task TMenuItemPlayerData_Check(parent)
+	{
+		let before_index = -99999;
+		let before_index2 = -99999;
+		let before_index3 = -99999;
+		while(!Obj_IsDeleted(parent))
+		{
+			if (before_index != Obj_GetValueD(parent, "VALUE", -1)
+				|| before_index2 != Obj_GetValueD(parent, "VALUE2", -1)
+				|| before_index3 != Obj_GetValueD(parent, "VALUE3", -1))
+			{
+				before_index = Obj_GetValueD(parent, "VALUE", -1);
+				before_index2 = Obj_GetValueD(parent, "VALUE2", -1);
+				before_index3 = Obj_GetValueD(parent, "VALUE3", -1);
+
+				if (imgValue2[before_index2] == D_ACIEVE)
+				{
+					// 実績
+				}
+				else
+				{
+					// スコア
+					let col = imgColor[Obj_GetValueD(parent, "VALUE", 0)];
+					let diff = imgValue2[Obj_GetValueD(objParent, "VALUE2", 0)];
+					let tmp_eq = Obj_GetValueD(objParent, "VALUE3", 0);
+					let equips = [];
+					if (diff != D_EXTRA)
+					{
+						if (WEAPONS[tmp_eq%length(WEAPONS)] < 0) { equips = WEAPONS; }
+						else { equips = [WEAPONS[tmp_eq%length(WEAPONS)]]; }
+					}
+					else
+					{
+						if (WEAPONS_EX[tmp_eq%length(WEAPONS_EX)] < 0) { equips = WEAPONS_EX; }
+						else { equips = [WEAPONS_EX[tmp_eq%length(WEAPONS_EX)]]; }
+					}
+					
+					ascent(i in 0 .. 10)
+					{
+						let bx = 76;
+						let by = 192 + i*24;
+						
+						let tmp = i/9;
+						let cr = 255*(1-tmp) + col[0]*tmp;
+						let cg = 255*(1-tmp) + col[1]*tmp;
+						let cb = 255*(1-tmp) + col[2]*tmp;
+						TMenuItemPlayerData(parent, i, bx, by, [cr,cg,cb], equips)
+					}
+				}
+			}
+			yield;
+		}
+	}
+	// メニューパーツ
+	task TMenuItemPlayerData_Diff(parent, base_x, base_y)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjPrim_SetTexture(objText, imgTtSelectPData);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjSprite2D_SetDestRect(objText, -64, -16, 64, 16);
+		
+		let objArrow = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		ascent(i in 0 .. 2)
+		{
+			Obj_SetRenderPriorityI(objArrow[i], 20);
+			ObjPrim_SetTexture(objArrow[i], imgTtPage);
+			ObjSprite2D_SetSourceRect(objArrow[i], 0, 0, 128, 128);
+			ObjSprite2D_SetDestRect(objArrow[i], -20, -20, 20, 20);
+		}
+		ObjRender_SetAngleZ(objArrow[1], 180);
+		ObjRender_SetPosition(objArrow[0], base_x, base_y-21, 0);
+		ObjRender_SetPosition(objArrow[1], base_x, base_y+21, 0);
+		
+		let t = 0;
+		let before_index = -99999;
+		let selected_index = -1;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE2", -1);
+			if (before_index != selected_index)
+			{
+				alternative(imgValue2[selected_index])
+				case(D_EASY) { ObjSprite2D_SetSourceRect(objText, 128, 0, 256, 32); }
+				case(D_NORM) { ObjSprite2D_SetSourceRect(objText, 128, 32, 256, 64); }
+				case(D_HARD) { ObjSprite2D_SetSourceRect(objText, 128, 64, 256, 96); }
+				case(D_LUNA) { ObjSprite2D_SetSourceRect(objText, 128, 96, 256, 128); }
+				case(D_EXTRA) { ObjSprite2D_SetSourceRect(objText, 128, 128, 256, 160); }
+				case(D_ACIEVE) { ObjSprite2D_SetSourceRect(objText, 128, 224, 256, 256); }
+				before_index = selected_index;
+			}
+			ascent(i in 0 .. 2)
+			{
+				let tmp_c = sin(t*8)*128+255;
+				ObjRender_SetColor(objArrow[i], tmp_c, tmp_c, tmp_c);
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objText);
+		Obj_Delete(objArrow[0]);
+		Obj_Delete(objArrow[1]);
+	}
+	task TMenuItemPlayerData_Pl(parent, base_x, base_y)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjPrim_SetTexture(objText, imgTtSelectPData);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjSprite2D_SetDestRect(objText, -64, -16, 64, 16);
+		
+		let objArrow = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		ascent(i in 0 .. 2)
+		{
+			Obj_SetRenderPriorityI(objArrow[i], 20);
+			ObjPrim_SetTexture(objArrow[i], imgTtPage);
+			ObjSprite2D_SetSourceRect(objArrow[i], 0, 0, 128, 128);
+			ObjSprite2D_SetDestRect(objArrow[i], -20, -20, 20, 20);
+		}
+		ObjRender_SetAngleZ(objArrow[0], 270);
+		ObjRender_SetAngleZ(objArrow[1], 90);
+		ObjRender_SetPosition(objArrow[0], base_x-68, base_y, 0);
+		ObjRender_SetPosition(objArrow[1], base_x+68, base_y, 0);
+		
+		let t = 0;
+		let before_index = -99999;
+		let selected_index = -1;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			if (before_index != selected_index)
+			{
+				alternative(imgValue[selected_index])
+				case(PLAYER_REIMU_A) { ObjSprite2D_SetSourceRect(objText, 0, 0, 128, 32); }
+				case(PLAYER_MARISA_A) { ObjSprite2D_SetSourceRect(objText, 0, 32, 128, 64); }
+				case(PLAYER_SAKUYA_A) { ObjSprite2D_SetSourceRect(objText, 0, 64, 128, 96); }
+				case(PLAYER_KAGUYA_A) { ObjSprite2D_SetSourceRect(objText, 0, 96, 128, 128); }
+				
+				before_index = selected_index;
+			}
+			ascent(i in 0 .. 2)
+			{
+				let tmp_c = sin(t*8+180)*128+255;
+				ObjRender_SetColor(objArrow[i], tmp_c, tmp_c, tmp_c);
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objText);
+		Obj_Delete(objArrow[0]);
+		Obj_Delete(objArrow[1]);
+	}
+	task TMenuItemPlayerData_Eq(parent, base_x, base_y)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetPrimitiveType(objText, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetTexture(objText, imgSystemAsciiEquip);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjPrim_SetVertexCount(objText, 6);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjRender_SetScaleXYZ(objText, 0.6, 0.6, 0.6);
+		
+		let before_index2 = -99999;
+		let before_index3 = -99999;
+		while(!Obj_IsDeleted(parent))
+		{
+			if (before_index3 != Obj_GetValueD(parent, "VALUE3", -1)
+				|| before_index2 != Obj_GetValueD(parent, "VALUE2", -1))
+			{
+				let diff = imgValue2[Obj_GetValueD(parent, "VALUE2", -1)];
+				let equip = -1;
+				if (diff != D_EXTRA) { equip = WEAPONS[Obj_GetValueD(parent, "VALUE3", 0)]; }
+				else { equip = WEAPONS_EX[Obj_GetValueD(parent, "VALUE3", 0)]; }
+				
+				let pos = [ 0+32*equip, 0, 32+32*equip, 32];
+				if (equip < 0) { pos = [ 0, 0, 0, 0 ]; }
+				AddImg_Triangle01(objText, 0,
+						pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+						0, 0, 32, 32);	//貼り付け範囲
+				
+				before_index2 = Obj_GetValueD(parent, "VALUE2", -1);
+				before_index3 = Obj_GetValueD(parent, "VALUE3", -1);
+			}
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+
+	task TMenuItemPlayerData(parent, index, base_x, base_y, color, equips)
+	{
+		let carea = GetHighScoreString(
+			LoadHighScoresPlayer(imgValue2[Obj_GetValueD(parent, "VALUE2", 0)],
+				imgValue[Obj_GetValueD(parent, "VALUE", 0)],
+				equips)[index]
+			);
+
+		let objTexts = [
+			CreateAsciiText(vtos("2d", index+1)),
+			CreateAsciiText(vtos("14.0f", ator(GetAreaCommonData(carea, "S", 0)))),
+			CreateEquipText(GetAreaCommonData(carea, "E", 0)),
+			CreateAsciiText(GetAreaCommonData(carea, "D", 0)),
+			CreateAsciiText(vtos("-9s", GetAreaCommonData(carea, "C", 0))),
+			CreateEquipText2(GetAreaCommonData(carea, "Esub", 0)),
+			];
+		
+		let flgRainbow = (GetAreaCommonData(carea, "E", 0) == WEAPON_RAINBOW);
+		if (flgRainbow)
+		{
+			ObjRender_SetPosition(objTexts[0], base_x, base_y, 0);
+			ObjRender_SetPosition(objTexts[1], base_x+32, base_y, 0);
+			ObjRender_SetPosition(objTexts[2], base_x+230, base_y, 0);
+			ObjRender_SetPosition(objTexts[3], base_x+270, base_y, 0);
+			ObjRender_SetPosition(objTexts[4], base_x+440, base_y, 0);
+			ObjRender_SetPosition(objTexts[5], base_x+245, base_y, 0);
+		}
+		else
+		{
+			ObjRender_SetPosition(objTexts[0], base_x, base_y, 0);
+			ObjRender_SetPosition(objTexts[1], base_x+32, base_y, 0);
+			ObjRender_SetPosition(objTexts[2], base_x+230, base_y, 0);
+			ObjRender_SetPosition(objTexts[3], base_x+270, base_y, 0);
+			ObjRender_SetPosition(objTexts[4], base_x+440, base_y, 0);
+			Obj_SetVisible(objTexts[5], false);
+		}
+		
+		let ct = length(objTexts);
+		ascent(i in 0 .. ct)
+		{
+			ObjRender_SetScaleXYZ(objTexts[i], 0.65, 0.65, 1);
+			if (!(i == 2 || i == 5)) { ObjRender_SetColor(objTexts[i], color[0], color[1], color[2]); }
+		}
+		
+		let before_index = Obj_GetValueD(parent, "VALUE", -1);
+		let before_index2 = Obj_GetValueD(parent, "VALUE2", -1);
+		let before_index3 = Obj_GetValueD(parent, "VALUE3", -1);
+		let alpha = 0;
+		while(!Obj_IsDeleted(parent))
+		{
+			if (before_index != Obj_GetValueD(parent, "VALUE", -1)
+				|| before_index2 != Obj_GetValueD(parent, "VALUE2", -1)
+				|| before_index3 != Obj_GetValueD(parent, "VALUE3", -1))
+			{
+				break;
+			}
+			yield;
+		}
+		ascent(i in 0 .. ct)
+		{
+			Obj_Delete(objTexts[i]);
+		}
+	}
+
+	// 装備文字をテキスト化
+	function CreateEquipText(equip)
+	{
+		let objString = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(objString, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetTexture(objString, imgSystemAsciiEquip);
+		Obj_SetRenderPriorityI(objString, 80);
+		ObjPrim_SetVertexCount(objString, 6);
+
+		let pos = [ 0+32*equip, 0, 32+32*equip, 32];
+		AddImg_Triangle01(objString, 0,
+				pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+				0, 0, 32, 32);	//貼り付け範囲
+		return(objString);
+	}
+	function CreateEquipText2(equip_sub)
+	{
+		let scale = 0.75;
+		let ct = length(equip_sub);
+		let ct_scale = 2/(2+max(0,ct-2)/2);
+		let objString = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(objString, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetTexture(objString, imgSystemAsciiEquip);
+		Obj_SetRenderPriorityI(objString, 80);
+		ObjPrim_SetVertexCount(objString, 6*ct);
+
+		ascent(i in 0 .. ct)
+		{
+			let equip = equip_sub[i];
+			let pos = [ 0+32*equip, 0, 32+32*equip, 32];
+			AddImg_Triangle01(objString, i*6,
+					pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+					(0+i*24*ct_scale)*scale, 32-32*scale, (32+i*24*ct_scale)*scale, 32);	//貼り付け範囲
+		}
+		return(objString);
+	}
+}

@@ -1,0 +1,151 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["乱々通常1"]
+#Text["乱々通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ranran.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2200);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(30);		}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_RANRAN);	//ボスセット
+	// アイテム数
+	bossDropItem = 50;
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 1, CHAPTER_BOSS);
+
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 120, 60);
+	waitObj(objEnemy, 60);
+
+	let wt = [240, 210, 180, 150][Difficult];
+	
+	let muki = 1;
+	while(eAlive)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy)-60*muki, ObjMove_GetY(objEnemy), 0, 0, muki);
+		RanranActSet(objEnemy, 60, 150);
+		CallSound(sndBoon);
+		waitObj(objEnemy, wt);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 120, 64);
+		waitObj(objEnemy, 60);
+		muki = -muki;
+	}
+}
+// 筆ショット
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	let iniMuki = iniValue;
+	let baseAngle = 90;
+	
+	let eSize = ENEMY_SS;
+	let eColor = EFF_RED;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 999999, eSize);
+	SetEnemyVisible(objFamilier, false);
+	DrawRanranOption(objFamilier);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		waitObj(objFamilier, 60);
+		ascent(t in 0 .. 180)
+		{
+			if (Obj_IsDeleted(objFamilier)) { return; }
+			let tmp = (1-cos((t+1)/180*180))/2;
+			let r = tmp*48;
+			let a = 90 + tmp*360*2.5*iniMuki;
+			ObjMove_SetPosition(objFamilier, iniX+iniMuki*240*tmp+r*cos(a), iniY+120*tmp+r*sin(a));
+			baseAngle = a;
+			waitObj(objFamilier, 1);
+		}
+		if (Obj_IsDeleted(objFamilier)) { return; }
+		EraseEnemy(objFamilier);
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, 60);
+		
+		let shot_speed = [1, 1, 1.5, 2][Difficult];
+		let base_angle = rand(0,360);
+		let graphic = BGW_SCALE_RED;
+		let way = [1, 1, 2, 3][Difficult];
+		let way2 = [2, 2, 2, 2][Difficult];
+		
+		let wt = 2;
+		
+		let st = 0;
+		ascent(t in 0 .. 180)
+		{
+			if (Obj_IsDeleted(objFamilier)) { break; }
+			if (t%wt == 0)
+			{
+				let ss = rand(1, 1.25);
+				let sa = -90 - iniMuki*30+rand(-5,5);
+				My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss*5, sa, -ss/5, ss, BGW_WATER_RED, 15);
+				
+				let tmp = t/120;
+				let to_sa = baseAngle + iniMuki*90;
+				let to_ss = shot_speed * (1 - (st%2)*0.25);
+				if (Difficult <= D_EASY && st%2 == 0) { RedRedShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), to_ss, to_sa, graphic, 15, 0, 0); }
+				else { RedRedShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), to_ss, to_sa, graphic, 15, way, way2); }
+				
+				CallSound(sndShot2);
+				st++;
+			}
+			waitObj(objFamilier, 1);
+		}
+
+		task RedRedShot(x, y, speed, angle, graphic, delay, way, way2)
+		{
+			let obj = My_CreateShotA1(x, y, 0, 90, ADD_BGW_BALL_S_RED, 15);
+			wait(60);
+			if (!Obj_IsDeleted(obj))
+			{
+				ascent(i in 0 .. way)
+				{
+					ascent(j in 0 .. way2)
+					{
+						let sa = i*360/way + (j-(way2-1)/2)*2 + angle;
+						let to_obj = My_CreateShotA1(x, y, 0.2, sa, graphic, delay);
+						ObjMove_AddPatternA2(to_obj, 60, NO_CHANGE, NO_CHANGE, speed/60, 0, speed);
+					}
+				}
+				DeleteBulletEffect(obj);
+			}
+		}
+	}
+}

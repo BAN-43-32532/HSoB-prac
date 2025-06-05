@@ -1,0 +1,294 @@
+//　Stage2
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+
+let flagEnd = false;
+let flgScriptValue = 0;
+
+//　ステージの背景テクスチャ
+let world04_path;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_CloseScript)
+	{
+		//背景削除
+		flagEnd = true;
+		BlackOutEx( world_layer+2, 0, 120, false, [128,96,64] );
+		CloseMine(300);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world04_path = LoadingImageFile_StgWorld(4);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld04a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,world04_path[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	ObjRender_SetPosition(obj,MinX,MinY,0);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task SetWorld04a()
+{
+	let obj		= [
+		CreateTexture01( world04_path[0] ),
+		CreateTexture01( world04_path[1] ),
+		CreateTexture01( world04_path[1] ),
+	];
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let ctr		= 0;
+	
+	//　モノクロシェーダ
+	let sLayer	= [ world_layer, world_layer+1 ];
+	let seed	= 0;
+	let count	= 0;
+	let rt	= CreateRenderTexture( "Monochrome", sLayer[0], sLayer[1], true );
+	let tex	= CreateShaderTexture( rt, BLEND_ALPHA, sLayer[1] );
+	let shd	= CreateShaderObject( tex, 0 );
+	ObjShader_SetTexture( shd, "g_Texture", fxMask[0] );
+	
+	//　霧用のダミー
+	ObjRender_SetPosition( obj[0], -1024-512, 0, 0 );
+	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　草（下
+	ObjRender_SetPosition( obj[1], -512, -128 - 8, 0 );
+	ObjRender_SetAngleXYZ( obj[1], 90, 0, 90 );
+	ObjRender_SetColor( obj[1], 192, 192, 192 );
+	
+	//　草（上
+	ObjRender_SetPosition( obj[2], -512, -128, 0 );
+	ObjRender_SetAngleXYZ( obj[2], 90, 180, 90 );
+	ObjRender_SetAlpha( obj[2], 128 );
+	Obj_SetRenderPriorityI( obj[2], world_layer+1 );
+	
+	//　今は無限です
+	while( true ){
+		let spd = 1.25;
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjShader_SetFloat( shd, "m_seed", seed );
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetFloat( shd, "m_count", count );
+		ObjShader_SetFloat( shd, "m_alpha", 1 );
+		RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		
+		SetFogParam( 0, move1*1024, 128, 64, 64 );
+		SetCameraFocusXYZ( 0, 0, 0 );
+		SetCameraRadius( 64 );
+		SetCameraAzimuthAngle( 0 + 0 * cos(frame/8) );
+		SetCameraElevationAngle( 8 + 0 * sin(frame/4) );
+		
+		ObjSprite3D_SetSourceDestRect( obj[1], 0, 0 + frame*spd, 1024, 1024 + frame*spd );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0, 0 - frame*spd, 1024, 1024 - frame*spd );
+		
+		if( frame%16 == 0 ){
+			World04Object02( [-randEffect(0,512),0,randEffect(-192,192)], [spd,0,0], [randEffect(0.1,0.4),1,0], [0,0,180+8], 120, [255,192,128], randEffect(32,64) );
+		}
+		
+		if( frame%90 == 0 ){
+			World04Object01( [-1024,-128-randEffect(2,6),0+randEffect(-256,256)], [spd,0,0], 780, 1 );
+			//　木
+			if( ctr%2 == 0 ){
+				World04Object03( [-1024,192-randEffect(0,72),128-randEffect(0,64)], [spd,0.02,-0.1], 780, [-1,1,1] );
+			}
+			else{
+				World04Object03( [-1024,192-randEffect(0,72),-192-randEffect(0,64)], [spd,0.02,0], 780, [1,1,1] );
+			}
+			ctr++;
+		}
+		
+		if( frame%4 == 0 ){
+			//　動いてるとき
+			//CreateFallLeaf( [randEffect(-256,-768),randEffect(-256,256),randEffect(-256,256)], [randEffect(spd,spd*2),randEffect(-0.5,-1),randEffect(-0.5,-1)], randEffect(0.2,0.4), 64, randEffect(0,120), [255,randEffect(192,255),64], true );
+			//　動いてないとき
+			CreateFallLeaf( [randEffect(-256,-768),randEffect(-256,256),randEffect(-256,256)], [randEffect(spd,spd*2),0,0], randEffect(0.2,0.4), 64, randEffect(0,120), [255,randEffect(192,255),64], false );
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 1; }
+		count += 0.01;
+		if( count > 1 ) {
+			count = 0;
+			seed++;
+		}
+		
+		yield;
+	}
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+	Obj_Delete( tex );
+	Obj_Delete( shd );
+}
+
+
+//　落ち葉
+task World04Object01( m_pos, add_pos, m_kill, scale ){
+	let frame = 0;
+	
+	//　モデル初期化
+	let obj		= ObjMesh_Create();
+	ObjMesh_Load( obj, world04_path[2] );
+	Obj_SetRenderPriorityI( obj, world_layer );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjRender_SetAngleY( obj, randEffect(0,360) );
+	ObjRender_SetScaleXYZ( obj, scale, scale, scale );
+	
+	while( true && frame < m_kill ){
+		ObjRender_SetPosition( obj, m_pos[0], m_pos[1], m_pos[2] );
+		
+		frame++;
+		m_pos[0] = m_pos[0] + add_pos[0];
+		m_pos[1] = m_pos[1] + add_pos[1];
+		m_pos[2] = m_pos[2] + add_pos[2];
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+
+//　はしご
+task World04Object02( pos, movep, sca, angle, long, rgb_array, alpha ){
+	let obj			= ObjPrim_Create(OBJ_SPRITE_3D);
+	let objScene 	= GetEnemyBossSceneObjectID();
+	let OnSpell		= ObjEnemyBossScene_GetInfo(objScene,INFO_IS_SPELL);
+	let move		= [0,0,0];
+	let frame		= 0;
+	let move1		= 0;
+	let moveA		= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], pos[2] );
+	ObjPrim_SetTexture( obj, world04_path[4] );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	Obj_SetRenderPriorityI( obj, world_layer+1 );
+	ObjRender_SetScaleXYZ( obj, sca[0], sca[1], sca[2] );
+	ObjRender_SetColor( obj, rgb_array[0], rgb_array[1], rgb_array[2] );
+	ObjSprite3D_SetSourceDestRect( obj, 0, 0, 256, 256 );
+	ObjRender_SetAngleXYZ( obj, angle[0], angle[1], angle[2] );
+	ObjSprite3D_SetBillboard( obj, true );
+	
+	while( move1 < 1 ){
+		objScene 	= GetEnemyBossSceneObjectID();
+		OnSpell		= ObjEnemyBossScene_GetInfo(objScene,INFO_IS_SPELL);
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetPosition( obj, pos[0]+move[0], pos[1]+move[1], pos[2]+move[2] );
+		ObjRender_SetAlpha( obj, move1*alpha );
+		
+		if( !OnSpell ){
+			frame++;
+			moveA += 1;
+			move[0] = move[0] + movep[0];
+			move[1] = move[1] + movep[1];
+			move[2] = move[2] + movep[2];
+		}
+		else{ break; }
+		
+		yield;
+	}
+	move1 = 0;
+	moveA = 0;
+	while( frame < long ){
+		objScene 	= GetEnemyBossSceneObjectID();
+		OnSpell		= ObjEnemyBossScene_GetInfo(objScene,INFO_IS_SPELL);
+		
+		ObjRender_SetPosition( obj, pos[0]+move[0], pos[1]+move[1], pos[2]+move[2] );
+		
+		if( !OnSpell ){
+			frame++;
+			move[0] = move[0] + movep[0];
+			move[1] = move[1] + movep[1];
+			move[2] = move[2] + movep[2];
+		}
+		else{ break; }
+		
+		yield;
+	}
+	while( move1 < 1 ){
+		objScene 	= GetEnemyBossSceneObjectID();
+		OnSpell		= ObjEnemyBossScene_GetInfo(objScene,INFO_IS_SPELL);
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetPosition( obj, pos[0]+move[0], pos[1]+move[1], pos[2]+move[2] );
+		ObjRender_SetAlpha( obj, alpha - move1*alpha );
+		
+		if( !OnSpell ){
+			frame++;
+			moveA += 2;
+			move[0] = move[0] + movep[0];
+			move[1] = move[1] + movep[1];
+			move[2] = move[2] + movep[2];
+		}
+		else{ break; }
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+
+//　木
+task World04Object03( m_pos, add_pos, m_kill, scale ){
+	let frame = 0;
+	
+	//　モデル初期化
+	let obj		= ObjMesh_Create();
+	ObjMesh_Load( obj, world04_path[3] );
+	Obj_SetRenderPriorityI( obj, world_layer );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjRender_SetAngleY( obj, 90 );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], scale[2] );
+	
+	while( true && frame < m_kill ){
+		ObjRender_SetPosition( obj, m_pos[0], m_pos[1], m_pos[2] );
+		
+		frame++;
+		m_pos[0] = m_pos[0] + add_pos[0];
+		m_pos[1] = m_pos[1] + add_pos[1];
+		m_pos[2] = m_pos[2] + add_pos[2];
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}

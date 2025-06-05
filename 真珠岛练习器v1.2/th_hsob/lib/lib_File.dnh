@@ -1,0 +1,107 @@
+let imgDir	= GetCurrentScriptDirectory() ~ "../img/";
+let plDir	= GetCurrentScriptDirectory() ~ "../player/";
+let stageDir	= GetCurrentScriptDirectory() ~ "../stg/";
+let hlslDir	= GetCurrentScriptDirectory() ~ "hlsl/";
+let seDIR	= GetCurrentScriptDirectory() ~ "../se/";
+
+let imgDataFile	= imgDir ~ "img.dat";
+
+/*--------HLSLスクリプト--------*/
+let hlslBossWave	= hlslDir ~ "HLSL_BossWave.txt";
+let hlslGaussian	= hlslDir ~ "HLSL_Gaussian.txt";
+let hlslNoise		= hlslDir ~ "HLSL_Noise.txt";
+let hlslMonotone	= hlslDir ~ "HLSL_Monotone.txt";
+let hlslMulti		= hlslDir ~ "HLSL_MultiplyAlpha.txt";
+let hlslMaskFade	= hlslDir ~ "HLSL_MaskFade.txt";
+let hlslMask		= hlslDir ~ "HLSL_Mask.txt";
+let hlslMask2		= hlslDir ~ "HLSL_Mask2.txt";
+let hlslMask3		= hlslDir ~ "HLSL_Mask3.txt";
+let hlslDist		= hlslDir ~ "HLSL_Distortion.fx";
+let hlslBubble		= hlslDir ~ "HLSL_Bubble.txt";
+
+/*--------エフェクト--------*/
+let imgWhite	= imgDir ~ "white.png";
+let imgEffectPower	= imgDir ~ "effect/power_effect.png";
+let imgEffectBullet	= imgDir ~ "effect/bulleteffect.png";
+let imgEffectParticle	= imgDir ~ "effect/particle.png";
+let imgEffectCon	= imgDir ~ "effect/effcon02.png";
+let imgEffectExplode	= imgDir ~ "effect/explode.png";
+let imgEffectExplode2	= imgDir ~ "effect/explode2.png";
+let imgEffectExplode3	= imgDir ~ "effect/explode3.png";
+let imgEffectBaloon	= imgDir ~ "effect/baloon.png";
+let imgEffectTFrame	= imgDir ~ "effect/talkframe.png";
+let imgEffectMCircleS	= imgDir ~ "effect/circle_s.png";
+let imgEffectShutter	= imgDir ~ "effect/eff_shutter.png";
+let imgEffectMZodiac	= imgDir ~ "effect/zodiac_mini.png";
+let imgEffectChargeC	= imgDir ~ "effect/charge_circie.png";
+let imgEffectSlash	= imgDir ~ "effect/slash01.png";
+let imgEffectCircle	= imgDir ~ "effect/circle.png";
+let imgEffectCircleB	= imgDir ~ "effect/circle_b.png";
+let imgEffectNuclear	= imgDir ~ "effect/nuclear.png";
+let imgEffectExpCloud	= imgDir ~ "effect/expcloud.png";
+let imgEffectExpNormal	= imgDir ~ "effect/expnorm.png";
+
+let imgEffectTarget		= imgDir ~ "effect/target.png";
+let imgEffectFist		= imgDir ~ "effect/fist.png";
+let imgEffectWingShot		= imgDir ~ "effect/wingshot_rainbow.png";
+
+let imgEffectStageParticle	= imgDir ~ "effect/effect01b.png";
+let imgEffectStageLine		= imgDir ~ "effect/effect01c.png";
+let imgEffectStageCloud		= imgDir ~ "effect/aura01d.png";
+let imgEffectSpark			= imgDir ~ "effect/spark01a.png";
+let imgEffectSpark2			= imgDir ~ "effect/spark02a.png";
+let imgEffectSpark3			= imgDir ~ "effect/spark03a.png";
+
+/*--------システム--------*/
+let imgSystemBase01	= imgDir ~ "system/front01.png";
+let imgSystemAscii	= imgDir ~ "system/front02.png";
+let imgSystemDifficulty	= imgDir ~ "system/front03.png";
+let imgSystemExtend	= imgDir ~ "system/front_gauge.png";
+let imgSystemChapter	= imgDir ~ "system/chapter.png";
+let imgSystemZbomb	= imgDir ~ "system/zbomb.png";
+
+let imgSystemPause01	= imgDir ~ "system/pause.png";
+let imgSystemPause02	= imgDir ~ "system/pauseBG.png";
+let imgSystemStgClear	= imgDir ~ "system/clear01a.png";
+let imgSystemAscii2 	= imgDir ~ "system/basicfont.png";
+let imgSystemAsciiEquip 	= imgDir ~ "system/equiptext.png";
+let imgSystemItem 	= imgDir ~ "system/Item.png";
+let imgSystemWpIcon		= imgDir ~ "title/pl_wpicon.png";
+
+let imgSystemStgFrame	= imgDir ~ "system/stg_frame.png";
+let imgSystemNumber	= imgDir ~ "system/number_base.png";
+let imgSystemFPS	= imgDir ~ "system/number_fps.png";
+let imgSystemMarker	= imgDir ~ "system/marker.png";
+let imgSystemLife	= imgDir ~ "system/System_Life.png";
+let imgSystemMCircle	= imgDir ~ "system/magic03.png";
+let imgSystemAura	= imgDir ~ "system/aura.png";
+let imgSystemSCircle	= imgDir ~ "system/SpellCircle.png";
+let imgSystemSCircle2	= imgDir ~ "system/SpellCircle02.png";
+let imgSystemSCircle2b	= imgDir ~ "system/SpellCircle02b.png";
+let imgSystemBossName	= imgDir ~ "system/ename_all.png";
+let imgSystemFrame	= imgDir ~ "system/spellframe.png";
+let imgSystemShotBreak	= imgDir ~ "system/BulletBreak.png";
+let imgSystemMusic	= imgDir ~ "system/music_name.png";
+
+/*--------ステージ--------*/
+
+let imgZakoFairyRed	= imgDir ~ "world/zako/faily_red.png";
+let imgZakoFairyBlue	= imgDir ~ "world/zako/faily_blue.png";
+let imgZakoFairyGreen	= imgDir ~ "world/zako/faily_green.png";
+let imgZakoFairyYellow	= imgDir ~ "world/zako/faily_yellow.png";
+let imgZakoFairyDark	= imgDir ~ "world/zako/faily_dark.png";
+let imgZakoFairyEx	= imgDir ~ "world/zako/faily_ex1.png";
+let imgZakoFairyEx2	= imgDir ~ "world/zako/faily_ex2.png";
+let imgZakoFairyFrog	= imgDir ~ "world/zako/faily_frog.png";
+let imgZakoFairyEgypt	= imgDir ~ "world/zako/faily_egypt.png";
+let imgZakoOnmyou	= imgDir ~ "world/zako/Onmyoudama.png";
+let imgZakoHitodama	= imgDir ~ "world/zako/hitodama.png";
+let imgZakoOther	= imgDir ~ "world/zako/zako_other.png";
+let imgZakoStar		= imgDir ~ "world/zako/Star.png";
+let imgZakoBird		= imgDir ~ "world/zako/bird.png";
+let imgZakoBubble	= imgDir ~ "world/zako/bubble.png";
+let imgZakoRosary	= imgDir ~ "world/zako/Rosary.png";
+let imgZakoStone	= imgDir ~ "world/zako/stone.png";
+let imgZakoScarab	= imgDir ~ "world/zako/scarab.png";
+
+

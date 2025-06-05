@@ -1,0 +1,322 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ひかり子スペカ4"]
+#Text["ひかり子スペカ4"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Hikariko.dnh"
+
+let PHASE = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(450);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 25;
+	let SPELL_NAME = [10, 10, 11, 11][Difficult];
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	// アイテム数
+	bossDropItem = 0;
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_HIKARIKO);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"03a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+	
+	// 発狂ゲージ区切り
+	BossEffect_LifeCirclePartition(objEnemy, 72, 0.66);
+	BossEffect_LifeCirclePartition(objEnemy, 72, 0.33);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+
+	if (GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_MAIN)
+	{
+		standBy(objEnemy, CenX, CenY, 1);
+		SetAction(objEnemy, ACT_SHOT1, 60*120);
+		waitObj(objEnemy, 1);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, CenY, 180);
+		waitObj(objEnemy, 60);
+		
+		// 開幕
+		SetAction(objEnemy, ACT_SHOT1, 60*120);
+		BossCharge(objEnemy);
+		
+		let ba = rand(0, 360);
+		descent(i in 0 .. 9)
+		{
+			SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 1000, ba+i*4*360/9, 0, 90+i*10);
+			waitObj(objEnemy, 10);
+		}
+		waitObj(objEnemy, 75);
+	}
+	EffectExplodeCloudSet(CenX, CenY, 10, [16,32,96], 60, 15);
+	TChkLife();
+	S04Nuclear();
+
+	CallSpellCard(true);	//スペカ起動
+	
+	
+	waitObj(objEnemy, 60);
+	while(eAlive)
+	{
+		waitObj(objEnemy, 90);
+	}
+
+}
+
+task TChkLife()
+{
+	while(GetBossLifeRate(objEnemy) > 0.66) { wait(1); }
+	if (!eAlive) { return; }
+	PHASE++;
+	BossCharge(objEnemy);
+	CallSound(sndShot1);
+	EffectExplodeCloudSet(CenX, CenY, 10, [16,32,96], 60, 15);
+	while(GetBossLifeRate(objEnemy) > 0.33) { wait(1); }
+	if (!eAlive) { return; }
+	PHASE++;
+	BossCharge(objEnemy);
+	CallSound(sndShot1);
+	EffectExplodeCloudSet(CenX, CenY, 10, [16,32,96], 60, 15);
+}
+
+task S04Nuclear()
+{
+	let bx = CenX;
+	let by = CenY;
+	let nuclear_r = 64;
+	let max_r = nuclear_r;
+	let obj = NuclearShot(bx, by, [0,64,255], nuclear_r, 60);
+	
+	// ショット用
+	TShot_sub01();
+	TShot_sub02();
+	
+	let st = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		Obj_SetValue(obj, "SIZE", nuclear_r);
+		if (PHASE >= 2) { max_r = 64+16*2; }
+		else if (PHASE >= 1) { max_r = 64+16; }
+		nuclear_r = min(max_r, nuclear_r+1);
+		t++;
+		wait(1);
+	}
+	
+	// 粒
+	task TShot_sub01()
+	{
+		let speed = [0.66, 0.75, 1.1, 1.25][Difficult];
+		let way = [8, 10, 12, 14][Difficult];
+		let wt = [5, 4, 4, 3][Difficult];
+		let wt2 = [40, 30, 22, 16][Difficult];
+		let graphic = BGW_BALL_S_BLUE;
+		let add_speed = [speed/30, speed/24, speed/33, speed/45][Difficult];
+		
+		let angle = rand(0, 360);
+		let add_a = 137.5/way;
+		let r = 0;
+		let speed_base = speed;
+
+		let t = 0;
+		while(!Obj_IsDeleted(obj) && t < 60)
+		{
+			r = 360 * (t+1)/60;
+			if (t > 0 && t%wt == 0)
+			{
+				if (t > 12)
+				{
+					ascent(i in 0 .. way)
+					{
+						let sa = angle + i*360/way;
+						let sx = bx + cos(sa)*r;
+						let sy = by + sin(sa)*r;
+						FireShot(sx, sy, speed, sa+180, graphic, 30, 120, r-16);
+					}
+				}
+				CallSound(sndShot2);
+				angle += add_a;
+			}
+			t++;
+			wait(1);
+		}
+		while(!Obj_IsDeleted(obj))
+		{
+			if (PHASE >= 2)
+			{
+				speed = min(speed_base*1.75, speed+add_speed);
+			}
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + i*360/way;
+				let sx = bx + cos(sa)*r;
+				let sy = by + sin(sa)*r;
+				FireShot(sx, sy, speed, sa+180, graphic, 30, 120, r-16);
+			}
+			angle += add_a;
+			t++;
+			wait(wt2);
+		}
+	}
+	
+	task FireShot(x, y, speed, angle, grpahic, delay, timer, r)
+	{
+		if (CheckInPlayer(x, y, 48)) { return; }
+		
+		let obj = My_CreateShotA1(x, y, 0, angle, grpahic, delay);
+		ObjShot_SetAutoDelete(obj, false);
+		loop(timer)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			if (r < (nuclear_r-16)) { ObjShot_FadeDelete(obj); break; }
+			wait(1);
+		}
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+		while(!Obj_IsDeleted(obj))
+		{
+			if (r < (nuclear_r-16)) {
+				CallSound(sndBulletBreak);
+				ObjMove_SetSpeed(obj, speed/4);
+				ObjShot_FadeDelete(obj);
+				break;
+			}
+			r -= ObjMove_GetSpeed(obj);
+			yield;
+		}
+	}
+
+	// 粒
+	task TShot_sub02()
+	{
+		wait(120);
+
+		let speed = [0.75, 1, 1, 1][Difficult];
+		let way = [1, 2, 2, 2][Difficult];
+		let wt = [5, 5, 4, 3][Difficult];
+		let graphic = BGW_BALL_SS_WHITE;
+		
+		let angle = 0;
+		
+		let st = 0;
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			if (PHASE >= 1)
+			{
+				ascent(i in 0 .. way)
+				{
+					let sa = angle + i*360/way + st*180;
+					let sx = bx + cos(sa)*(nuclear_r+16);
+					let sy = by + sin(sa)*(nuclear_r+16);
+					My_CreateShotA2(sx, sy, 0, sa+rand(-10,10), speed/120, speed, graphic, 15);
+					CallSound(sndShot3);
+				}
+				angle += 5;
+				st++;
+			}
+			t++;
+			wait(wt);
+		}
+	}
+	
+}
+
+// 人魂
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.1);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, iniAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		SetMovePositionHermite(objFamilier, CenX, CenY, iniSpeed, iniAngle, iniSpeed, iniAngle+90*rand_dir(), iniValue);
+		waitObj(objFamilier, iniValue);
+		EraseEnemy(objFamilier);
+	}
+}
+
+// 人魂
+task SetFamilier02(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = 90+(45-90)*iniMuki;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 50, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.8);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, baseAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		let ms = 1;
+		Enemy_SetPatternA2(objFamilier, 0, ms, baseAngle, ms, -iniMuki*0.15, ms);
+		TCheckDispINOut(objFamilier, 32);
+		
+		TShot();
+	}
+
+	task TShot()
+	{
+		waitObj(objFamilier, 30);
+
+		let speed = 2;
+		let way = 6;
+		let count = 12;
+		let wt = 15;
+		let graphic = ADD_BGW_BALL_BS_BLUE;
+		
+		while(CanShotBullet(objFamilier))
+		{
+			let sa = iniAngle + rand(-10,10);
+			My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, sa, speed/240, speed, graphic, 15);
+			CallSound(sndShot5);
+			waitObj(objFamilier, wt);
+		}
+	}
+}

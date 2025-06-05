@@ -1,0 +1,156 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　ボス会話後半"]
+#Text["4面　ボス会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Siran.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_KAGUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "果然你们没有因为月亮发了疯。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL6);
+			SetTalkEx(cutinPlayer1, "既然能这样表演『可怜的自己』，[r]说明你们肯定保留了一定程度的正常精神。 ");
+		}
+		case(2)
+		{
+			SetTalkEx(cutinBoss1, "咕，真是何等性格讨嫌的公主啊。[r]居然就把小僧断作是什么欺诈师之流。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
+			SetTalkEx(cutinPlayer1, "刚刚我和青鹭战斗了嘛，[r]所以一点儿都不假。 ");
+		}
+		case(4)
+		{
+			SetTalkEx(cutinBoss1, "青鹭（音同欺诈）师。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "正是。 ");
+		}
+		case(6)
+		{
+			SetTalkEx(cutinBoss1, "你大概会想让小僧停止异变吧，[r]但很遗憾，小僧是做不到的。 ");
+		}
+		case(7)
+		{
+			SetTalkEx(cutinBoss1, "绝对他力，是即大佛本愿。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "啊啊真是的，[r]要被月亮的魔力和地上的污秽染透啦！ ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "佛祖啊，这种家伙就别救了好不好~[r]……开玩笑的。 ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

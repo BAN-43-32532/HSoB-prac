@@ -1,0 +1,89 @@
+
+let path_front01	= GetCurrentScriptDirectory() ~ "./../../img/system/front01.png";
+let path_front02	= GetCurrentScriptDirectory() ~ "./../../img/system/front02.png";
+let path_front03	= GetCurrentScriptDirectory() ~ "./../../img/system/front03.png";
+
+#include"./lib_front_01.dnh"
+#include"./lib_front_02.dnh"
+#include"./lib_front_03.dnh"
+#include"./lib_front_04.dnh"
+#include"./lib_front_05.dnh"
+
+task ControlFront( BOOL_SCENE_CENTER ){
+	let path	= GetCurrentScriptDirectory() ~ "./../../img/system/stg_frame.png";
+	let layer	= 85;
+	
+	Front1( BOOL_SCENE_CENTER, path );
+	if( !BOOL_SCENE_CENTER ){
+		FrontLine( MaxX+110+32, MinY+47+16, 10, [255,128,128], 5 );
+		FrontLine( MaxX+110+32, MinY+72+16, 15, [128,255,128], 5 );
+		FrontLine( MaxX+110+32, MinY+117+4, 20, [255,96,255], 5 );
+		FrontLine( MaxX+110+32, MinY+154+4, 25, [96,255,96], 5 );
+		FrontLine( MaxX+125+32, CenY+20, 30, [96,96,255], 5 );
+		FrontLine( MaxX+125+32, CenY+54, 35, [96,96,96], 5 );
+		Front2( layer );
+		
+		DisplayDifficulty( [640-112,24], layer, 120 );
+		HighScore( BOOL_SCENE_CENTER, layer );
+		Score( BOOL_SCENE_CENTER, layer );
+		MaxPoint( layer );
+		MaxGraze( layer );
+		
+		//　現在、残機9以上の表記はされないが無限に増える（？）仕様
+		Remaining_Player( [0,4], layer );
+		Remaining_Bomb( [0,4], layer );
+		Fragment_Player( [0,2], layer );
+		Fragment_Bomb( [0,2], layer );
+		
+		//　特殊オプションの有無
+		IsAutoBomb( layer );
+	}
+	else{
+		Score( BOOL_SCENE_CENTER, layer );
+		HighScore( BOOL_SCENE_CENTER, layer );
+	}
+	
+	EnemyMarker( layer );
+	
+	DisplayNowFps( layer );
+	
+	//DebugCounter();
+}
+
+task DebugCounter(){
+	let countC		= 0;
+	
+	loop( 120 ){ yield; }
+	
+	while( true ){
+		let gpf		= GetAreaCommonData("Trance", "player_fragment", 0 );
+		let gbf		= GetAreaCommonData("Trance", "bomb_fragment", 0 );
+		
+		if( countC%32 == 0 ){
+			SetAreaCommonData("Trance", "player_fragment", gpf + 1 );
+			SetAreaCommonData("Trance", "bomb_fragment", gbf + 1 );
+		}
+		
+		AddScore(10);
+		AddPoint(1);
+		AddGraze(1);
+		
+		countC++;
+		
+		yield;
+	}
+}
+
+//　オートボムがONかどうか
+task IsAutoBomb( lay ){
+	if( GetAreaCommonData("Option", "AutoBomb", 0 ) == 0 ){ return; }
+	
+	let text_scale = 0.6;
+	let distance = 16*text_scale;
+	let text = [ "A", "U", "T", "O", " ", "B", "O", "M", "B" ];
+	let rgb = [ 255, 255, 255 ];
+	
+	ascent( i in 0..( length(text) ) ){
+		CreateText_AsciiFront( [ MaxX + 48 + i*distance, MaxY+26 ], lay, text_scale, text[i], rgb, i*2 );
+	}
+}

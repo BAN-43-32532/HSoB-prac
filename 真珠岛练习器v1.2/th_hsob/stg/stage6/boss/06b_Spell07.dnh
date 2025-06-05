@@ -1,0 +1,679 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ﾎﾛｳﾁｬﾝスペカ7"]
+#Text["ﾎﾛｳﾁｬﾝスペカ7"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Horou.dnh"
+#include"./../../../lib/lib_ChapterSkip.dnh"
+
+let HAKKYOU = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(7777);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(98);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 77;
+	let SPELL_NAME = [17, 17, 18, 18][Difficult];
+
+	// アイテム数
+	bossDropItem = 0;
+	//ダメージ透過率
+	dIni_Shot = 70.7;
+	// スペカ中はZボム使えないぶん少しやわらかくする
+	if (GetPlayMode() == GAME_SPELL) { dIni_Shot = 100; }
+	// 停止無効
+	bossResistTime = 1;
+	// でっかい爆発
+	bossBigExplode = true;
+	
+	// キャラごとに硬さを変える
+	/*
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { dIni_Shot /= 1; }
+	case(PLAYER_MARISA_A) { dIni_Shot /= 0.9; }
+	case(PLAYER_SAKUYA_A) { dIni_Shot /= 1; }
+	case(PLAYER_KAGUYA_A) { dIni_Shot /= 1; }
+	*/
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HOROU);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	InitHorou();
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+	
+	// 発狂ゲージ区切り
+	BossEffect_LifeCirclePartition(objEnemy, 72, 0.25);
+	BossEffect_LifeCirclePartition(objEnemy, 72, 0.125);
+
+	Task_Main();
+	
+	SetBackGroundBase( objEnemy, 6 );
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	ObjMove_SetPosition(objEnemy, CenX, MinY-112);
+	SetEffect06_Opt(objEnemy, 0, 1);
+	objHorouEffect = SetEffect06(objEnemy);
+
+	if (GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_MAIN) { wait(60); }	// 通し中は㍉待機
+	
+	if (GetHorouReigekiSynchroFlag(WEAPON_YELLOW))
+	{
+		StandBy_TimeStop3(objEnemy, CenX, CenY-16, 510);
+		waitObj(objEnemy, 120);
+		HorouReigekiSynchro(WEAPON_YELLOW, 180);
+	}
+	else
+	{
+		StandBy_TimeStop3(objEnemy, CenX, CenY-16, 510-150);
+		waitObj(objEnemy, 120);
+	}
+
+	CheckHakkyou();	// 発狂チェック
+	
+	SetAction(objEnemy, ACT_SHOT2, 999*60);
+	SUN_SHOT(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy)-48, 270);
+	
+	waitObj(objEnemy, 240);
+	
+	CallSpellCard(true);	//スペカ起動
+
+	TZSpellCounder();	// Zボムカウンター
+}
+
+task TZSpellCounder()
+{
+	TSpellGuard();
+	
+	while(eAlive)
+	{
+		if (GetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false))
+		{
+			ZSpellCounder();
+		}
+		yield;
+	}
+	
+	function ZSpellCounder()
+	{
+		let way = 48;
+		
+		wait(30);
+		if (!eAlive) { return; }
+		SetAreaCommonData(CAREA_SYSTEM, "PACKAGE_CUTIN", true );
+		SetAreaCommonData(CAREA_SYSTEM, "PACKAGE_CUTIN_ID", -13 );
+		CallSound(sndCallSpellCard);
+		
+		let rest_timer = 999999;
+		let t = 0;
+		while(eAlive && rest_timer > 0)
+		{
+			if (!GetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false) && rest_timer > 32) { rest_timer = 32; }
+			
+			if (t%3 == 0)
+			{
+				let tmp = trunc(t/3)%8;
+				if (tmp < 7)
+				{
+					let ss = 4 + tmp/7 * 4;
+					let ba = rand(0, 360);
+					ascent(i in 0 .. way)
+					{
+						let sa = ba + i*360/way;
+						let obj = My_CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+							ss, sa, BGW_WING_RED+SHOT_COLOR[tmp], 5);
+						ObjShot_SetSpellResist(obj, true);
+					}
+					CallSound(sndShot1);
+				}
+			}
+			
+			rest_timer--;
+			t++;
+			yield;
+		}
+	}
+}
+
+task TSpellGuard()
+{
+	while(eAlive)
+	{
+		if (GetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false))
+		{
+			ObjEnemy_SetDamageRate(objEnemy, dIni_Shot/2, dIni_Shot*dIni_Spell/2);
+		} else if (IsPlayerSpellActive()) {
+			ObjEnemy_SetDamageRate(objEnemy, dIni_Shot/2, 0);
+		} else {
+			ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);
+		}
+		yield;
+	}
+}
+
+task SUN_SHOT(x, y, angle)
+{
+	let max_r = 108;
+	let shot_r = max_r;
+	let shot_speed = 1.5;
+	
+	let objBase = NuclearShot(x, y, [255,255,0], 12, 30);
+	ObjShot_SetAutoDelete(objBase, false);
+	NuclearMotion(objBase);
+	
+	task NuclearMotion(obj)
+	{
+		ObjMove_AddPatternA2(obj, 0, 0, angle, 1/30, 0, 1);
+		ObjMove_AddPatternA2(obj, 120, NO_CHANGE, NO_CHANGE, -1/120, 0, 0);
+		FirstEffect(obj);
+		wait(240-120-60*2);
+
+		loop(3)
+		{
+			if (Obj_IsDeleted(obj) || !eAlive) { return; }
+			CallSound(sndPower1);
+			wait(60);
+		}
+		wait(120-60);
+
+		if (Obj_IsDeleted(obj) || !eAlive) { return; }
+		CallSound(sndFlare);
+		EffectExplodeCloudSet(ObjMove_GetX(obj), ObjMove_GetY(obj), 20, [24,16,64], 60, 15);
+		// おんぷちゃん
+		FirstOnpu(obj);
+		// ﾋﾘ
+		T_HIRI(obj, 0);
+		// レーザー氏
+		TLaser(obj, 45+240);
+		// 発狂用
+		THakkyou(obj, 45);
+		// 効果音だけ
+		TSound(obj, 45+60);
+
+		ascent(t in 0 .. 45)
+		{
+			if (Obj_IsDeleted(obj) || !eAlive) { return; }
+			let tmp = GetCurve_d((t+1)/45);
+			let r = 12 + (max_r-12)*tmp;
+			Obj_SetValue(obj, "SIZE", r);
+			wait(1);
+		}
+		wait(180);
+		
+		if (Obj_IsDeleted(obj) || !eAlive) { return; }
+		let to_angle = GetAngleToPlayer(obj);
+//		ObjMove_AddPatternA2(obj, 0, 0, to_angle, shot_speed/60, 0, shot_speed);
+//		ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, shot_speed/480, 0, shot_speed);
+		
+		descent(t in 0 .. 120)
+		{
+			if (Obj_IsDeleted(obj) || !eAlive) { return; }
+			let tmp = GetCurve_ad(t/120);
+			let r = shot_r + (max_r-shot_r)*tmp;
+			Obj_SetValue(obj, "SIZE", r);
+			wait(1);
+		}
+		while(!Obj_IsDeleted(obj))
+		{
+			if (!CheckDispIN(obj, Obj_GetValueD(obj, "SIZE", 0)+384))
+			{
+				Obj_Delete(obj);
+				break;
+			}
+			yield;
+		}
+	}
+	
+	task TSound(objBase, delay)
+	{
+		wait(delay);
+		while(!Obj_IsDeleted(objBase))
+		{
+			CallSound(sndShot2);
+			wait(19);
+		}
+	}
+	
+	task FirstEffect(objBase)
+	{
+		ascent(t in 0 .. 240)
+		{
+			if (Obj_IsDeleted(objBase) || !eAlive) { return; }
+			if (t%8 == 0 && t < 180)
+			{
+				EffectConcentrationPointEx(ObjMove_GetX(objBase), ObjMove_GetY(objBase), objBase,
+					[192,192,128], 2, 3, 240, 120);
+			}
+			wait(1);
+		}
+	}
+	
+	task FirstOnpu(objBase)
+	{
+		let speed = 1.75;
+		let way = [16, 24, 24, 24][Difficult];
+		let count = [5, 7, 7, 7][Difficult];
+		let graphic = BGW_NOTE_YELLOW;
+		
+		let st = 0;
+		ascent(i in 0 .. count)
+		{
+			let ss = speed * (1+i*0.15);
+			let sa = GetAngleToPlayer(objBase);
+			let sr = 0;
+			CreateShotCircleA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+				ss*3, sa, -ss/15, ss, graphic, 30, way, sr);
+		}
+		ascent(i in 0 .. count)
+		{
+			let ss = speed * (1+i*0.15) * 0.75;
+			let sa = GetAngleToPlayer(objBase) + 180/way;
+			let sr = 0;
+			CreateShotCircleA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+				ss*3, sa, -ss/15, ss, graphic, 30, way, sr);
+		}
+	}
+
+	task T_HIRI(objBase, delay)
+	{
+		wait(delay);
+		
+		let speed = [1.25, 1.25, 1.5, 1.5][Difficult];
+		let add_a = [1.75, 1.75, 2.25, 2.25][Difficult];
+		let wt = [80, 80, 60, 60][Difficult];
+		let way = [12, 16, 16, 20][Difficult];
+		let shot_delay = [45, 45, 40, 40][Difficult];
+		let item_way = [11, 11, 8, 8][Difficult];
+		let muki = 1;
+		
+		while(!Obj_IsDeleted(objBase) && eAlive){
+			
+			let angle = rand(0, 360);
+			ascent(i in 0 .. way)
+			{
+				let ss = speed;
+				let sa = angle + i*360/way;
+				let add_a = 1.75;
+				if (sin(sa+add_a*45*muki) > -0.5)
+				{
+					SetFamilier01(objBase, ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+						ss, sa, shot_delay, muki, add_a, 0);
+				}
+			}
+			// 一緒にアイテムも落とす
+			if (GetPlayMode() != GAME_SPELL)
+			{
+				let ba = 90 + rand(-5,5);
+				let r = 128;
+				ascent(i in 0 .. item_way)
+				{
+					let sa = ba + (i-(item_way-1)/2)/item_way*180;
+					SetItemEx(ObjMove_GetX(objBase)+r*cos(sa), ObjMove_GetY(objBase)+r*sin(sa),
+						1, sa, MY_ITEM_TIME_COLOR, ITEM_SIZE_2);
+				}
+			}
+		//	CallSound(sndShot2);
+			muki = -muki;
+			wait(wt);
+		}
+	}
+	
+	task THakkyou(objBase, delay)
+	{
+		wait(delay);
+		
+		let speed = [1.25, 1.25, 1.25, 1.25][Difficult];
+		let way = 7;
+		let graphic = BGW_WING_YELLOW;
+		let wt = [80, 55, 45, 40][Difficult];
+		let shot_ct = 15;
+		
+		let hakkyou_wt = [5, 5, 5, 4][Difficult];
+		let hakkyou_speed = [3, 3.75, 4.5, 5][Difficult];
+		let hakkyou_way = [4, 6, 7, 7][Difficult];
+		
+		let t = 0;
+		while(eAlive && !Obj_IsDeleted(objBase))
+		{
+			if (HAKKYOU > 0 && t%3 == 0 && t%wt < shot_ct)
+			{
+				let sr = Obj_GetValueD(objBase, "SIZE", 0);
+				let sa = t*0.33;
+				let ss = speed*0.75;
+				CreateShotCircleA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					ss*2, sa, -ss/30, ss, graphic, 5, way, sr);
+				CallSound(sndShot3);
+			}
+			if (HAKKYOU > 1 && t%3 == 0 && (t+trunc(wt/2))%wt < shot_ct)
+			{
+				let sr = Obj_GetValueD(objBase, "SIZE", 0);
+				let sa = -t*0.33;
+				let ss = speed;
+				CreateShotCircleA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					ss*2, sa, -ss/30, ss, graphic, 5, way, sr);
+				CallSound(sndShot3);
+			}
+			// ペナルティショットもこっち（ついで）
+			if (t%hakkyou_wt == 0 &&
+				!IsPlayerSpellActive() && !GetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false))
+			{
+				if (CheckInPlayer(ObjMove_GetX(objBase), ObjMove_GetY(objBase), max_r+64))
+				{
+					let sr = Obj_GetValueD(objBase, "SIZE", 0);
+					let sa = rand(0, 360);
+					let ss = hakkyou_speed;
+					if (t%(hakkyou_wt*4) == 0) { sa = GetAngleToPlayer(objBase); }
+					CreateShotCircleA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+						0, sa, ss/240, ss, BGW_BALL_BS_YELLOW, 5, hakkyou_way*2, sr-32);
+					CallSound(sndShot3);
+				}
+				else if (HAKKYOU > 2)
+				{
+					let sr = Obj_GetValueD(objBase, "SIZE", 0);
+					let sa = rand(0, 360);
+					let ss = hakkyou_speed;
+					CreateShotCircleA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+						0, sa, ss/240, ss, BGW_BALL_BS_YELLOW, 5, hakkyou_way, sr-32);
+					CallSound(sndShot3);
+				}
+			}
+			t++;
+			wait(1);
+		}
+	}
+
+	task TLaser(objBase, delay)
+	{
+		wait(delay);
+		
+		let speed = 12;
+		let way = [16, 24, 24, 28][Difficult];
+		let wt = 3;
+		let wt2 = 420;
+		let graphic = BGW_RICE_M_YELLOW;
+		
+		while(!Obj_IsDeleted(objBase) && eAlive)
+		{
+			EffectConcentrationPointEx(ObjMove_GetX(objBase), ObjMove_GetY(objBase), objBase,
+				[192,192,128], 15, 3, 240, 120);
+			CallSound(sndPower2);
+			wait(90);
+
+			if (!eAlive || Obj_IsDeleted(objBase)) { break; }
+			let angle = GetAngleToPlayer(objBase);
+			TLaaser_single(angle);
+			wait(90);
+
+			if (!eAlive || Obj_IsDeleted(objBase)) { break; }
+			if (HAKKYOU > 2) { TLaaser_single(angle+180/way); }
+			
+			wait(wt2-90-90);
+		}
+		
+		task TLaaser_single(angle)
+		{
+			let hway = trunc(way/2);
+			
+			descent(i in 0 .. hway+1)
+			{
+				if (!eAlive || Obj_IsDeleted(objBase)) { break; }
+				let muki = 1;
+				let ct = 2;
+				if (i == 0 || i == hway) { ct = 1; }
+				
+				loop(ct)
+				{
+					let sa = angle + i*180/hway*muki;
+					if (sin(sa) > -0.1)
+					{
+						let sr = Obj_GetValueD(objBase, "SIZE", 0);
+						let sx = ObjMove_GetX(objBase) + sr*cos(sa);
+						let sy = ObjMove_GetY(objBase) + sr*sin(sa);
+						CreateLaserS07(sx, sy, speed, sa, 32*30, 32, graphic, 105);
+					}
+					muki = -muki;
+				}
+				CallSound(sndBulletBreak);
+				wait(wt);
+			}
+		}
+	}
+	
+	task CreateLaserS07(x, y, speed, angle, l_length, l_width, graphic, delay)
+	{
+		descent(i in 0 .. 6)
+		{
+			CreateLaserS07_notice(x, y, angle, BGW_BEAM_YELLOW, delay-5*6-30, i*5);
+			if (i > 0) { CreateLaserS07_notice(x, y, angle, BGW_BEAM_YELLOW, delay-5*6-30, -i*5); }
+			wait(5);
+		}
+		wait(delay-5*6-15);
+		if (eAlive)
+		{
+			CallSound(sndLaser1);
+			ascent(i in 0 .. 4)
+			{
+				CreateLaserS07_single(x, y, speed, angle, l_width, graphic, 75, i*1);
+				if (i > 0) { CreateLaserS07_single(x, y, speed, angle, l_width, graphic, 75, -i*1); }
+			}
+		}
+		
+		task CreateLaserS07_notice(x, y, angle, graphic, delay, offset_a)
+		{
+			// 予告線＆操作用
+			let objDummy = CreateStraightLaserA1(x, y, angle, 0, 2, delay+30, BGW_BEAM_YELLOW, 0);
+			ObjStLaser_SetSource(objDummy, false);
+			ObjShot_SetItemChange(objDummy, false);
+			ObjShot_SetIntersectionEnable(objDummy, false);
+			ObjRender_SetAlpha(objDummy, 192);
+			
+			ascent(t in 0 .. delay)
+			{
+				if (Obj_IsDeleted(objDummy)) { return; }
+				let tmp = min(1, (t+1)/delay*2);
+				let tmp2 = GetCurve_d(min(1, (delay-t)/delay));
+				ObjLaser_SetLength(objDummy, 800*tmp);
+				ObjStLaser_SetAngle(objDummy, angle+offset_a*tmp2);
+				wait(1);
+			}
+		}
+		
+		task CreateLaserS07_single(x, y, speed, angle, l_width, graphic, timer, offset_a)
+		{
+			let obj = My_CreateSimpleLaserA1(x, y, angle, 0, l_width, 99999, graphic, 0);
+			ObjRender_SetColor(obj, 255, 255, 128);
+			ObjLaser_SetIntersectionWidth(obj, l_width/3);
+			let len = speed;
+			ascent(t in 0 .. timer)
+			{
+				if (Obj_IsDeleted(obj)) { break; }
+				let tmp = GetCurve_a((t+1)/timer);
+				ObjStLaser_SetAngle(obj, angle+tmp*offset_a);
+				ObjLaser_SetLength(obj, len);
+				len = min(480, len+speed);
+				wait(1);
+			}
+		//	ObjShot_SetIntersectionEnable(obj, false);
+			descent(t in 0 .. 30)
+			{
+				if (Obj_IsDeleted(obj)) { break; }
+				let tmp = GetCurve_d((t+1)/30);
+				ObjStLaser_SetAngle(obj, angle+tmp*offset_a);
+				ObjLaser_SetRenderWidth(obj, l_width*tmp);
+				ObjLaser_SetLength(obj, len);
+				if (t < 10) { ObjShot_SetIntersectionEnable(obj, false); }
+				len += speed;
+				wait(1);
+			}
+			Obj_Delete(obj);
+		}
+	}
+}
+
+// ﾋﾘ
+task SetFamilier01(objBase, iniX, iniY, iniSpeed, iniAngle, iniTimer, iniMuki, iniValue, flgHakkyou)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_YELLOW;
+	let baseAngle = iniAngle;
+	let timer = iniTimer;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 1000, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 1);	// ボスと体力連動
+	DrawBirdOption(objFamilier, eColor, iniAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		waitObj(objFamilier, iniTimer);
+		if(Obj_IsDeleted(objFamilier)){return;}
+		TShot;
+		TShot2;
+	}
+	
+	task TMove()
+	{
+		let speed = iniSpeed;
+		let angle = iniAngle;
+		let add_a = iniValue*iniMuki;
+		
+		// 範囲外チェック
+		Enemy_WaitForDispOUT(objFamilier, 64, 0);
+		
+		ascent(t in 1 .. 181)
+		{
+			if(Obj_IsDeleted(objFamilier)){break;}
+			let tmp = GetCurve_d(t/180);
+			
+			angle += (1-tmp)*add_a;
+			speed = (3-tmp*2)*iniSpeed;
+			
+			Enemy_SetSpeed(objFamilier, speed);
+			Enemy_SetAngle(objFamilier, angle);
+			wait(1);
+		}
+		Enemy_SetPatternA2(objFamilier, 0, NO_CHANGE, NO_CHANGE, speed/60, 0.33*iniMuki, speed*3);
+	}
+	
+	task TShot()
+	{
+		let speed = [1, 1, 1.5, 1][Difficult];
+		let count = min(7, trunc(0 + (1-GetBossLifeRate(objEnemy))*7/0.66));
+		let wt = 2;
+		if (HAKKYOU > 0) { count = 7; } 
+		
+		let st = 0;
+		while(CanShotBullet(objFamilier) && st < count)
+		{
+			let graphic = BGW_NOTE_RED + SHOT_COLOR[(st*6+2)%7];
+			let ss = speed * (1 + st*0.015);
+			let sa = Obj_GetValueD(objFamilier, "E_ANGLE", 0) - 90*iniMuki;
+			let obj = My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				ss, sa, -ss/30, ss/4, graphic, 15);
+			ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, ss/600, 0, ss);
+			ObjShot_SetSpellResist(obj, true);
+			
+			CallSound(sndShot5);
+			st++;
+			wait(wt);
+		}
+	}
+	
+	task TShot2()
+	{
+		let speed = 1.66;
+		let timer = 30;
+		let graphic = ADD_BGW_BALL_BS_YELLOW;
+		
+		while(CanShotBullet(objFamilier))
+		{
+			let sa = Obj_GetValueD(objFamilier, "E_ANGLE", 0) + 180 + rand(-5,5);
+			let obj = My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				speed, sa, -speed/timer, 0, graphic, 5);
+			ObjShot_SetDeleteFrame(obj, timer);
+			wait(3);
+		}
+	}
+}
+
+task CheckHakkyou()
+{
+	let hk=GetPhase(true);
+	HAKKYOU = 0;
+	if(hk<=1){
+		while(GetBossLifeRate(objEnemy) > 0.25
+				&& ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER) > 33) { wait(1); }
+	}
+	if (!eAlive) { return; }
+	if (ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER) > 11)
+	{
+		CallSound(sndShot1);
+	}
+	HAKKYOU = 1;
+
+	while(GetBossLifeRate(objEnemy) > 0.125
+		&& ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER) > 22) { wait(1); }
+	
+	if (!eAlive) { return; }
+	if (ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER) > 11)
+	{
+		CallSound(sndShot1);
+	}
+	HAKKYOU = 2;
+
+	while(ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER) > 11) { wait(1); }
+
+	if (!eAlive) { return; }
+	CallSound(sndShot1);
+	HAKKYOU = 3;
+}
+
+// StandByタイマー無効付き
+task StandBy_TimeStop3(objEnemy, xIni, yIni, wIni)
+{
+	let wr = ((ObjMove_GetY(objEnemy)-yIni)^2+(ObjMove_GetX(objEnemy)-xIni)^2)^0.5;
+	if (wIni > 5 && wr > 16) { SetAction(objEnemy, ACT_MOVE, 600); }
+	if (wr > 1) { ObjMove_SetDestAtWeightSpeedUp(objEnemy, xIni, yIni, 10, 4, 0.05, 3); }
+	
+	//移動中は判定を消す
+	SetEnemyVisible(objEnemy, false);
+	// タイマー停止
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);
+
+	waitObj(objEnemy, wIni);
+
+	SetEnemyVisible(objEnemy, true);
+	// タイマー開始
+	ObjEnemyBossScene_SetSpellTimer(objScene, ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF));
+}

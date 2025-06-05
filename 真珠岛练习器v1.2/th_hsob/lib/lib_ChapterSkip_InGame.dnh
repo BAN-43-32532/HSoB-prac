@@ -1,0 +1,75 @@
+/*
+if some file is included too early,
+some function will be unable to use(for example,setplayerlife)
+*/
+//\\
+//˜Z?\\\
+let VK_RESTART="12";
+function DisPlayChapterMiss(){
+    let showmiss=GetShowMiss();
+    let objt=ObjText_Create();
+    let str="";
+    Obj_SetRenderPriorityI(objt, 120);
+    ObjText_SetFontType(objt, "‚l‚r ‚oƒSƒVƒbƒN");
+    ObjText_SetFontSize(objt, 16);
+    ObjText_SetFontBold(objt, true);
+    ObjText_SetFontBorderType(objt, BORDER_SHADOW);
+    ObjText_SetFontBorderWidth(objt, 1);
+    ObjText_SetFontBorderColor(objt, 16, 16, 16);
+    ObjRender_SetPosition(objt,420,250,0);
+    dpcm();
+    task dpcm(){
+        SetCurrentChapter(-1);
+        
+        if(GetStage()>6 || GetStage()<1){
+            return;
+        }
+        if(GetPlayMode()==GAME_PRACTICE){
+            AddVirtualKey(VK_RESTART,KEY_R,KEY_INVALID);
+            AddReplayTargetVirtualKey(VK_RESTART);
+        }
+        loop{
+            if(GetCurrentChapter()==-1){
+                wait(1);
+            }
+            else{
+                break;
+            }
+        }
+        loop{
+            if(GetPlayMode()==GAME_PRACTICE){
+                if(GetVirtualKeyState(VK_RESTART) == KEY_PUSH){
+                    SetPlayerLife(-1);
+                    SetPlayerSpell(0);
+                    CreateShotA1(GetPlayerX(),GetPlayerY(),0,0,625,0);
+                }
+            }
+            if(GetVirtualKeyState(VK_USER2) == KEY_PUSH){
+                showmiss= !showmiss;
+                SetShowMiss(showmiss);
+            }
+            str="";
+            if(showmiss){
+                let count=GetMissCount();
+                let tb=GetChapterMiss();
+                str=str ~ "MissCount: " ~ IntToString(count) ~ "[r]";
+                ascent(i in 0..6){
+                    ascent(j in 0..chapter_max[i]){
+                        if(tb[i][j]>0){
+                            str=str ~ chapter_name[i][j] ~ " * " ~ IntToString(tb[i][j]) ~ "[r]";
+                        }
+                    }
+                }
+                str=str ~ "[r]Press v to hide";
+            }
+            ObjText_SetText(objt,str);
+            
+            if(GetCurrentChapter()==-1){
+                Obj_Delete(objt);
+            }
+            
+            wait(1);
+        }
+    }
+    
+}

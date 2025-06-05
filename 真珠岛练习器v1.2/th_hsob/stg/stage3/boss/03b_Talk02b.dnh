@@ -1,0 +1,154 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　会話後半"]
+#Text["3面　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HIKARIKO);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_HIKARIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "这个弹幕我见过的，[r]我记得只要上避等时间到就行了。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "……这件事我第一次知道。[r]果然复制品（Replica）无法超越始祖（Origin）吗…… ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "当然是能的，[r]魔炮使（Spark Master）的我都这么说了，肯定不假。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "话说回来，你总是缩在自己的壳里，[r]完全不够努力啊。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CALM);
+			SetTalkEx(cutinPlayer1, "努力加油，努力发出声音来，[r]只要努力你也能做到的。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "……你……为什么对我这么好…… ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "嗯？啊抱歉， ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "刚才那句话的意思是你努努力，[r]赶紧把上人喊过来，用那个什么骚特。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "……在那之前你先听我碎碎念（Conflict）上一个小时（刹那）吧。 ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

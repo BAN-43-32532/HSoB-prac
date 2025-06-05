@@ -1,0 +1,233 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　ボス会話前半"]
+#Text["4面　ボス会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Siran.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
+	SetSiranRosary();	// 数珠配置
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "你这样的妖怪也挺少见的。[r]找我有事对吧？ ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetTalkEx2(cutinBoss1, "彼此彼此。你真的是女仆吗？ ", -48, -280);
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "我念佛这么多年，[r]第一次见到有能对抗时间停止的女仆啊。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "这个，应该和念佛没什么关系吧？ ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "总之，[r]都怪你唤醒了神社的巫女，[r]小僧无辜的门徒们不得不面临巫女的威胁。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx3(cutinBoss1, "真是遗憾。 ", -86, -86);
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "宗教家不就该跨过迫害，[r]坚定信心的吗？ ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "不、不要，现在[r]已经不是苦行、迫害之类的年代了。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "这一点上，小僧的妖土真宗乃是[r]只靠念佛就能去往净土的。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "这种简便性便是人气的秘诀。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			SetTalkEx2(cutinPlayer1, "就是因为那些人的信仰只有这点程度，[r]所以才被巫女一触即溃的吧…… ", 64, -80);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "乐园、极乐岛、芦苇原、至福乐土、极乐净土…… ", -86, -86);
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx3(cutinBoss1, "世界神话中的乐园，[r]宗教中的永生、救赎的世界。 ", 0, 0);
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "但是稍微想想就能知道，[r]救赎世界蕴含的矛盾。 ");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "他们绝大多数都是善人死后前往的世界。[r]不死就去不了的世界。 ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "不是现世的救赎、当下的救赎，[r]也不是恶人的救赎。 ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "想象并全身心地仰赖着死后的拯救，[r]以忍耐现世的痛苦，它们不过是这样的虚像罢了。 ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "反正宗教的乐园都是这种玩意儿。 ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "为了拯救苦于巫女暴行的妖怪们的心灵，[r]小僧便做了破戒僧。 ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "真是悲凉。充满死与苦的颜色的这个世界，[r]与救济之象差得太远了。 ");
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			SetTalkEx(cutinBoss1, "能对念佛有所共鸣，前来拜托小……拜佛的人的请求，[r]小僧怎么可能不帮忙呢。 ");
+
+			PlayMusicWithName( 9, 30, 30 );
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER2);
+			SetTalkEx(cutinBoss1, "出得我口，入得你耳的念佛弹幕，[r]与最新技术噪特的融合！[r]就用你来试一试威力吧！ ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetActionSiran(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

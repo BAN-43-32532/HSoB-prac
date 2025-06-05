@@ -1,0 +1,66 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　シェーダ用エフェクトファイル一括定義
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+
+//iniファイルの内容はコモンデータに保存する
+//#include "./../../../../../../launcher.ini"
+
+let fxPath = [
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_Fire.fx",
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_Aqua.fx",
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_Ice.fx",
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_Fog.fx",
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_DoubleMask.fx",
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_ZBombFog.fx",
+	GetCurrentScriptDirectory() ~ "./../fx/HLSL_HSVCurve.fx",
+];
+let fxTc = [
+	"tcFire",
+	"tcAqua",
+	"tcIce",
+	"tcFog",
+	"tcDoubleMask",
+	"tcZBombFog",
+	"tcHSVCurve",
+];
+
+//　RT作成
+function CreateRenderTexture( v_name, v_layerStart, v_layerEnd, v_clear ){
+	let res = CreateRenderTarget( v_name );
+	if( CfgIsUseShader() && res ){
+		RenderToTextureA1( v_name, v_layerStart, v_layerEnd, v_clear );
+		return v_name;
+	}
+	else{
+		RenderToTextureA1( v_name, v_layerStart, v_layerEnd, v_clear );
+		//　2を使用（本体で0,1を使用
+		return GetReservedRenderTargetName(2);
+	}
+}
+
+//　反映用の2Dテクスチャ作成
+function CreateShaderTexture( v_texture, v_blend, v_layer ){
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture( obj, v_texture );
+	ObjRender_SetBlendType( obj, v_blend );
+	ObjPrim_SetPrimitiveType( obj, PRIMITIVE_TRIANGLESTRIP );
+	ObjPrim_SetVertexCount( obj, 4 );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 640, 480 );
+	ObjSprite2D_SetDestRect( obj, 0, 0, 640, 480 );
+	Obj_SetRenderPriorityI( obj, v_layer );
+	ObjRender_SetPosition( obj, -32, -16, 0 );
+	return obj;
+}
+
+//　ObjShader作成
+function CreateShaderObject( v_obj, v_fxNumber ){
+	let obj = ObjShader_Create();
+	if( !CfgIsUseShader() ){ return obj; }
+	ObjShader_SetShaderF( obj, fxPath[ v_fxNumber ] );
+	ObjShader_SetTechnique( obj, fxTc[ v_fxNumber ] );
+	ObjShader_SetShaderO( v_obj, obj );
+	return obj;
+}

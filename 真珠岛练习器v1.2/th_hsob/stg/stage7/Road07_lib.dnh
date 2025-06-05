@@ -1,0 +1,154 @@
+
+#include "./../../title/lib/MusicData.dnh"
+
+//道中曲に合わせたタイマー
+let SinglePhase = 22.32;
+let PhaseTotal = 0;
+function phase(SplitNum){
+	PhaseTotal += SinglePhase*SplitNum;
+	let w = trunc(PhaseTotal);
+	PhaseTotal -= w;
+	return w;
+}
+
+function phaseEx(SplitNum){
+	let old = PhaseTotal;
+	old += SinglePhase*SplitNum;
+	let w = trunc(old);
+	return w;
+}
+
+// waitObjのウェイト量計算にはこっちを使う
+function phaseExEnemy(SplitNum){
+	let speedMod = GetAreaCommonData(CAREA_STAGE, "StageModification", 0 );
+	let addTimer = 1 + speedMod;
+
+	let old = PhaseTotal;
+	old += SinglePhase*SplitNum/addTimer;
+	let w = trunc(old);
+	return w;
+}
+
+
+// 曲フェードアウト
+task CrossFadeExMusic(timer, vol)
+{
+	timer = ceil(timer);
+	ascent(t in 0 .. timer)
+	{
+		let tmp = (t+1)/timer;
+		let base_vol = vol[1] + (1-tmp)*(vol[0] - vol[1]);
+		SetMusicVolumeMultiply(base_vol);
+//		SetMusicVolumeMultiply2(1 - base_vol);
+		yield;
+	}
+}
+
+
+// 自機反転
+task S07_ResetPlayerAngle(angle, timer)
+{
+	if (timer > 0)
+	{
+		SetForbidPlayerShot(true);
+		SetForbidPlayerSpell(true);
+		waitEx(15);
+	}
+	SetPlayerAngle(angle);
+	if (timer > 0)
+	{
+		waitEx(timer-15);
+		SetForbidPlayerShot(false);
+		SetForbidPlayerSpell(false);
+	}
+}
+// 自機反転
+task S07_CarryPlayer(to_y, timer)
+{
+	ascent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*180)/16;
+		let py = GetPlayerY;
+		let dify = to_y - py;
+		if ((to_y > CenX && dify < 0) || (to_y < CenX && dify > 0)) { dify = 0; }
+		dify *= tmp;
+		ObjMove_SetY(objPlayer, py+dify);
+		yield;
+	}
+}
+
+function SetEnemyDropItem_Extra(obj, drop_count)
+{
+	if (DEBUG_MODE) { AddAreaCommonData(CAREA_STAGE, "AllDropItem_Road", -GetDropItemCount(obj)); }	// リセット時用
+	
+	let ct = drop_count;
+	if (IsRainbow()) { ct *= 2; }
+	else { ct = ceil(ct/3); }
+	
+	// 中心アイテム
+	let item_sp = [];
+	if (ct == 1) { ct -= 1; item_sp = [MY_ITEM_TIME_1]; }
+	else if (ct == 2) { ct -= 2; item_sp = [MY_ITEM_TIME_2]; }
+	else if (ct == 3) { ct -= 3; item_sp = [MY_ITEM_TIME_3]; }
+	else if (ct >= 24) { ct -= 10; item_sp = [MY_ITEM_TIME_10]; }
+	else if (ct >= 12) { ct -= 5; item_sp = [MY_ITEM_TIME_5]; }
+	else if (ct >= 8) { ct -= 3; item_sp = [MY_ITEM_TIME_3]; }
+	else if (ct > 0) { ct -= 1; item_sp = [MY_ITEM_TIME_1]; }
+	
+	// 周囲アイテム
+	if (IsRainbow())
+	{
+		if (ct < 10)
+		{
+			let tmp_ct = ct;
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_1,tmp_ct]);
+		} else if (ct < 20) {
+			let tmp_ct = trunc(ct/2);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_1,tmp_ct,MY_ITEM_TIME_1,tmp_ct]);
+		} else if (ct < 40) {
+			let tmp_ct = trunc(ct/4);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_2,tmp_ct,MY_ITEM_TIME_2,tmp_ct]);
+		} else if (ct < 60) {
+			let tmp_ct = trunc(ct/6);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_3,tmp_ct,MY_ITEM_TIME_3,tmp_ct]);
+		} else if (ct < 100) {
+			let tmp_ct = trunc(ct/10);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_5,tmp_ct,MY_ITEM_TIME_5,tmp_ct]);
+		} else {
+			let tmp_ct = trunc(ct/20);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_10,tmp_ct,MY_ITEM_TIME_10,tmp_ct]);
+		}
+	}
+	else
+	{
+		if (ct < 10)
+		{
+			let tmp_ct = ct;
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_1,tmp_ct]);
+		} else if (ct < 10) {
+			let tmp_ct = trunc(ct/2);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_2,tmp_ct]);
+		} else if (ct < 15) {
+			let tmp_ct = trunc(ct/3);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_3,tmp_ct]);
+		} else if (ct < 25) {
+			let tmp_ct = trunc(ct/5);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_5,tmp_ct]);
+		} else {
+			let tmp_ct = trunc(ct/10);
+			Obj_SetValue(obj, "ITEM_DROP_SP", item_sp);
+			Obj_SetValue(obj, "ITEM_DROP", [MY_ITEM_TIME_10,tmp_ct]);
+		}
+	}
+	if (DEBUG_MODE) { AddAreaCommonData(CAREA_STAGE, "AllDropItem_Road", GetDropItemCount(obj)); }
+}

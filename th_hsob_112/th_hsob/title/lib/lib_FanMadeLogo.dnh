@@ -1,0 +1,101 @@
+
+task SetFanMadeLogoMain(){
+	let sca = [ 0.8, 0.8 ];
+	SetFanMadeLogoNormal( [60,20], [ sca[0]+0.02, sca[1]+0.02 ], [0,0,0,255], 71, BLEND_ALPHA );
+	SetFanMadeLogoNormal( [60,20], sca, [255,192,192,255], 71, BLEND_ALPHA );
+	SetFanMadeLogo( [60,20], sca, [512,512,255,255], 71, BLEND_ALPHA );
+}
+
+
+//　二次創作ロゴ
+task SetFanMadeLogo( pos, scale, rgba, layer, blend ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let _rect	= [ 128, 64 ];
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+	ObjPrim_SetTexture( obj, imgTtTitle4 );
+	ObjRender_SetBlendType( obj, blend );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, _rect[0], _rect[1] );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+	
+	let sLayer	= [ 0, layer-1 ];
+	
+	let rt	= CreateRenderTexture( "rtTest", sLayer[0], sLayer[1], true );
+	let shd	= CreateShaderObject( obj, 5 );
+	ObjShader_SetVector( shd, "m_rtSize", 1024, 512, 0, 0 );
+	ObjShader_SetVector( shd, "m_texSize", _rect[0], _rect[1], 0, 0 );
+	ObjShader_SetVector( shd, "m_pos", pos[0], pos[1], 0, 0 );
+	
+	while( !Obj_IsDeleted(obj) && !GetAreaCommonData(CAREA_TITLE, "title_end", false ) ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		
+		ObjShader_SetFloat( shd, "m_frame", frame / 2 );
+		ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), move1*(rgba[3]*(1/255)) );
+		ObjShader_SetTexture( shd, "g_Texture", rt );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 2; }
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		
+		ObjShader_SetFloat( shd, "m_frame", frame / 2 );
+		ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), move1*(rgba[3]*(1/255)) );
+		ObjShader_SetTexture( shd, "g_Texture", rt );
+		
+		frame++;
+		moveA += 5;
+		yield;
+	}
+	Obj_Delete( shd );
+	Obj_Delete( obj );
+}
+
+
+//　シェーダなし
+task SetFanMadeLogoNormal( pos, scale, rgba, layer, blend ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let _rect	= [ 128, 64 ];
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+	ObjPrim_SetTexture( obj, imgTtTitle4 );
+	ObjRender_SetBlendType( obj, blend );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, _rect[0], _rect[1] );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+	ObjRender_SetColor( obj, rgba[0], rgba[1], rgba[2] );
+	
+	while( !Obj_IsDeleted(obj) && !GetAreaCommonData(CAREA_TITLE, "title_end", false ) ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 2; }
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		frame++;
+		moveA += 5;
+		yield;
+	}
+	Obj_Delete( obj );
+}

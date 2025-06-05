@@ -1,0 +1,234 @@
+// 敵配置taskをぶっこむ所
+
+task F01(x, to_x, count, f_rev, f_type)
+{
+	ascent(i in 0 .. count)
+	{
+		_F01(x, to_x, i+1, [0, f_type][i==0]);
+		WaitRoad(phaseEx(0.5));
+	}
+	if (f_rev)
+	{
+		descent(i in 0 .. count-1)
+		{
+			_F01(x, to_x, i+1, 0);
+			WaitRoad(phaseEx(0.5));
+		}
+	}
+}
+task _F01(x, to_x, count, f_type)
+{
+	ascent(i in 0 .. count)
+	{
+		let offset = (i-(count-1)/2)*32;
+		let ex = x + offset*3;
+		let ey = MinY-16;
+		let es = 0.85;
+	//	if (i > 0 && i < count-1) { es += 0.075; }
+		let tx = to_x + offset;
+		let timer = 105;
+		if (f_type == 1) { SetEnemyF02(ex, ey, es, 90, tx, 0, timer); }
+		else if (f_type == 2) { SetEnemyF03(ex, ey, es, 90, tx, 0, timer); }
+		else { SetEnemyF01(ex, ey, es, 90, tx, 0, 0, timer); }
+	}
+}
+task F02(x, to_x, count)
+{
+	let muki = [1, -1][x > CenX];
+	ascent(i in 0 .. count)
+	{
+		let offset = i*3*muki;
+		let ex = x + offset*3;
+		let ey = MinY-16;
+		let es = 0.4;
+		let tx = to_x;
+		let timer = 150;
+		if (i == 0 ) { SetEnemyF02(ex, ey, es, 90, tx, 0, timer); }
+		else { SetEnemyF01(ex, ey, es, 90, tx, 0, 0, timer); }
+		muki = -muki;
+		WaitRoad(phaseEx(0.5));
+	}
+}
+task F01b(x, to_x, angle, count, f_type)
+{
+	ascent(i in 0 .. count)
+	{
+		let ct = [2, 1][i==0];
+		let muki = 1;
+		loop(ct)
+		{
+			let offset = (i+0.5)*16*muki;
+			if (i == 0) { offset = 0; }
+			let ex = x + offset*2;
+			let ey = MinY-16;
+			let es = 0.66;
+			let tx = to_x + offset;
+			let timer = 105;
+			let flgBig = (i == trunc(count-1)/2);
+			if (i == 0 && f_type == 1) { SetEnemyF02(ex, ey, es, angle, tx, 1, timer); }
+			else if (i == 0 && f_type == 2) { SetEnemyF03(ex, ey, es, angle, tx, 1, timer); }
+			else { SetEnemyF01(ex, ey, es, angle, tx, 1, 0, timer); }
+			muki = -muki;
+		}
+		WaitRoad(phaseEx(1/4));
+	}
+}
+task F01c(x, to_x, speed, angle, count, f_type)
+{
+	ascent(i in 0 .. count)
+	{
+		let ct = [2, 1][i==0];
+		let muki = 1;
+		loop(ct)
+		{
+			let offset = (i+0.5)*16*muki;
+			if (i == 0) { offset = 0; }
+			let ex = x + offset*2;
+			let ey = MinY-16;
+			let es = speed;
+			let tx = to_x + offset;
+			let timer = 105;
+			let flgBig = (i == trunc(count-1)/2);
+			if (i == 0 && f_type == 1) { SetEnemyF02(ex, ey, es, angle, tx, 0, timer); }
+			else if (i == 0 && f_type == 2) { SetEnemyF03(ex, ey, es, angle, tx, 0, timer); }
+			else { SetEnemyF01(ex, ey, es, angle, tx, 0, 1, timer); }
+			muki = -muki;
+		}
+		WaitRoad(phaseEx(1/4));
+	}
+}
+function F04(x, y, add_x, add_y, count, muki, f_type, wait_phase)
+{
+	ascent(i in 0 .. count)
+	{
+		let ex = x + add_x*i;
+		let ey = y + add_y*i;
+		let es = 4;
+		let ea = 90;
+		let wt = phaseEx(wait_phase);
+		SetEnemyF04(ex, ey, es, ea, f_type, i, muki, wt);
+	}
+}
+task I01(pos_set, speed, angle)
+{
+	// pos_set = [[x,y,delay(phase)], [x,y,delay], ... ]
+	// x = 0:MinX, 1:MaxX
+	_I01(pos_set, 0.6, -0.15, speed, angle, "STG5R_CHP4");
+	_I01(pos_set, 0.6,  0.15, speed, angle, "STG5R_CHP4_2");
+	
+	task _I01(pos_set, wide_x, offset_x, speed, angle, carea)
+	{
+		ascent(i in 0 .. length(pos_set))
+		{
+			let beforeE = GetAreaCommonData(CAREA_STAGE, carea, -1);
+			
+			let tmp = pos_set[i][0]*wide_x + (1-wide_x)/2 + offset_x;
+			let ex = MinX + (MaxX-MinX)*tmp;
+			let ey = MinY+16;
+	//		let ey = pos_set[i][1];
+			let ea = angle - (tmp-0.5)*2 * 24;
+			let wt = pos_set[i][2];
+			let speed = 2;
+			let delay = 105;
+			let objE = SetEnemyI01(ex, ey, speed, ea, i, delay);
+			SetAreaCommonData(CAREA_STAGE, carea, objE);
+			
+			// レーザー発射処理はこっち
+			I01_SetLaser(beforeE, objE, 60*99, BGW_BEAM_BLUE, delay);
+			
+			WaitRoad(phaseEx(wt));
+		}
+		
+	}
+}
+
+function F04b(x, y, add_x, add_y, count, i_index, muki, f_type, wt)
+{
+	ascent(i in 0 .. count)
+	{
+		let ex = x + add_x*i;
+		let ey = y + add_y*i;
+		let es = 0.5;
+		let ea = 90;
+		SetEnemyF04b(ex, ey, es, ea, f_type, i+i_index, muki, wt);
+	}
+}
+task F05(x, y, to_x, to_y, count, wide, shot_delay, delay, e_type)
+{
+	let speed = 2;
+	let angle = 90;
+	
+	SetEnemyF05(x, y, speed, angle, [to_x,to_y], [0,0], e_type, shot_delay, delay);
+	ascent(i in 0 .. count)
+	{
+		let ox = min(i, count-i-1)*wide/32*24;
+		let oy = (i-(count-1)/2)*wide;
+		SetEnemyF05(x, y, speed, angle, [to_x,to_y], [ox,oy], 0, shot_delay, delay);
+		if (ox > 0)
+		{
+			ox = -ox;
+			SetEnemyF05(x, y, speed, angle, [to_x,to_y], [ox,oy], 0, shot_delay, delay);
+		}
+	}
+}
+task F05b(x, y, to_x, to_y, count, delay, e_type, e_range)
+{
+	let speed = 2;
+	let angle = 90;
+	
+	ascent(i in 0 .. count)
+	{
+		let ox = min(i, count-i-1)*e_range;
+		let oy = (i-(count-1)/2)*e_range/46*40;
+		SetEnemyF05(x+ox, y+oy, speed, angle, [to_x,to_y], [ox,oy], e_type, 0, delay);
+		if (ox > 0)
+		{
+			ox = -ox;
+			SetEnemyF05(x+ox, y+oy, speed, angle, [to_x,to_y], [ox,oy], e_type, 0, delay);
+		}
+	}
+}
+task F06(x, to_x, count, f_type)
+{
+	// 移動用ダミー氏
+	let ex = x;
+	let ey = MinY-32;
+	let es = 0.33;
+	let er = 54;
+	let timer = 150;
+	let objParent = SetEnemyD01(ex, ey, es, 90, to_x, 0, timer);
+	// こっちが本体
+	SetEnemyF06(objParent, ex, ey, es, 90, f_type, timer);
+	ascent(i in 0 .. count)
+	{
+		SetEnemyI02(objParent, ex, ey, es, i*360/count, er, timer)
+	}
+}
+function F07_single(ea, angle, muki, e_type)
+{
+	let ex = CenX - GetClipHeight/2*1.5*cos(ea);
+	let ey = CenY - GetClipHeight/2*1.5*sin(ea);
+	let es = 3;
+	SetEnemyF07(ex, ey, es, ea, e_type, angle, muki, 0);
+}
+task F08(muki)
+{
+	let baseX = -32;
+	let baseY = MinY-64;
+	
+	let st = 0;
+	while(baseY < MaxY)
+	{
+		let wt = phaseEx(1);
+		if (1)
+		{
+			let ex = MinX + GetClipWidth/2+(baseX-GetClipWidth/2)*muki;
+			let ey = baseY;
+			let vx = 1.5*muki;
+			SetEnemyF08(ex, ey, vx, 0, 0, 0);
+		}
+		st++;
+		baseY += wt*0.5;
+		wait(wt);
+	}
+}

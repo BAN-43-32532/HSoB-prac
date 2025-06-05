@@ -1,0 +1,734 @@
+#東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["StageEx道中"]
+#Text["StageEx道中"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road07_lib.dnh"
+#include "./Road07_ZakoS1.dnh"
+#include "./Road07_ZakoS2.dnh"
+#include "./Road07_ZakoS3.dnh"
+#include "./Road07_ZakoS4.dnh"
+#include "./Road07_ZakoS5.dnh"
+#include "./Road07_ZakoS6.dnh"
+#include "./Road07_ZakoS7.dnh"
+
+// 敵出現までの残り時間（登場までに時間のかかる敵用）
+let flgStopSetZakoTimer = 0;
+
+@Initialize
+{
+	STAGE_ID = 7;		//ステージID記録
+	NEXT_STAGE_ID = -1;	//次のステージIDを記録
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+/*
+	目安
+	0:00	1面
+	0:48	らんらん
+	1:13	2面
+	1:38	ちぃ
+	1:52	3面
+	2:28	ひかりこ
+	2:50	4面
+	3:15	上人（１ループ）
+	0:24	6面
+	0:48	ﾎﾛｳﾁｬﾝ
+	1:13	最終
+	2:03	ボス
+
+ボス配置に関連して、
+4小節ぶんだけ早く次のチャプターが開始されるので
+その辺を考慮に入れつつ配置する必要あり
+*/
+
+
+task TStage
+{
+	// 保険
+	yield;
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld07.dnh";	//背景
+	let pathMBoss1	= dir ~ "boss/07a1_plural.dnh";	//中ボス
+	let pathMBoss2	= dir ~ "boss/07a2_plural.dnh";
+	let pathMBoss3	= dir ~ "boss/07a3_plural.dnh";
+	let pathMBoss4	= dir ~ "boss/07a4_plural.dnh";
+	let pathMBoss5	= dir ~ "boss/07a5_plural.dnh";
+	let pathBoss	= dir ~ "boss/07b_plural.dnh";	//ボス
+	let firstBoss	= pathMBoss1;
+	
+	let pracChapter	= 0;
+	if (GetPlayMode() == GAME_PRACTICE) { pracChapter = GetAreaCommonData(CAREA_STAGE, "ChapterIndex", 0 ); }
+	alternative(pracChapter)
+	case(0, 1) { firstBoss	= pathMBoss1; }
+	case(2) { firstBoss	= pathMBoss2; }
+	case(3) { firstBoss	= pathMBoss3; }
+	case(4) { firstBoss	= pathMBoss5; }
+	case(5) { firstBoss	= pathMBoss4; }
+	case(6) { firstBoss	= pathBoss; }
+	case(7) { firstBoss	= pathBoss; }
+	
+	// 道中で使うコモンデータ
+	SetAreaCommonData(CAREA_STAGE, "STG7R_BG7A", phaseEx(4*8));
+	SetAreaCommonData(CAREA_STAGE, "STG7R_BG7B", phaseEx(4*4));
+	SetAreaCommonData(CAREA_STAGE, "STG7R_BG7C", 0);
+	SetAreaCommonData(CAREA_STAGE, "STG7R_EXTEND", 0);
+	
+	// 突入フラグON
+	SetExEnterFlag(DifficultEx);
+
+	// BGM
+	// 道中曲 : 1拍24.25fくらい
+	//　中ボスロード
+	StartScriptInThread(firstBoss);
+	//  背景配置
+	SetStageBackGround(pathBG);
+
+	PlayMusicWithName( 14, 30, 30 );
+	wait(60);
+
+	loop(1) { WaitRoad(phase(2)); }
+	if (pracChapter <= 1)
+	{
+		SetExChapterFlag(1);
+		CHAPTER_1();
+		CHAPTER_MBOSS(pathMBoss2, 1, 0, false, 120);
+		DELAY_CHAPTER("STG7R_WAIT_2");
+	}
+	if (pracChapter <= 2)
+	{
+		if (pracChapter == 2) { ChapterStart(STAGE_ID, 1, CHAPTER_ROAD); }
+		SetExChapterFlag(2);
+		CHAPTER_2();
+		CHAPTER_MBOSS(pathMBoss3, 2, 0, false, 120);
+		DELAY_CHAPTER("STG7R_WAIT_3");
+	}
+	if (pracChapter <= 3)
+	{
+		if (pracChapter == 3) { ChapterStart(STAGE_ID, 2, CHAPTER_ROAD); }
+		SetExChapterFlag(3);
+		CHAPTER_3();
+		CHAPTER_MBOSS(pathMBoss5, 3, 0, false, 120);
+		DELAY_CHAPTER("STG7R_WAIT_4");
+	}
+	if (pracChapter <= 4)
+	{
+		if (pracChapter == 4) { ChapterStart(STAGE_ID, 3, CHAPTER_ROAD); }
+		SetExChapterFlag(4);
+		CHAPTER_5();
+		CHAPTER_MBOSS(pathMBoss4, 4, 0, false, 120);
+		DELAY_CHAPTER("STG7R_WAIT_5");
+	}
+	if (pracChapter <= 5)
+	{
+		if (pracChapter == 5) { ChapterStart(STAGE_ID, 4, CHAPTER_ROAD); }
+		SetExChapterFlag(5);
+		CHAPTER_4();
+		CHAPTER_MBOSS(pathBoss, 5, 1, false, 60*7);
+		DELAY_CHAPTER("STG7R_WAIT_6");
+	}
+	if (pracChapter <= 6)
+	{
+		if (pracChapter == 6) { ChapterStart(STAGE_ID, 5, CHAPTER_ROAD); }
+		SetExChapterFlag(6);
+		CHAPTER_6();
+		CHAPTER_7();
+	}
+// ------------------------ ボス
+	SetExChapterFlag(7);
+	CHAPTER_BOSS();
+
+	// ゲームクリアフラグON
+	if (GetPlayMode() != GAME_PRACTICE)
+	{
+		SetAreaCommonData(CAREA_STAGE, "GAME_CLEAR", 1 );
+		StageEND();
+	}
+	wait(75);
+	CloseMine(0);	//終了
+// ------------------------ 
+
+
+	function CHAPTER_1()
+	{
+		_CHAPTER_1();
+		loop(4*32-4*4) { WaitRoad(phase(1)); }
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_1()
+		{
+			ChapterStart(STAGE_ID, 0, CHAPTER_ROAD);
+
+			S1_F01([CenX-160, CenY-32], [24, -4, 8], [12, -32, 1]);
+			WaitRoad(phaseEx(1));
+			S1_F01([CenX-160+8, CenY-32-32], [24, -4, 8], [12, -32, 1]);
+			WaitRoad(phaseEx(3));
+			S1_F01([CenX+160, CenY-32], [-24, -4, 8], [12, -32, 1]);
+			WaitRoad(phaseEx(1));
+			S1_F01([CenX+160-8, CenY-32-32], [-24, -4, 8], [12, -32, 1]);
+			WaitRoad(phaseEx(3+4));
+			S1_SetEnemyF02(CenX, CenY-128, 1, 0, 0, 0);	// でか妖精
+			WaitRoad(phaseEx(4));
+			S1_F01([CenX-160, CenY-32], [24, -4, 4], [12, -32, 1]);
+			WaitRoad(phaseEx(1));
+			S1_F01([CenX-160+8, CenY-32-32], [24, -4, 4], [12, -32, 1]);
+			WaitRoad(phaseEx(3));
+			S1_F01([CenX+160, CenY-32], [-24, -4, 4], [12, -32, 1]);
+			WaitRoad(phaseEx(1));
+			S1_F01([CenX+160-8, CenY-32-32], [-24, -4, 4], [12, -32, 1]);
+			WaitRoad(phaseEx(3+2));
+
+			// タイトル表示
+			DisplayStageExtra( STAGE_ID, 0, 120 );
+			WaitRoad(phaseEx(8*2-4));
+
+			ascent(i in 0 .. 4)
+			{
+				S1_SetEnemyI01(MinX-64, MinY, 2, 30, 180*i, 0);
+				WaitRoad(phaseEx(1));
+			}
+			WaitRoad(phaseEx(4));
+			S1_F01([CenX+160, CenY-32], [-24, -4, 4], [12, -32, 1]);
+			WaitRoad(phaseEx(1));
+			S1_F01([CenX+160-8, CenY-32-32], [-24, -4, 5], [12, -32, 1]);
+			WaitRoad(phaseEx(1));
+			S1_F01([CenX+160-16, CenY-32-32*2], [-24, -4, 6], [12, -32, 1]);
+			WaitRoad(phaseEx(2+4));
+			ascent(i in 0 .. 4)
+			{
+				S1_SetEnemyI01(MaxX+64, MinY, 2, 180-30, 180*i, 0);
+				WaitRoad(phaseEx(1));
+			}
+			WaitRoad(phaseEx(4));
+			
+			S1_SetEnemyF02(CenX+96, CenY-128, 1, 0, 1, 0);	// でか妖精
+			WaitRoad(phaseEx(8));
+			S1_SetEnemyF02(CenX-96, CenY-128, 1, 0, 1, 0);	// でか妖精
+			WaitRoad(phaseEx(8));
+			S1_SetEnemyF02(CenX, CenY-64, 1, 0, 1, 0);	// でか妖精
+			WaitRoad(phaseEx(8+4));
+
+			S1_SetEnemyF04(CenX-96, CenY-128, 1, 90, -1, 0);
+			S1_F03d([CenX-128,CenY-32], [32, 8], 4, 2);
+			WaitRoad(phaseEx(1));
+			S1_F03d([CenX-128-24,CenY-32-24], [32, 8], 4, 2);
+			WaitRoad(phaseEx(8-1));
+
+			S1_SetEnemyF04(CenX+96, CenY-128, 1, 90, 1, 0);
+			S1_F03d([CenX+128,CenY-32], [-32, 8], 4, 2);
+			WaitRoad(phaseEx(1));
+			S1_F03d([CenX+128+24,CenY-32-24], [-32, 8], 4, 2);
+			WaitRoad(phaseEx(8-1));
+			S1_SetEnemyF04(CenX-32, CenY-96, 1, 90, -1, 0);
+			S1_SetEnemyF04(CenX+32, CenY-96, 1, 90, 1, 0);
+
+			S1_F03d([CenX+32,CenY-32], [32, 12], 4, 2);
+			S1_F03d([CenX-32,CenY-32], [-32, 12], 4, 2);
+			WaitRoad(phaseEx(1));
+			S1_F03d([CenX+32+24,CenY-32-24], [32, 12], 4, 2);
+			S1_F03d([CenX-32-24,CenY-32-24], [-32, 12], 4, 2);
+		}
+	}
+	
+	function CHAPTER_2()
+	{
+		_CHAPTER_2();
+		loop(4*32-4*8) { WaitRoad(phase(1)); }
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_2()
+		{
+			let value = 0;
+			S2_I01([MinX-16,MinY-450], 90, -0.25, 12, 2, value);
+			WaitRoad(phaseEx(4*4));
+			value += phaseEx(4*4);
+			S2_I01([MaxX+16,MinY-450], 90, 0.25, 12, 2, value);
+			WaitRoad(phaseEx(4*4));
+			S2_H01([CenX+80,MinY+32], 8, 1);
+			WaitRoad(phaseEx(4));
+			S2_H01([CenX-64,MinY+0], 8, -1);
+			WaitRoad(phaseEx(4));
+			S2_H01([CenX+96,MinY+64], 6, 1);
+			WaitRoad(phaseEx(2));
+			S2_H01([CenX+16,MinY+32], 6, -1);
+			WaitRoad(phaseEx(2));
+			S2_H01([CenX-32,MinY+0], 6, 1);
+			WaitRoad(phaseEx(2));
+			S2_H01([CenX-96,MinY+32], 6, -1);
+			WaitRoad(phaseEx(2));
+			
+			S2_Chii03_Side([MinX,MinY+32], [0, 56], 4, 1);
+			WaitRoad(phaseEx(4));
+			S2_Chii03_Side([MaxX,MinY+32], [0, 56], 4, 1);
+			WaitRoad(phaseEx(4));
+			S2_Chii02_Side([CenX+32,MinY], [64, 0], 90, 4, 1);
+			S2_Chii02_Side([CenX-32,MinY], [-64, 0], 90, 4, 1);
+			WaitRoad(phaseEx(8));
+			S2_SetEnemyChii04(CenX, MinY, 0.75, 90+1, 0, 0);
+			WaitRoad(phaseEx(8));
+			S2_Chii03_Side([MinX,MinY+32], [0, 80], 3, 2);
+			WaitRoad(phaseEx(1));
+			S2_Chii03_Side([MaxX,MinY+32], [0, 80], 3, 2);
+			WaitRoad(phaseEx(8-1));
+			S2_SetEnemyChii04(CenX+96, MinY, 0.75, 90+30, 0, 0);
+			S2_SetEnemyChii04(CenX-96, MinY, 0.75, 90-30, 0, 0);
+		}
+	}
+	
+	function CHAPTER_3()
+	{
+		_CHAPTER_3();
+		loop(4*32-4*8) { WaitRoad(phase(1)); }
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_3()
+		{
+			task B01(ct)
+			{
+				S3_B01([MinX,MinY], [0, 8], 1.5, 30, 4, 2);
+				WaitRoad(phaseEx(1));
+				S3_B01([MinX,MinY+96], [0, 8], 1.5, 30, 4, 2);
+				WaitRoad(phaseEx(8-1));
+				if (ct > 0)
+				{
+					S3_B01([MaxX,MinY], [0, 8], 1.5, 180-30, 4, 2);
+					WaitRoad(phaseEx(1));
+					S3_B01([MaxX,MinY+96], [0, 8], 1.5, 180-30, 4, 2);
+					WaitRoad(phaseEx(8-1));
+				}
+			}
+			B01(1);
+			WaitRoad(phaseEx(8));
+			S3_SetEnemyF02(CenX+96, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			S3_SetEnemyF02(CenX-96, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			WaitRoad(phaseEx(8));
+			S3_SetEnemyF03(CenX+128, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			S3_SetEnemyF03(CenX-128, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			B01(1);
+			WaitRoad(phaseEx(8));
+			S3_SetEnemyF02(CenX+64, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			S3_SetEnemyF02(CenX-64, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			WaitRoad(phaseEx(8));
+			S3_SetEnemyF03(CenX+108, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			S3_SetEnemyF03(CenX-108, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			B01(1);
+			WaitRoad(phaseEx(8));
+
+			S3_SetEnemyF04(CenX, CenY-30, 0, 0, 1, phaseExEnemy(4));
+			WaitRoad(phaseEx(4));
+			S3_SetEnemyF02(CenX+128, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			S3_SetEnemyF02(CenX-128, CenY+30, 0, 0, 1, phaseExEnemy(4));
+
+			WaitRoad(phaseEx(16));
+
+			S3_F03([CenX-128,CenY+120], [0,-32], 1, 8);
+			WaitRoad(phaseEx(1));
+			S3_F03([CenX+128,CenY+120], [0,-32], 1, 8);
+			WaitRoad(phaseEx(1));
+			S3_F03([CenX-96,CenY+120-16], [0,-32], 1, 8);
+			WaitRoad(phaseEx(1));
+			S3_F03([CenX+96,CenY+120-16], [0,-32], 1, 8);
+			WaitRoad(phaseEx(1));
+			S3_F03([CenX-64,CenY+120-32], [0,-32], 1, 8);
+			WaitRoad(phaseEx(1));
+			S3_F03([CenX+64,CenY+120-32], [0,-32], 1, 8);
+			WaitRoad(phaseEx(8-5));
+			S3_SetEnemyF04(CenX, CenY+30, 0, 0, 1, phaseExEnemy(4));
+			WaitRoad(phaseEx(16));
+
+			S3_I01([MaxX-32,MinY-32], [24,1.25], 1.25, 90+45, 4, 2);
+			WaitRoad(phaseEx(1));
+			S3_I01([MinX+32,MinY+32], [-24,1.25], 1.25, 90-45, 4, 2);
+		}
+	}
+	
+	function CHAPTER_4()
+	{
+		_CHAPTER_4();
+		loop(4*32-4*8) { WaitRoad(phase(1)); }
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_4()
+		{
+			S4_F01(
+				[
+				CenX+132,	CenX+86,
+				CenX+132-16*2,	CenX+86-16*2,
+				CenX+132-16*1,	CenX+86-16*1,
+				CenX+132-16*3,	CenX+86-16*3,
+				], 1);
+			WaitRoad(phaseEx(8));
+			S4_F01(
+				[
+				CenX-132,	CenX-86,
+				CenX-132+16*2,	CenX-86+16*2,
+				CenX-132+16*1,	CenX-86+16*1,
+				CenX-132+16*3,	CenX-86+16*3,
+				], 1);
+			WaitRoad(phaseEx(8));
+			S4_F01(
+				[
+				CenX-132,	CenX-86,
+				CenX+132,	CenX+86,
+				CenX+132-16*2,	CenX+86-16*2,
+				CenX-132+16*2,	CenX-86+16*2,
+				], 1);
+			WaitRoad(phaseEx(8));
+			S4_SetEnemyF04(GetCenterX()+160, GetClipMinY()+120, 1.5, 175, 320/cos(5), phaseEx(2));
+			WaitRoad(phase(16));
+			S4_SetEnemyF04(GetCenterX()-160, GetClipMinY()+165, 1.5, 5, 320/cos(5), phaseEx(2));
+			WaitRoad(phase(16));
+			
+			S4_SetEnemyF03(GetCenterX()-90, GetCenterY()+60, 2, 180+15, 90/phaseEx(4), phaseEx(4));
+			S4_SetEnemyF03(GetCenterX()+90, GetCenterY()+60, 2, 0-15, -90/phaseEx(4), phaseEx(4));
+			WaitRoad(phase(8));
+			S4_SetEnemyF03(GetCenterX()-90, GetCenterY()+60, 2, 180, 90/phaseEx(4), phaseEx(4));
+			S4_SetEnemyF03(GetCenterX()+90, GetCenterY()+60, 2, 0, -90/phaseEx(4), phaseEx(4));
+			WaitRoad(phase(8));
+			S4_SetEnemyF02(GetCenterX()+135, GetClipMinY()+32, 1.2, 165, 0, phaseEx(4));
+			WaitRoad(phase(4));
+			S4_SetEnemyF02(GetCenterX()-135, GetClipMinY()+128, 1.5, 15, 0, phaseEx(4));
+			WaitRoad(phase(8));
+			S4_SetEnemyF02(GetCenterX()+160, GetClipMinY()+132, 1.2, 195, 0, phaseEx(4));
+			S4_SetEnemyF02(GetCenterX()-160, GetClipMinY()+132, 1.2, -15, 0, phaseEx(4));
+			WaitRoad(phase(8));
+		}
+	}
+	
+	function CHAPTER_5()
+	{
+		_CHAPTER_5();
+		loop(4*32-4*8) { WaitRoad(phase(1)); }
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_5()
+		{
+			S5_F01(MaxX+64, CenX+128, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MaxX, CenX+32, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MinX, CenX-32, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MinX-64, CenX-128, 3, true, 0);
+//			WaitRoad(phaseEx(2));
+
+			S5_F01b(CenX-192, CenX+64, 90+75, 4, 1);
+			WaitRoad(phaseEx(2));
+			S5_F01b(CenX+192, CenX-64, 90-75, 4, 1);
+			WaitRoad(phaseEx(4));
+
+			S5_F01(MinX-64, CenX-128, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MinX, CenX-32, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MaxX, CenX+32, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MaxX+64, CenX+128, 3, true, 0);
+//			WaitRoad(phaseEx(2));
+
+			S5_F01b(CenX, CenX, 90, 5, 2);
+			WaitRoad(phaseEx(6));
+			S5_F01(MaxX+128, CenX+128, 3, true, 0);
+			S5_F01(MinX-128, CenX-128, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(MaxX, CenX+64, 3, true, 0);
+			S5_F01(MinX, CenX-64, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			S5_F01(CenX, CenX, 3, true, 0);
+			WaitRoad(phaseEx(2));
+			
+			S5_F01b(CenX-192, CenX+96, 90-45, 4, 1);
+			S5_F01b(CenX+192, CenX-96, 90+45, 4, 1);
+			WaitRoad(phaseEx(4));
+			S5_F01b(CenX, CenX, 90, 5, 2);
+			WaitRoad(phaseEx(8+4));
+
+			S5_I01(CenX+96, 7);
+			WaitRoad(phaseEx(8));
+			S5_I01(CenX-96, 7);
+			WaitRoad(phaseEx(8));
+			S5_I01(CenX+72, 7);
+			WaitRoad(phaseEx(4));
+			S5_I01(CenX-72, 7);
+			WaitRoad(phaseEx(4+8));
+			S5_I01(CenX+108, 7);
+			S5_I01(CenX-108, 7);
+		}
+	}
+	
+	function CHAPTER_6()
+	{
+		_CHAPTER_6();
+		loop(4*(48-8)-4*8) { WaitRoad(phase(1)); }
+		// 背景チェンジ
+		NextStageScene();
+		loop(4*8-2) { WaitRoad(phase(1)); }
+		S07_CarryPlayer(MinY+64, 180);	// 移動
+		DeleteShotAll_Effect(CenX, CenY);
+		KillAllEnemy();
+		loop(2) { WaitRoad(phase(1)); }
+		S07_ResetPlayerAngle(180, 30);	// 自機反転
+		SetItemCollectFlag(true);	// 反転中は常時回収
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_6()
+		{
+//			S6_F01([CenX-108,MinY+128], [-8,-8], [64,0], 2, 8, 1);
+//			WaitRoad(phaseEx(8));
+			S6_F01([CenX+108,MinY+128], [8,-8], [-64,0], 2, 8, 1);
+			WaitRoad(phaseEx(8));
+			S6_F01([CenX-64,MinY+128], [-16,-8], [64,0], 2, 8, 1);
+			WaitRoad(phaseEx(8));
+			S6_F01([CenX+64,MinY+128], [16,-8], [-64,0], 2, 8, 1);
+			WaitRoad(phaseEx(8));
+			S6_SetEnemyF02(CenX-64, CenY-64, 1, 90, 0, phaseEx(4));
+			WaitRoad(phaseEx(8));
+			S6_SetEnemyF02(CenX+64, CenY-64, 1, 90, 0, phaseEx(4));
+			WaitRoad(phaseEx(8));
+
+			S6_F01([CenX-108-32,MinY+128], [-8,-8], [64,0], 2, 6, 1);
+			S6_F01([CenX-108+64,MinY+128-16], [-8,-8], [64,0], 2, 6, 1);
+			WaitRoad(phaseEx(4));
+			S6_F01([CenX+108+32,MinY+128], [8,-8], [-64,0], 2, 6, 1);
+			S6_F01([CenX+108-64,MinY+128-16], [8,-8], [-64,0], 2, 6, 1);
+			WaitRoad(phaseEx(4));
+			S6_SetEnemyF02(CenX, CenY-32, 1, 90, 0, phaseEx(4));
+			WaitRoad(phaseEx(8));
+
+			S6_F01([CenX-64,MinY+108], [-16,-12], [64,0], 2, 6, 2);
+			S6_F01([CenX-64-48,MinY+108+32], [-16,-12], [64,0], 2, 6, 2);
+			WaitRoad(phaseEx(1));
+			S6_F01([CenX+64,MinY+108], [16,-12], [-64,0], 2, 6, 2);
+			S6_F01([CenX+64+48,MinY+108+32], [16,-12], [-64,0], 2, 6, 2);
+			WaitRoad(phaseEx(7));
+			WaitRoad(phaseEx(8));
+
+			S6_SetEnemyF03(CenX-96, CenY-128, 8, 90-45, -0.5, phaseEx(4));
+			WaitRoad(phaseEx(8));
+			S6_SetEnemyF03(CenX+64, CenY-128, 8, 90+15, 0.5, phaseEx(4));
+			WaitRoad(phaseEx(8));
+			S6_SetEnemyF03(CenX-128, CenY-128, 8, 90-75, 0.25, phaseEx(4));
+			WaitRoad(phaseEx(4));
+			S6_SetEnemyF03(CenX+32, CenY-128, 8, 90+50, 1, phaseEx(4));
+			WaitRoad(phaseEx(4));
+
+		//	S6_SetEnemyF03(CenX+32, CenY-128, 8, 90+50, 1, phaseEx(4));
+		//	WaitRoad(phaseEx(4));
+		//	S6_SetEnemyF03(CenX-128, CenY-128, 8, 90-30, -0.5, phaseEx(4));
+		//	WaitRoad(phaseEx(4));
+		//	S6_SetEnemyF03(CenX+160, CenY+16, 8, 90+75, 0.25, phaseEx(4));
+		//	WaitRoad(phaseEx(8));
+			WaitRoad(phaseEx(8));
+
+			ascent(i in 0 .. 3)
+			{
+				S6_H03([CenX-144+64*i, CenY-48+32*i], 3, [2,-2][i%2], 48);
+				WaitRoad(phaseEx(1));
+			}
+			WaitRoad(phaseEx(1));
+			ascent(i in 0 .. 3)
+			{
+				S6_H03([CenX+144-32*i, CenY-96+64*i], 3, [2,-2][i%2], 48);
+				WaitRoad(phaseEx(1));
+			}
+			WaitRoad(phaseEx(1+8));
+			S6_SetEnemyF02(CenX, CenY-128, 1, 90, 0, phaseEx(4));
+			WaitRoad(phaseEx(8));
+			ascent(i in 0 .. 4)
+			{
+				S6_H03([CenX-48-38*i, CenY-128+32*i], 3, [2,-2][i%2], 48);
+				S6_H03([CenX+48+38*i, CenY-128+32*i], 3, [-2,2][i%2], 48);
+				WaitRoad(phaseEx(2));
+			}
+			ascent(i in 0 .. 12)
+			{
+				S6_H03([CenX+(172-i*16-[16,-16][trunc(i/2)%2])*([1,-1][i%2]), CenY-128+16*i], 2, [2,-2][i%2], 48);
+				WaitRoad(phaseEx(1));
+			}
+		}
+	}
+	
+	function CHAPTER_7()
+	{
+		// 更にフェードアウト
+	//	CrossFadeExMusic(phaseEx(4*4), [0.8, 0.5]);
+		CrossFadeExMusic(phaseEx(4*4), [1.0, 0.5]);
+		_CHAPTER_7();
+		loop(4*32-4*4) { WaitRoad(phase(1)); }
+		// 更にフェードアウト
+		CrossFadeExMusic(phaseEx(4*4), [0.5, 0]);
+		loop(4*4) { WaitRoad(phase(1)); }
+		NextStageScene();
+		
+		// ----------- 実処理ここから ----------- //
+		task _CHAPTER_7()
+		{
+			ChapterStart(STAGE_ID, 6, CHAPTER_ROAD);
+			WaitRoad(phaseEx(8));	// 移動待ち
+			S7_F01([CenX-108,MaxY+24], [-42,-16], 2, -90+24, 4, 1);
+			WaitRoad(phaseEx(8));
+			S7_F01([CenX+108,MaxY+24], [42,-16], 2, -90-24, 4, 1);
+			WaitRoad(phaseEx(8));
+			S7_H01([MinX+96,MaxY-64], 8, 80, 1/2);
+			WaitRoad(phaseEx(4));
+			S7_H01([MinX+96,MaxY-64], 8, 80, 1/2);
+			WaitRoad(phaseEx(4));
+			S7_H01([MaxX-96,MaxY-64], 8, 80, 1/2);
+			WaitRoad(phaseEx(4));
+			S7_H01([MaxX-96,MaxY-64], 8, 80, 1/2);
+			WaitRoad(phaseEx(4));
+			S7_SetEnemyF02(CenX-80, MaxY+24, 2, 270, 0, phaseEx(2));
+			WaitRoad(phaseEx(4));
+			S7_SetEnemyF02(CenX+80, MaxY+24, 2, 270, 0, phaseEx(2));
+			WaitRoad(phaseEx(4));
+			S7_F01([CenX-128,MaxY+48], [36,-12], 2, -90+12, 4, 2);
+			WaitRoad(phaseEx(1));
+			S7_F01([CenX+128,MaxY+48], [-36,-12], 2, -90-12, 4, 2);
+			WaitRoad(phaseEx(7));
+			S7_H01([MinX+48,MaxY-64], 8, 48, 1/2);
+			WaitRoad(phaseEx(2));
+			S7_H01([MaxX-48,MaxY-64], 8, 48, 1/2);
+			WaitRoad(phaseEx(2));
+			S7_H01([CenX,MaxY-64], 8, 48, 1/2);
+			WaitRoad(phaseEx(2));
+
+			S7_I01(24, 1);
+			WaitRoad(phaseEx(8*2));
+			S7_I01(24, -1);
+			WaitRoad(phaseEx(8));
+			S7_I01(24, 1);
+			WaitRoad(phaseEx(8));
+			S7_I01(24, -1);
+			WaitRoad(phaseEx(8));
+			S7_I01(24, 1);
+			WaitRoad(phaseEx(8));
+		}
+	}
+	
+	// 実時間待機用
+	function DELAY_CHAPTER(AREA_NAME)
+	{
+		WaitRoad_Time(SinglePhase*(4*8)/58.6, AREA_NAME);	// 何もない所は実時間に合わせて待機
+	}
+
+// ----------- 中ボス氏 ----------- //
+	task CHAPTER_MBOSS(pathBoss, nextChapter, nextSceneType, killEnemy, eDelay)
+	{
+		WaitRoad(phaseEx(2));	// 処理落ち回避
+		
+		// みんなしねばいい
+		if (killEnemy)
+		{
+			KillAllEnemy();
+			DeleteShotAll_Effect(CenX, CenY);
+			SetItemCollect(60);
+		}
+		if (nextSceneType == 1) { NextStageScene(); }	// シーン移行
+		
+		// ボスがでたぞー
+		CallBoss();
+		flgStopSetZako = true;
+		flgStopSetZakoTimer = 99999;
+		// 中ボスが消えてからボスをロード
+		if (length(pathBoss) > 0) { StartScriptInThreadWaitBoss(pathBoss); }
+		
+		// ボス撃破待ち
+		CheckBossKilled();
+		WaitForMiddleBossKilled();
+		
+		if (nextChapter >= 0)
+		{
+			if (nextSceneType == 0) { NextStageScene(); }	// シーン移行
+			ChapterStart(STAGE_ID, nextChapter, CHAPTER_ROAD);
+			if (nextChapter == 5)
+			{
+				// タイトル表示
+				DisplayStage(STAGE_ID, 120);
+			//	PlaySubMusic( 77, 30, 0 );
+			//	CrossFadeExMusic(480, [1.0, 0.8]);
+			}
+			else
+			{
+				DisplayStageExtra( STAGE_ID, nextChapter, 120 );
+			}
+		}
+		
+		descent(t in 0 .. eDelay)
+		{
+			flgStopSetZakoTimer = t;
+			yield;
+		}
+		
+		flgStopSetZakoTimer = 0;
+		flgStopSetZako = false;
+	}
+
+// ----------- ボス氏 ----------- //
+	function CHAPTER_BOSS()
+	{
+		PlayMusic(-1, 0, 0);	// BGM停止
+		wait(60);
+		
+		KillAllEnemy();
+		DeleteShotAll_Effect(CenX, CenY);
+		SetItemCollect(120);
+		//SetItemCollectFlag(false);	// ↑でキャンセルしているからフヨウラ
+		
+		wait(60);
+		
+		PlayMusic( 77, 30, 30 );	// 風サウンド
+		S07_CarryPlayer(MaxY-64, 180);	// 自機の位置を戻す
+		
+		wait(240-120);
+		
+		S07_ResetPlayerAngle(0, 0);	// 自機ショットを戻す
+		CallBoss();
+
+		// 待機とロード
+		WaitForBossKilled();
+
+		wait(60);
+	}
+}
+
+
+// Ex突入フラグ
+task SetExEnterFlag(difex)
+{
+	let aname = "EXTRA_ENTER_" ~ IntToString(difex);
+	if (!GetAreaCommonData(CAREA_SAVE, aname, false))
+	{
+		SetAreaCommonData(CAREA_SAVE, aname, true);
+		SaveCommonDataAreaA2(CAREA_SAVE, saveCommonSAVE);
+	}
+}
+
+// チャプタープラクティス解禁フラグ
+task SetExChapterFlag(num)
+{
+	if (GetAreaCommonData(CAREA_SAVE, "EXTRA_CHAPTER", 0) < num)
+	{
+		SetAreaCommonData(CAREA_SAVE, "EXTRA_CHAPTER", num );
+		SaveCommonDataAreaA2(CAREA_SAVE, saveCommonSAVE);
+	}
+}

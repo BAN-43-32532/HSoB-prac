@@ -1,0 +1,245 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　ボス会話前半"]
+#Text["4面　ボス会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Siran.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
+	SetSiranRosary();	// 数珠配置
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "你逃得掉吗，[r]我可是幻想乡最快的人类啊（大概）。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx2(cutinBoss1, "但是，人类的生命是短暂且脆弱的。 ", -48, -280);
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "相反，念佛者不会被任何人妨碍。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "啊、呃，你等着，[r]我肯定能学会舍虫魔法的。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "噫！何等自大的人类。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "你若那时就此被时间停止，[r]本可以永远逃脱死亡的桎梏的。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "你岂非正该对小僧等人[r]献上感谢的念佛吗？ ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "不，那样和死了[r]也没什么区别吧。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "维持现状、永远的停滞，[r]这根本不算是救赎，什么也不算。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx(cutinPlayer1, "如果你是宗教家，[r]那就不要放弃思考啊！ ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "没关系的， ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "56亿年之后会有个叫什么弥勒之世的来临，[r]此世变为极乐净土…… ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "20亿年后太阳就会膨胀，[r]把此世化为极乐焦土啦。 ");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
+			SetTalkEx(cutinPlayer1, "所以我总有一天要超越幻想乡，[r]去往比月亮更远的宇宙旅行。 ");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE2);
+			SetTalkEx(cutinPlayer1, "现在的我是个弱小的人类。[r]但我也在用我自己的方式，积极向上地生活着。 ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "不要擅自改变我的活法！ ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "南无阿弥陀佛。 ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "区区人类，若不依赖科学之类的迷信，[r]连小僧之类妖怪的小指头也不及。 ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "老老实实念一句佛，[r]成为我等妖土真宗的门徒吧。 ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "宗教才是[r]从人类的弱点之中诞生的武器。 ");
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
+			SetTalkEx(cutinPlayer1, "我怎么可能输给[r]拿这种东西当宝的你！ ");
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "而且你搞错了。 ");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "科学不是迷信。[r]科学才是超越了宗教的，人类最终兵器！ ");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			SetTalkEx(cutinBoss1, "那么，小僧便也用一用人类所取得的最终兵器--[r]科学之力（噪特）吧。 ");
+
+			PlayMusicWithName( 9, 30, 30 );
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER2);
+			SetTalkEx(cutinBoss1, "好！就让你在[r]能使人惊醒的恐怖记忆中永远沉眠下去吧！ ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetActionSiran(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

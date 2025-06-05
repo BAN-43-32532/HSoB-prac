@@ -1,0 +1,138 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["灵梦エンディング-Bad"]
+#Text["灵梦エンディング-Bad"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdBad[0][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 108, 108];
+	let COL2 = [108, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]博丽神社。 ", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]博丽神社。[r]败给了可怖的沙漠诸神的力量的灵梦，眼前一片漆黑。 ", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "[r]当她再次睁开眼睛的时候，却又是雪白的静止世界与熟悉的神社了。 ", COL0);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「巫女千躲，必有一糟么。来吧，趁着还记得版面再推一遍吧。」 ", COL2);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "灵梦[r]「禁咒塔又恢复了……难道说，是回到了出发之前的时间了吗？」 ", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「女仆的时间操纵术也有很多种哦。这次请一定要胜利才行。」 ", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「因为保持记忆不变卷回时间，就相当于增加了卷回时间那么多的年龄啊。」 ", COL2);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "灵梦[r]「我寿命短一年也没关系，能不能把他们和红魔馆（你们）一块儿干掉啊。」 ", COL1);
+		}
+		case(8)
+		{
+			TEndingImage(imgEdBad[0][1], 30);
+			SetTalkEx(cutinDescri, "[r]选择了和「一周目」不同的道路，灵梦再次向禁咒塔出发。[r]然而一切如故地，同样的boss再度挡在前面。 ", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]就算时间卷回，和狒狒及牙签相遇的命运也是不会改变的。 ", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]前进吧灵梦！[r]别浪费了必杀的禁咒返啊！ ", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.05　　这也算是出于游戏性嘛 ", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

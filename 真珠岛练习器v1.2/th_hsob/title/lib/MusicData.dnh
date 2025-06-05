@@ -1,0 +1,323 @@
+// MUSIC
+
+//僒儞僾儖悢傪曉偡
+function GetMusicSample(musicID)
+{
+	alternative(musicID)
+	case(0)  { return([973360,3806145]); }	//丂僞僀僩儖
+	case(1)  { return([1425674,3585671]); }	//丂僾儗僀儎乕僘僗僐傾
+	case(2)  { return([1329035,6449035]); }	//丂1 road
+	case(3)  { return([522335,3298233]); }	//丂1 boss
+	case(4)  { return([591367,6198771]); }	//丂2 road
+	case(5)  { return([205240,3829502]); }	//丂2 boss
+	case(6)  { return([687132,6530601]); }	//丂3 road
+	case(7)  { return([787560,5982162]); }	//丂3 boss
+	case(8)  { return([972416,9734113]); }	//丂4 road
+	case(9)  { return([1313294,8312787]); }	//丂4 boss
+	case(10)  { return([520833,8804862]); }	//丂5 road
+	case(11)  { return([537482,8510159]); }	//丂5 boss
+	case(12)  { return([684194,4671886]); }	//丂6 road
+	case(13)  { return([1082253,12570074]); }	//丂6 boss
+	case(14)  { return([606579,9998681]); }	//丂Ex road
+	case(15)  { return([1238335,9125363]); }		//丂Ex boss
+	case(16)  { return([811253,3115251]); }		//丂ed
+	case(17)  { return([149291,4421669]); }	//丂st
+	case(77) { return([16384,1296384]); }	//丂wind
+	others  { return([0,0]); }
+}
+
+//BGM偺僷僗傪曉偡
+function GetMusicPath(musicID)
+{
+	let musicDir = GetCurrentScriptDirectory() ~ "../../music/";
+	
+	alternative(musicID)
+	case(0)  { return(musicDir ~ "hsob_title.ogg"); }	//丂僞僀僩儖
+	case(1)  { return(musicDir ~ "hsob_playersscore.ogg"); }	//丂僾儗僀儎乕僘僗僐傾
+	case(2)  { return(musicDir ~ "hsob_1road.ogg"); }	//丂1 road
+	case(3)  { return(musicDir ~ "hsob_1boss.ogg"); }	//丂1 boss
+	case(4)  { return(musicDir ~ "hsob_2road.ogg"); }	//丂2 road
+	case(5)  { return(musicDir ~ "hsob_2boss.ogg"); }	//丂2 boss
+	case(6)  { return(musicDir ~ "hsob_3road.ogg"); }	//丂3 road
+	case(7)  { return(musicDir ~ "hsob_3boss.ogg"); }	//丂3 boss
+	case(8)  { return(musicDir ~ "hsob_4road.ogg"); }	//丂4 road
+	case(9)  { return(musicDir ~ "hsob_4boss.ogg"); }	//丂4 boss
+	case(10) { return(musicDir ~ "hsob_5road.ogg"); }	//丂5 road
+	case(11) { return(musicDir ~ "hsob_5boss.ogg"); }	//丂5 boss
+	case(12) { return(musicDir ~ "hsob_6road.ogg"); }	//丂6 road
+	case(13) { return(musicDir ~ "hsob_6boss.ogg"); }	//丂6 boss
+	case(14) { return(musicDir ~ "hsob_7road.ogg"); }	//丂Ex road
+	case(15) { return(musicDir ~ "hsob_7boss.ogg"); }	//丂Ex boss
+	case(16) { return(musicDir ~ "hsob_ending.ogg"); }	//丂ed
+	case(17) { return(musicDir ~ "hsob_staffroll.ogg"); }	//丂st
+	case(77) { return(musicDir ~ "desert_wind.ogg"); }	//丂wind
+	others { return(""); }
+}
+
+//BGM偺僷僗傪曉偡
+function GetMusicText(musicID)
+{
+	let obj = ObjText_Create();	//揔摉側僆僽僕僃僋僩傪惗惉乮僨乕僞偺傗傝庢傝梡乯
+
+	alternative(musicID)
+	case(0)	//丂僞僀僩儖
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.01 幻想乡最漫长的一日");
+		Obj_SetValue(obj, "_NAME", "No.01 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"标题画面的主题曲。[r]
+			能让人轻易地感觉到体感时间的变化的就是音乐吧。[r]
+			睡醒的时候，熬夜的时候，还有在缓慢的曲子后面听快速的曲子。[r]
+			顺便，在感冒的时候听到的音会变低一些");
+	}
+	case(2)	//丂1 road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.02 沉默的春景");
+		Obj_SetValue(obj, "_NAME", "No.02 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"1面的主题曲。[r]
+			经常听到有人说无农药栽培非常难。[r]
+			我小学的时候体验过插秧，但附近的田地里用的是插秧机，[r]
+			感受到了文明的力量……");
+	}
+	case(3)	//丂1 boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.03 Scarlet Ranran");
+		Obj_SetValue(obj, "_NAME", "No.03 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"绯神乱乱的主题曲。[r]
+			之前用红色水滴的设计做出的很酷炫的衣服，[r]
+			结果让人担心说，“你肚子出血了没事吧？”[r]
+			改成黄色，又被误认为是咖喱洒在上面了。");
+	}
+	case(4)	//丂2 road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.04 末法之夜降临");
+		Obj_SetValue(obj, "_NAME", "No.04 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"2面的主题曲。[r]
+			妖怪眼里的墓地，是很快活呢还是很热闹呢，[r]
+			经常听到那种风格做得明亮又向上的曲子。[r]
+			我不太喜欢恐怖风格的，就做成这种感觉了。");
+	}
+	case(5)	//丂2 boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.05 欢迎前往小幺的墓地！");
+		Obj_SetValue(obj, "_NAME", "No.05 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"白袴幺的主题曲。[r]
+			要用的时候偏偏手边没有的东西，这个能毫无悬念地当选第一。[r]
+			清洁小地方什么的时候也得用到。[r]
+			还有，我喜欢章鱼烧。真好吃。");
+	}
+	case(6)	//丂3 road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.06 Lotus Maze");
+		Obj_SetValue(obj, "_NAME", "No.06 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"3面的主题曲。[r]
+			以前，我说过我觉得花有些诡异，[r]
+			如果说莲花，花托实在太恐怖了。好可怕。[r]
+			做成了和那种感觉相反，神秘又有透明感的曲子。");
+	}
+	case(7)	//丂3 boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.07 清高的翠之灰姑娘 ");
+		Obj_SetValue(obj, "NAME_EX", "No.07 清高的翠之[ruby rb=\"灰姑娘 \" rt=\"   Cinderella\"]");
+		Obj_SetValue(obj, "_NAME", "No.07 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"青鹭光子的主题曲。[r]
+			被选中者的资质宛如棱镜般四散分岔。[r]
+			在我的体内所沉眠的资质乃是调和与创造。[r]
+			顺应那宿命，我奏响古老的记忆，捕风编织成曲。");
+		Obj_SetValue(obj, "COMMENT_EX",
+			"青鹭光子的主题曲。[r]
+			光是说中二病也有各种各样的表现类型。[r]
+			我自己当时就像突然间对音乐觉醒了一样，[r]
+			为了耍帅又是买CD又是作曲的。");
+	}
+	case(8)	//丂4 road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.08 苦短之森");
+		Obj_SetValue(obj, "_NAME", "No.08 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"4面的主题曲。[r]
+			俗话说藏木于林，但其实用不着那么麻烦。[r]
+			放在桌子上的东西也会突然就藏起来了。[r]
+			不知不觉就自己消失了，真是不可思议。");
+	}
+	case(9)	//丂4 boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.09 飞翔八十亿劫 ～ Sinful Rampage");
+		Obj_SetValue(obj, "_NAME", "No.09 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"紫鸾上人（德雀坊紫鸾）的主题曲。	[r]
+			现在小鸟是标配了，[r]
+			不过以前主页、博客才是主流啊。[r]
+			有时候就会踩中不回或者接龙插楼了。");
+	}
+	case(10)	//丂5 road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.10 Far-East El Dorado");
+		Obj_SetValue(obj, "_NAME", "No.10 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"5面的主题曲。[r]
+			El Dorado和Zipangu同样指的是黄金乡。[r]
+			不说那个，我第一次玩的某游戏是“金”来着，[r]
+			但我不知道怎么存档，很久以来一直都是从头打起。");
+	}
+	case(11)	//丂5 boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.11 烈日的暴君 ～ Violent General");
+		Obj_SetValue(obj, "_NAME", "No.11 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"赛特大将的主题曲。[r]
+			有时候就会突然特别想吃超辣的菜。不过，[r]
+			那种超出常识范围的辣实在是太辣了，所以只吃常识范围内的超辣。[r]
+			凡事都还是有个度比较好。毕竟很疼。");
+	}
+	case(12)	//丂6 road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.12 我乃将远方之人带回者");
+		Obj_SetValue(obj, "_NAME", "No.12 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"6面的主题曲。[r]
+			一开始我想加点拟声吟唱（Scat），[r]
+			但没那个音源，于是鸟生鱼汤地放弃了。[r]
+			也想过要不要自己唱，然后一秒钟就否掉了。");
+	}
+	case(13)	//丂6 boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.13 黄金赞歌 ～ Ibis Trismegistus");
+		Obj_SetValue(obj, "_NAME", "No.13 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"鸟澄珠乌的主题曲。[r]
+			最近葱也能美味地吃下肚了，[r]
+			但以前我很讨厌鸡串中间夹的葱，总是挑出来扔掉。[r]
+			我一般吃炸鸡皮和烤鸡腿。爱吃酱烧。");
+	}
+	case(16)	//丂ed
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.14 幻想乡最短暂的一夜");
+		Obj_SetValue(obj, "_NAME", "No.14 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"Ending的主题曲。[r]
+			对妖怪的畏惧和信仰都渐渐稀薄了，[r]
+			对他们而言夜晚或许确实是太短了吧。[r]
+			我在被死线的妖怪狂追的时候也觉得夜晚太短。");
+	}
+	case(17)	//丂st
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.15 响彻朝霞的鸟之歌 ");
+		Obj_SetValue(obj, "_NAME", "No.15 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"Staff Roll的主题曲。[r]
+			使用了不止是响彻朝霞，更是能响彻宿醉的脑子的笛子的声音，[r]
+			做成了有些民族风的曲子。[r]
+			一般休息日我都听不到鸟叫，醒过来已经过中午了。");
+	}
+	case(14)	//丂ex road
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.16 万紫千红的百鬼夜行");
+		Obj_SetValue(obj, "_NAME", "No.16 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"Ex面的主题曲。[r]
+			虽然是同样的景色，但只是多了颜色，就很给人一种新鲜感。[r]
+			食物也一样，三色装点的三餐，外观和营养都同等重要。[r]
+			不过要是变成彩虹色那就看起来像是有毒了。我喜欢吃马卡龙。");
+	}
+	case(15)	//丂ex boss
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.17 Glass-heart Chevalier");
+		Obj_SetValue(obj, "_NAME", "No.17 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"藤壶无名异的主题曲。[r]
+			受深渊魅惑、歌颂终焉的异端者是常见的，[r]
+			但因黄昏而思考起自己的存在理由的观测者是稀有的。[r]
+			或许只是因为这种人基本都是安安静静的，不很起眼而已。");
+	}
+	case(1)	//丂僾儗僀儎乕僘僗僐傾
+	{
+		// 柤慜
+		Obj_SetValue(obj, "NAME", "No.18 Player's Score");
+		Obj_SetValue(obj, "_NAME", "No.18 ???");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 嶌嬋幰
+		Obj_SetValue(obj, "COMMENT",
+			"游戏结束的主题曲。[r]
+			焕然一新，合着气氛新作的曲子。[r]
+			虽然听起来有些寂寞，但情绪却会更加激动。[r]
+			因为这样才更适合接着打下一盘嘛。");
+	}
+	
+	return(obj);
+}

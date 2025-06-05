@@ -1,0 +1,872 @@
+let PORCELAIN_DISH	= 0;
+let PORCELAIN_CUP	= 1;
+let PORCELAIN_POT	= 2;
+let PORCELAIN_KNIFE	= 3;
+let PORCELAIN_KNIFE_R	= 4;
+let PORCELAIN_DISH_W	= 5;
+let PORCELAIN_SWORD	= 6;
+let PORCELAIN_SWORD_L	= 7;
+let PORCELAIN_FRAGMENT	= 8;
+let PORCELAIN_DISH_W2	= 9;
+let PORCELAIN_DISH_W0	= 10;
+
+// 皿弾
+function PorcelainShot(x, y, stype, size, delay)
+{
+	let obj = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	SetShotDisabled(obj);
+	Obj_SetVisible(obj, false);
+	Obj_SetValue(obj, "COLOR", stype);
+	Obj_SetValue(obj, "SIZE", size);
+	
+	alternative(stype)
+	case(PORCELAIN_DISH) { _PorcelainShot(obj, delay, 0, true, imgEffectSara); }
+	case(PORCELAIN_DISH_W) { _PorcelainShot(obj, delay, 60, true, imgEffectSara); }
+	case(PORCELAIN_DISH_W2) { _PorcelainShot(obj, delay, 75, true, imgEffectSara); }
+	case(PORCELAIN_CUP) { _PorcelainShot2(obj, delay, imgEffectSara2, 4, 8); }
+	case(PORCELAIN_POT) { _PorcelainShot2(obj, delay, imgEffectSara3, 4, 16); }
+	case(PORCELAIN_KNIFE) { _PorcelainShot3(obj, 1, delay, imgEffectSara4); }
+	case(PORCELAIN_KNIFE_R) { _PorcelainShot3(obj, -1, delay, imgEffectSara4); }
+	case(PORCELAIN_SWORD) { _PorcelainShot3b(obj, 1, delay, imgEffectSara4); }
+	case(PORCELAIN_SWORD_L) { _PorcelainShot3c(obj, 1, delay, imgEffectSara4); }
+	case(PORCELAIN_FRAGMENT) { _PorcelainShot4(obj, delay, MUMEI_EFF_IMG[0]); }
+	case(PORCELAIN_DISH_W0) { _PorcelainShot(obj, delay, 60, false, imgEffectSara); }
+	return(obj);
+}
+// 当たり判定付けるよ
+function PorcelainEnemy(x, y, stype, size, delay, e_life, link_rate)
+{
+	let objFamilier = MakeEnemyFamilier(x, y, e_life, ENEMY_S);
+	let objS = PorcelainShot(x, y, stype, size, delay);
+	Obj_SetValue(objS, "E_OBJ", objFamilier);
+	SetEffectResist(objFamilier, -1);	// 凍結ダメージは通りやすい
+	SetTimeResist(objFamilier, 1);	// 停止耐性（主にバグ防止用）
+	Obj_SetValue(objFamilier, "DISH_RESIST", true);	// 皿用特殊耐性
+
+	// あいてむさん落とすよ！
+	if (IsRainbow()) { SetEnemyDropItem(objFamilier, [MY_ITEM_TIME_5], [MY_ITEM_TIME_2, 5]); }
+	else { SetEnemyDropItem(objFamilier, [MY_ITEM_TIME_3], [MY_ITEM_TIME_1, 0]); }
+
+	// ボスと体力連動
+	if (link_rate > 0) { CheckLinkLife_Familier(objEnemy, objFamilier, link_rate); }
+	
+	TCheckHit();
+	TCheckLife();
+	
+	return(objS);
+	
+	task TCheckLife()
+	{
+		let t = 0;
+		while(!Obj_IsDeleted(objFamilier) && !Obj_IsDeleted(objS))
+		{
+			if (t > delay)
+			{
+				// 当たり判定連動
+				let sz = Obj_GetValueD(objS, "SIZE", 0);
+				Obj_SetValue(objFamilier, "TO_SHT", sz);
+			}
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objS), ObjMove_GetY(objS));
+			t++;
+			yield;
+		}
+		if (!Obj_IsDeleted(objS)) { Obj_Delete(objS); }
+		if (!Obj_IsDeleted(objFamilier)) { Obj_Delete(objFamilier); }
+	}
+	task TCheckHit()
+	{
+		WaitForKilledFamilier(objFamilier, 0, 0);
+		// ショット撃破なら破壊音
+		if (!Obj_IsDeleted(objFamilier) && CheckKillType(objFamilier) == 2)
+		{
+			CallSound(sndFreeze);
+			// アイテムドロップ
+			DropItems(objFamilier);
+		}
+		Obj_Delete(objFamilier);
+	}
+
+}
+
+// 回転オブジェクト
+task _PorcelainShot(parent, delay, scy_angle, isHit, imgFile)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "ANGLE", 90);
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetSourceRect(obj[0], 0+2, 0+2, 256-2, 256-2);
+	ObjSprite2D_SetDestCenter(obj[0]);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	Obj_SetRenderPriorityI(obj[1], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetSourceRect(obj[1], 256+2, 0+2, 512-2, 256-2);
+	ObjSprite2D_SetDestCenter(obj[1]);
+	ObjRender_SetBlendType(obj[1], BLEND_MULTIPLY);
+	
+	let x = ObjMove_GetX(parent);
+	let y = ObjMove_GetY(parent);
+	let sc = 0;
+	let sz = 0;
+	let ax = 0;
+	let ay = 0;
+	let az = 0;
+
+	let t = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		let sc_y = 0;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		else { sc_y = sin(min(1,(t+1-delay)/60)*90); }
+		
+		x = ObjMove_GetX(parent);
+		y = ObjMove_GetY(parent);
+		sz = Obj_GetValueD(parent, "SIZE", 0) * tmp;
+		let xang = Obj_GetValueD(parent, "ANGLE", 90);
+		let asc = (1-sc_y)*60;
+		if (scy_angle != 0) { asc = scy_angle; }
+		sc = (sz+12)/90;
+		ax = -sin(xang)*asc;
+		ay = cos(xang)*asc;
+		
+		sz *= cos(asc);	// 楕円状の時は当たり判定縮小
+		
+		if (isHit)
+		{
+			ObjShot_SetIntersectionCircleA1(parent, sz);
+			// グレイズ判定
+			if (t >= delay && t%3 == 0) { _SaraGrazeShot(x, y, sz); }
+		}
+		
+		ascent(i in 0 .. 2)
+		{
+			ObjRender_SetPosition(obj[i], x, y, 0);
+		}
+		ObjRender_SetScaleXYZ(obj[0], sc, sc, 1);
+		ObjRender_SetScaleXYZ(obj[1], sc, sc, 1);
+		ObjRender_SetAngleXYZ(obj[0], ax, ay, 0);
+		ObjRender_SetAngleXYZ(obj[1], ax, ay, az);
+		az += (1 + (1-sc_y)*5);
+		t++;
+		yield;
+	}
+	// 割れるアニメ
+	if (!Obj_IsDeleted(obj[0]))
+	{
+		if (IsDrawEffect() < 2)
+		{
+			ascent(i in 0 .. length(obj)) { _PorcelainShot_Fadeout(obj[i]); }
+			return;
+		}
+		else
+		{
+			ascent(i in 0 .. length(obj))
+			{
+				_PorcelainShot_Break(x, y, [ax,ay,az], sc, Obj_GetRenderPriorityI(obj[i]));
+			}
+		}
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+
+	// 割れるアニメ
+	task _PorcelainShot_Break(x, y, angle, scale, priI)
+	{
+		let ct = 4;
+		let pos = [];
+		ascent(i in 0 .. ct)
+		{
+			let tmpy = i/(ct-1);
+			let posx = [];
+			ascent(j in 0 .. ct)
+			{
+				let tmpx = j/(ct-1);
+				let px = 0.5 + (tmpx-0.5)*1 + randEffect(-0.2,0.2);
+				let py = 0.5 + (tmpy-0.5)*1 + randEffect(-0.2,0.2);
+				if (tmpx <= 0) { px = 0; }
+				if (tmpx >= 1) { px = 1; }
+				if (tmpy <= 0) { py = 0; }
+				if (tmpy >= 1) { py = 1; }
+				posx = posx ~ [[px, py]];
+			}
+			pos = pos ~ [posx];
+		}
+
+		ascent(i in 0 .. ct-1)
+		{
+			ascent(j in 0 .. ct-1)
+			{
+				_PorcelainShot_Break_Single(x, y, angle, scale,
+					[pos[i][j], pos[i+1][j], pos[i][j+1], pos[i+1][j+1]], priI);
+			}
+		}
+
+		task _PorcelainShot_Break_Single(x, y, angle, scale, rect, priI)
+		{
+			let ipos = [[0+1, 0+1], [256+1, 0+1]];
+			
+			let obj = [ObjPrim_Create(OBJ_PRIMITIVE_2D), ObjPrim_Create(OBJ_PRIMITIVE_2D)];
+			ascent(j in 0 .. 2)
+			{
+				ObjPrim_SetPrimitiveType(obj[j], PRIMITIVE_TRIANGLESTRIP);
+				ObjPrim_SetVertexCount(obj[j], 4);
+				ObjPrim_SetTexture(obj[j], imgFile);
+				Obj_SetRenderPriorityI(obj[j], priI);
+				ObjRender_SetPosition(obj[j], x, y, 0);
+				ObjRender_SetScaleXYZ(obj[j], scale, scale, scale);
+				ObjRender_SetAngleXYZ(obj[j], angle[0], angle[1], angle[2]);
+				ascent(i in 0 .. 4)
+				{
+					ObjPrim_SetVertexPosition(obj[j], i, 256*(rect[i][0]-0.5), 256*(rect[i][1]-0.5), 0);
+					ObjPrim_SetVertexUVT(obj[j], i, ipos[j][0]+254*rect[i][0], ipos[j][1]+254*rect[i][1]);
+				}
+			}
+			ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+			ObjRender_SetBlendType(obj[1], BLEND_MULTIPLY);
+			
+			let va = atan2(y-GetPlayerY, x-GetPlayerX);
+			let vx = (rect[0][0] + rect[1][0] + rect[2][0] + rect[3][0])/4 - 0.5;
+			let vy = (rect[0][1] + rect[1][1] + rect[2][1] + rect[3][1])/4 - 0.5;
+			let vp = Rotate2D_XY(vx, vy, angle[2]);
+			vx = vp[0] + cos(va)/2;
+			vy = vp[1] + sin(va)/2;
+			let vt = trunc(randEffect(10, 45));
+			let ax = angle[0];
+			let ay = angle[1];
+			let az = angle[2];
+			let addx = randEffect(-3, 3);
+			let addy = randEffect(-3, 3);
+			let addz = randEffect(-3, 3);
+			vx = (vx+randEffect(-0.25, 0.25))*6;
+			vy = (vy+randEffect(-0.25, 0.25))*6;
+			ascent(t in 0 .. vt)
+			{
+				let tmp = 1-t/vt;
+				ascent(j in 0 .. 2)
+				{
+					ObjRender_SetPosition(obj[j], x, y, 0);
+					ObjRender_SetAlpha(obj[j], tmp*512);
+					ObjRender_SetAngleXYZ(obj[j], ax, ay, az);
+				}
+				x += vx*tmp;
+				y += vy*tmp;
+				ax += addx;
+				ay += addy;
+				az += addz;
+				yield;
+			}
+			ascent(j in 0 .. 2) { Obj_Delete(obj[j]); }
+		}
+	}
+	// 軽量版
+	task _PorcelainShot_Fadeout(obj)
+	{
+		descent(t in 0 .. 15)
+		{
+			let tmp = (t+1)/15;
+			ObjRender_SetAlpha(obj, tmp*255);
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// コマ送りオブジェクト
+task _PorcelainShot2(parent, delay, imgFile, anim_frame, anim_count)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetDestRect(obj[0], -128, -128, 128, 128);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	
+	let x = ObjMove_GetX(parent);
+	let y = ObjMove_GetY(parent);
+	let a = ObjMove_GetAngle(parent)-90;
+	let t = 0;
+	let sz = 0;
+	let sc = 0;
+	let anime = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		
+		x = ObjMove_GetX(parent);
+		y = ObjMove_GetY(parent);
+		a = ObjMove_GetAngle(parent)-90;
+		sz = Obj_GetValueD(parent, "SIZE", 0) * tmp;
+		sc = (sz+12)/90;
+		
+		ObjShot_SetIntersectionCircleA1(parent, sz);
+		// グレイズ判定
+		if (t >= delay && t%3 == 0) { _SaraGrazeShot(x, y, sz); }
+		
+		ObjRender_SetPosition(obj[0], x, y, 0);
+		ObjRender_SetScaleXYZ(obj[0], sc, sc, 1);
+		if (t%anim_frame == 0)
+		{
+			let ix = (anime%4) * 256;
+			let iy = trunc(anime/4) * 256;
+			ObjSprite2D_SetSourceRect(obj[0], ix, iy, ix+256, iy+256);
+			anime = (anime+1)%anim_count;
+		}
+
+		ObjRender_SetAngleZ(obj[0], a);
+		t++;
+		yield;
+	}
+	// 割れるアニメ
+	if (!Obj_IsDeleted(obj[0]))
+	{
+		if (IsDrawEffect() < 2)
+		{
+			_PorcelainShot2_Fadeout(obj[0]);
+			ascent(i in 1 .. length(obj)) { Obj_Delete(obj[i]); }
+			return;
+		}
+		else
+		{
+			let ix = (anime%4) * 256;
+			let iy = trunc(anime/4) * 256;
+			_PorcelainShot2_Break(x, y, a, sc, ix, iy, GetShotRenderPriorityI()+2);
+		//	_PorcelainShot2_Break(x, y, a, sc, ix, iy, Obj_GetRenderPriorityI(obj[0]));
+		}
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+
+	// 割れるアニメ
+	task _PorcelainShot2_Break(x, y, angle, scale, ix, iy, priI)
+	{
+		let ct = 6;
+		let pos = [];
+		ascent(i in 0 .. ct)
+		{
+			let tmpy = i/(ct-1);
+			let posx = [];
+			ascent(j in 0 .. ct)
+			{
+				let tmpx = j/(ct-1);
+				let px = 0.5 + (tmpx-0.5)*1 + randEffect(-0.1,0.1);
+				let py = 0.5 + (tmpy-0.5)*1 + randEffect(-0.1,0.1);
+				if (tmpx <= 0) { px = 0; }
+				if (tmpx >= 1) { px = 1; }
+				if (tmpy <= 0) { py = 0; }
+				if (tmpy >= 1) { py = 1; }
+				posx = posx ~ [[px, py]];
+			}
+			pos = pos ~ [posx];
+		}
+
+		ascent(i in 0 .. ct-1)
+		{
+			ascent(j in 0 .. ct-1)
+			{
+				_PorcelainShot2_Break_Single(x, y, angle, scale, ix, iy,
+					[pos[i][j], pos[i+1][j], pos[i][j+1], pos[i+1][j+1]], priI);
+			}
+		}
+
+		task _PorcelainShot2_Break_Single(x, y, angle, scale, ix, iy, rect, priI)
+		{
+			let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+			ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+			ObjPrim_SetVertexCount(obj, 4);
+			ObjPrim_SetTexture(obj, imgFile);
+			Obj_SetRenderPriorityI(obj, priI);
+			ObjRender_SetBlendType(obj, BLEND_ALPHA);
+			ObjRender_SetPosition(obj, x, y, 0);
+			ObjRender_SetScaleXYZ(obj, scale, scale, scale);
+			ObjRender_SetAngleZ(obj, angle);
+			ascent(i in 0 .. 4)
+			{
+				ObjPrim_SetVertexPosition(obj, i, 256*(rect[i][0]-0.5), 256*(rect[i][1]-0.5), 0);
+				ObjPrim_SetVertexUVT(obj, i, ix+256*rect[i][0], iy+256*rect[i][1]);
+			}
+			
+			let va = atan2(y-GetPlayerY, x-GetPlayerX);
+			let vx = (rect[0][0] + rect[1][0] + rect[2][0] + rect[3][0])/4 - 0.5;
+			let vy = (rect[0][1] + rect[1][1] + rect[2][1] + rect[3][1])/4 - 0.5;
+			let vp = Rotate2D_XY(vx, vy, angle);
+			vx = vp[0] + cos(va)/2;
+			vy = vp[1] + sin(va)/2;
+			let vt = trunc(randEffect(10, 45));
+			let ax = 0;
+			let ay = 0;
+			let az = angle;
+			let addx = randEffect(-3, 3);
+			let addy = randEffect(-3, 3);
+			let addz = randEffect(-3, 3);
+			vx = (vx+randEffect(-0.25, 0.25))*6;
+			vy = (vy+randEffect(-0.25, 0.25))*6;
+			ascent(t in 0 .. vt)
+			{
+				let tmp = 1-t/vt;
+				ObjRender_SetPosition(obj, x, y, 0);
+				ObjRender_SetAlpha(obj, tmp*512);
+				ObjRender_SetAngleXYZ(obj, ax, ay, az);
+				x += vx*tmp;
+				y += vy*tmp;
+				ax += addx;
+				ay += addy;
+				az += addz;
+				yield;
+			}
+			Obj_Delete(obj);
+		}
+	}
+	// 軽量版
+	task _PorcelainShot2_Fadeout(obj)
+	{
+		descent(t in 0 .. 15)
+		{
+			let tmp = (t+1)/15;
+			ObjRender_SetAlpha(obj, tmp*255);
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// 直線オブジェクト
+task _PorcelainShot3(parent, sca_x, delay, imgFile)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetSourceRect(obj[0], 0, 0, 512, 256);
+	ObjSprite2D_SetDestCenter(obj[0]);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	
+	// キラキラシェーダ
+	let shd	= CreateShaderObject( obj[0], 14 );
+	
+	let t = 0;
+	let shd_seed = 0;
+	let sz = 0;
+	let az = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		
+		sz = Obj_GetValueD(parent, "SIZE", 0);
+		let sc = sz/320*2;
+
+		let va = ObjMove_GetAngle(parent);
+		let vx = sz * cos(va);
+		let vy = sz * sin(va);
+		let vw = sz/320*64 * tmp;
+		ObjShot_SetIntersectionLine(parent, ObjMove_GetX(parent)-vx, ObjMove_GetY(parent)-vy, ObjMove_GetX(parent)+vx, ObjMove_GetY(parent)+vy, vw);
+		
+		ObjRender_SetPosition(obj[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		ObjRender_SetScaleXYZ(obj[0], sc, sc*tmp*sca_x, 1);
+		ObjRender_SetAngleZ(obj[0], va);
+
+		shd_seed = t/30 + sin(t/30*180)/4;
+		ObjShader_SetFloat( shd, "m_position", shd_seed );
+		ObjShader_SetFloat( shd, "m_power", 0.25+cos(shd_seed)*0.25 );
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+	Obj_Delete(shd);
+}
+
+// 剣ショット
+task _PorcelainShot3b(parent, sca_x, delay, imgFile)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	let size_l = Obj_GetValueD(parent, "SIZE", 0);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	Obj_SetValue(parent, "VISIBLE", true);
+	Obj_SetValue(parent, "SIZE_W", size_l/320*96);	// 横幅
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetSourceRect(obj[0], 0, 0, 512, 256);
+	ObjSprite2D_SetDestCenter(obj[0]);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	
+	// キラキラシェーダ
+	let shd	= CreateShaderObject( obj[0], 14 );
+	
+	let t = 0;
+	let shd_seed = 0;
+	let sz = 0;
+	let sw = 0;
+	let az = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		
+		sz = Obj_GetValueD(parent, "SIZE", 0);
+		sw = Obj_GetValueD(parent, "SIZE_W", 0);
+
+		let va = ObjMove_GetAngle(parent);
+		let vx = sz * cos(va);
+		let vy = sz * sin(va);
+		let vw = absolute(sw * tmp * 0.7);
+
+		let sc = sz/320*2;
+		let scw = sw/320*2*tmp;
+
+		if (Obj_GetValueD(parent, "VISIBLE", false))
+		{
+			ObjShot_SetIntersectionLine(parent, ObjMove_GetX(parent)-vx, ObjMove_GetY(parent)-vy, ObjMove_GetX(parent)+vx, ObjMove_GetY(parent)+vy, vw);
+		}
+		
+		ObjRender_SetPosition(obj[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		ObjRender_SetScaleXYZ(obj[0], sc, scw, 1);
+		ObjRender_SetAngleZ(obj[0], va);
+
+		shd_seed = t/24 + sin(t/24*180)/4;
+		ObjShader_SetFloat( shd, "m_position", shd_seed );
+		ObjShader_SetFloat( shd, "m_power", 0.25+cos(shd_seed)*0.25 );
+		
+		// 影えへくと
+		_PorcelainShot3b_Shadow(ObjMove_GetX(parent), ObjMove_GetY(parent), va, sc, scw, Obj_GetRenderPriorityI(obj[0])-1);
+		t++;
+		yield;
+	}
+	local
+	{
+		let sc = ObjRender_GetScaleX(obj[0]);
+		let scw = ObjRender_GetScaleY(obj[0]);
+		descent(t in 0 .. 15)
+		{
+			let tmp = GetCurve_d(t/15);
+			ObjRender_SetScaleXYZ(obj[0], sc, scw*tmp, 1);
+			yield;
+		}
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+	Obj_Delete(shd);
+
+	// 剣ショット
+	task _PorcelainShot3b_Shadow(x, y, angle, scx, scy, priI)
+	{
+		if (IsDrawEffect() < 2) { return; }
+		
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgFile);
+		Obj_SetRenderPriorityI(obj, priI);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 256);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetPosition(obj, x, y, 0);
+		ObjRender_SetScaleXYZ(obj, scx, scy, 1);
+		ObjRender_SetAngleZ(obj, angle);
+		ObjRender_SetColor(obj, 24, 24, 48);
+		
+		descent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			let tmp_s = 1.5 - tmp*0.5;
+			ObjRender_SetScaleXYZ(obj, scx, tmp_s*scy, 1);
+		//	ObjRender_SetAlpha(obj, tmp*255);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// 剣ショット（幻影）
+task _PorcelainShot3c(parent, sca_x, delay, imgFile)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	let size_l = Obj_GetValueD(parent, "SIZE", 0);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	Obj_SetValue(parent, "VISIBLE", true);
+	Obj_SetValue(parent, "SIZE_W", size_l/320*96);	// 横幅
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetSourceRect(obj[0], 0, 0, 512, 256);
+	ObjSprite2D_SetDestCenter(obj[0]);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	
+	// キラキラシェーダ
+	let shd	= CreateShaderObject( obj[0], 14 );
+	
+	let t = 0;
+	let shd_seed = 0;
+	let sz = 0;
+	let sw = 0;
+	let az = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		
+		sz = Obj_GetValueD(parent, "SIZE", 0);
+		sw = Obj_GetValueD(parent, "SIZE_W", 0);
+
+		let va = ObjMove_GetAngle(parent);
+		let vx = sz * cos(va);
+		let vy = sz * sin(va);
+		let vw = absolute(sw * tmp);
+
+		let sc = sz/320*2;
+		let scw = sw/320*2*tmp;
+
+		if (Obj_GetValueD(parent, "VISIBLE", false))
+		{
+			ObjShot_SetIntersectionLine(parent, ObjMove_GetX(parent)-vx, ObjMove_GetY(parent)-vy, ObjMove_GetX(parent)+vx, ObjMove_GetY(parent)+vy, vw);
+		}
+		
+		ObjRender_SetPosition(obj[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		ObjRender_SetScaleXYZ(obj[0], sc, scw, 1);
+		ObjRender_SetAngleZ(obj[0], va);
+
+		shd_seed = t/24 + sin(t/24*180)/4;
+		ObjShader_SetFloat( shd, "m_position", shd_seed );
+		ObjShader_SetFloat( shd, "m_power", 0.25+cos(shd_seed)*0.25 );
+		
+		// 影えへくと
+		_PorcelainShot3c_Shadow(ObjMove_GetX(parent), ObjMove_GetY(parent), va, sc, scw, Obj_GetRenderPriorityI(obj[0])-1);
+		t++;
+		yield;
+	}
+	local
+	{
+		let sc = ObjRender_GetScaleX(obj[0]);
+		let scw = ObjRender_GetScaleY(obj[0]);
+		descent(t in 0 .. 15)
+		{
+			let tmp = GetCurve_d(t/15);
+			ObjRender_SetScaleXYZ(obj[0], sc, scw*tmp, 1);
+			yield;
+		}
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+	Obj_Delete(shd);
+
+	// 剣ショット
+	task _PorcelainShot3c_Shadow(x, y, angle, scx, scy, priI)
+	{
+		if (IsDrawEffect() < 2) { return; }
+		
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgFile);
+		Obj_SetRenderPriorityI(obj, priI);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 256);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetPosition(obj, x, y, 0);
+		ObjRender_SetScaleXYZ(obj, scx, scy, 1);
+		ObjRender_SetAngleZ(obj, angle);
+		ObjRender_SetColor(obj, 48, 16, 0);
+		
+		descent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ObjRender_SetAlpha(obj, tmp*255);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// 欠片
+task _PorcelainShot4(parent, delay, imgFile)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	// 乱数使うとこまとめとく
+	let gtype = rand_int(0, 3);	// 欠片の種類
+	let eff_angle = rand(0, 360);	// 欠片の角度
+	let eff_a = rand(0, 360);	// 欠片の角度
+	let ix = (gtype%2)*128;
+	let iy = trunc(gtype%2)*128 + 256;
+	
+	Obj_SetValue(parent, "G_TYPE", gtype);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()-1);
+	ObjSprite2D_SetSourceRect(obj[0], ix, iy, ix+128, iy+128);
+	ObjSprite2D_SetDestRect(obj[0], -64, -64, 64, 64);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	
+	let x = ObjMove_GetX(parent);
+	let y = ObjMove_GetY(parent);
+	let a = ObjMove_GetAngle(parent)-90;
+	let t = 0;
+	let sz = 0;
+	let sc = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		
+		x = ObjMove_GetX(parent);
+		y = ObjMove_GetY(parent);
+		a = ObjMove_GetAngle(parent)-90;
+		sz = Obj_GetValueD(parent, "SIZE", 0) * tmp;
+		sc = (sz+12)/20;
+		
+		ObjShot_SetIntersectionCircleA1(parent, sz);
+		// グレイズ判定
+		if (t >= delay && t%3 == 0) { _SaraGrazeShot(x, y, sz); }
+		
+		ObjRender_SetPosition(obj[0], x, y, 0);
+		ObjRender_SetScaleXYZ(obj[0], sc, sc, 1);
+
+		ObjRender_SetAngleZ(obj[0], a+eff_a+sin(t*2)*15);
+		t++;
+		yield;
+	}
+	// 割れるアニメ
+	if (!Obj_IsDeleted(obj[0]))
+	{
+		if (IsDrawEffect() < 2)
+		{
+			_PorcelainShot2_Fadeout(obj[0]);
+			ascent(i in 1 .. length(obj)) { Obj_Delete(obj[i]); }
+			return;
+		}
+		else
+		{
+			_PorcelainShot2_Break(x, y, a, sc, ix, iy, Obj_GetRenderPriorityI(obj[0]));
+		}
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+
+	// 割れるアニメ
+	task _PorcelainShot2_Break(x, y, angle, scale, ix, iy, priI)
+	{
+		let ct = 3;
+		let pos = [];
+		ascent(i in 0 .. ct)
+		{
+			let tmpy = i/(ct-1);
+			let posx = [];
+			ascent(j in 0 .. ct)
+			{
+				let tmpx = j/(ct-1);
+				let px = 0.5 + (tmpx-0.5)*1 + randEffect(-0.1,0.1);
+				let py = 0.5 + (tmpy-0.5)*1 + randEffect(-0.1,0.1);
+				if (tmpx <= 0) { px = 0; }
+				if (tmpx >= 1) { px = 1; }
+				if (tmpy <= 0) { py = 0; }
+				if (tmpy >= 1) { py = 1; }
+				posx = posx ~ [[px, py]];
+			}
+			pos = pos ~ [posx];
+		}
+
+		ascent(i in 0 .. ct-1)
+		{
+			ascent(j in 0 .. ct-1)
+			{
+				_PorcelainShot2_Break_Single(x, y, angle, scale, ix, iy,
+					[pos[i][j], pos[i+1][j], pos[i][j+1], pos[i+1][j+1]], priI);
+			}
+		}
+
+		task _PorcelainShot2_Break_Single(x, y, angle, scale, ix, iy, rect, priI)
+		{
+			let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+			ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+			ObjPrim_SetVertexCount(obj, 4);
+			ObjPrim_SetTexture(obj, imgFile);
+			Obj_SetRenderPriorityI(obj, priI);
+			ObjRender_SetBlendType(obj, BLEND_ALPHA);
+			ObjRender_SetPosition(obj, x, y, 0);
+			ObjRender_SetScaleXYZ(obj, scale, scale, scale);
+			ObjRender_SetAngleZ(obj, angle);
+			ascent(i in 0 .. 4)
+			{
+				ObjPrim_SetVertexPosition(obj, i, 128*(rect[i][0]-0.5), 128*(rect[i][1]-0.5), 0);
+				ObjPrim_SetVertexUVT(obj, i, ix+128*rect[i][0], iy+128*rect[i][1]);
+			}
+			
+			let va = atan2(y-GetPlayerY, x-GetPlayerX);
+			let vx = (rect[0][0] + rect[1][0] + rect[2][0] + rect[3][0])/4 - 0.5;
+			let vy = (rect[0][1] + rect[1][1] + rect[2][1] + rect[3][1])/4 - 0.5;
+			let vp = Rotate2D_XY(vx, vy, angle);
+			vx = vp[0] + cos(va)/2;
+			vy = vp[1] + sin(va)/2;
+			let vt = trunc(randEffect(10, 45));
+			let ax = 0;
+			let ay = 0;
+			let az = angle;
+			let addx = randEffect(-3, 3);
+			let addy = randEffect(-3, 3);
+			let addz = randEffect(-3, 3);
+			vx = (vx+randEffect(-0.25, 0.25))*6;
+			vy = (vy+randEffect(-0.25, 0.25))*6;
+			ascent(t in 0 .. vt)
+			{
+				let tmp = 1-t/vt;
+				ObjRender_SetPosition(obj, x, y, 0);
+				ObjRender_SetAlpha(obj, tmp*512);
+				ObjRender_SetAngleXYZ(obj, ax, ay, az);
+				x += vx*tmp;
+				y += vy*tmp;
+				ax += addx;
+				ay += addy;
+				az += addz;
+				yield;
+			}
+			Obj_Delete(obj);
+		}
+	}
+	// 軽量版
+	task _PorcelainShot2_Fadeout(obj)
+	{
+		descent(t in 0 .. 15)
+		{
+			let tmp = (t+1)/15;
+			ObjRender_SetAlpha(obj, tmp*255);
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// グレイズ判定
+task _SaraGrazeShot(x, y, r)
+{
+	let obj = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	Obj_SetVisible(obj, false);
+	ObjShot_SetIntersectionCircleA1(obj, r);
+	ObjShot_SetDeleteFrame(obj, 1);
+	ObjShot_SetItemChange(obj, false);
+	ObjShot_SetSpellResist(obj, true);
+}

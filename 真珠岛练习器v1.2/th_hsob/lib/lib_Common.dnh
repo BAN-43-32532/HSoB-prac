@@ -1,0 +1,224 @@
+#include "./lib_SystemAll.dnh"
+#include "./lib_File.dnh"
+#include "./lib_Sound.dnh"
+#include "./lib_Util.dnh"
+#include "./lib_Time.dnh"
+
+// =========== 背景
+let configDrawBG = 2;
+let configDrawEffect = 1;
+
+
+//グローバル変数宣言
+let objPlayer;
+let idPlayer;
+let objScene = ID_INVALID;
+
+//初期化
+sub init
+{
+	SetAutoDeleteObject(true);	//オブジェクトの自動削除ON
+
+	objPlayer = GetPlayerObjectID();
+	idPlayer = GetPlayerScriptID();
+	objScene = GetEnemyBossSceneObjectID();
+}
+
+//弾消し範囲リセット
+sub InitDeleteClip { SetShotAutoDeleteClip(64, 64, 64, 64); }
+//プレイヤー位置チェック
+function CheckInPlayer(x, y, r) { return(((GetPlayerX-x)^2+(GetPlayerY-y)^2)^0.5 <= r); }
+//自己をクローズ
+task CloseMine(timer)
+{
+	wait(timer);
+	CloseScript(GetOwnScriptID());
+}
+// 背景ID
+function GetStageBG_ID()
+{
+	return (GetAreaCommonData(CAREA_STAGE, "ScriptBackground", -1));
+}
+
+//----------------------------------------------------
+//ユーティリティ
+//----------------------------------------------------
+function DigitToArray(let digit,let count)
+{
+	let res = [];
+	digit = truncate(digit);
+
+	loop
+	{
+		let tnum = truncate(digit % 10);
+		digit /= 10;
+		res = [tnum] ~ res;
+		if (truncate(digit) == 0) { break; }
+	}
+
+	loop(max(0, count - length(res)))
+	{
+		res = [-1] ~ res;
+	}
+
+	return res;
+}
+
+function DigitToArray2(let digit,let count)
+{
+	let res = [];
+	digit = truncate(digit);
+
+	loop
+	{
+		let tnum = truncate(digit % 10);
+		digit /= 10;
+		res = [tnum] ~ res;
+		if (truncate(digit) == 0) { break; }
+	}
+
+	loop(max(0, count - length(res)))
+	{
+		res = [0] ~ res;
+	}
+
+	return res;
+}
+
+function DigitToArrayPlus(let digit,let count,let add_char)
+{
+	let res = [];
+	digit = truncate(digit);
+
+	loop
+	{
+		let tnum = truncate(digit % 10);
+		digit /= 10;
+		res = [tnum] ~ res;
+		if (truncate(digit) == 0) { break; }
+	}
+	res = [add_char] ~ res;
+
+	loop(max(0, count - length(res)))
+	{
+		res = [-1] ~ res;
+	}
+
+	return res;
+}
+
+/* 画面震動 */
+task DisplayShake(flame, power)
+{
+	let kx = Get2DCameraX();
+	let ky = Get2DCameraY();
+	
+	let gain_flame = trunc(flame/3);
+	let main_flame = flame - gain_flame*2;
+
+	ascent(i in 0 .. gain_flame)
+	{
+		Set2DCameraFocusX(kx + rand(-i/gain_flame*power,i/gain_flame*power));
+		Set2DCameraFocusY(ky + rand(-i/gain_flame*power,i/gain_flame*power));
+		waitEx(1);
+	}
+	loop(main_flame)
+	{
+		Set2DCameraFocusX(kx + rand(-power,power));
+		Set2DCameraFocusY(ky + rand(-power,power));
+		waitEx(1);
+	}
+	descent(i in 0 .. gain_flame)
+	{
+		Set2DCameraFocusX(kx + rand(-i/gain_flame*power,i/gain_flame*power));
+		Set2DCameraFocusY(ky + rand(-i/gain_flame*power,i/gain_flame*power));
+		waitEx(1);
+	}
+	Reset2DCamera();
+}
+
+//ベクトル関係いろいろ
+function CalcDot(vx1, vy1, vx2, vy2)
+{
+	return (vx1*vx2+vy1*vy2);
+}
+
+function CalcCross(vx1, vy1, vx2, vy2)
+{
+	return (vx1*vy2-vy1*vx2);
+}
+
+// 線分の交差チェック line=[x1, y1, x2, y2]
+function CheckCrossLines(line1, line2)
+{
+	if (CalcCross(line2[2]-line2[0], line2[3]-line2[1], line1[0]-line2[0], line1[1]-line2[1])
+		* CalcCross(line2[2]-line2[0], line2[3]-line2[1], line1[2]-line2[0], line1[3]-line2[1]) > 0)
+	{
+		return(false);
+	}
+	else if (CalcCross(line1[2]-line1[0], line1[3]-line1[1], line2[0]-line1[0], line2[1]-line1[1])
+			* CalcCross(line1[2]-line1[0], line1[3]-line1[1], line2[2]-line1[0], line2[3]-line1[1]) > 0)
+	{
+		return(false);
+	}
+	else
+	{
+		return(true);
+	}
+}
+
+// 四角形と線分の交差チェック l_pos=[x1, y1, x2, y2] r_pos=[x1, y1, x2, y2, x3, y3, x4, y4]
+function CheckCrossLineRect(l_pos, r_pos)
+{
+	if (CheckCrossLines(l_pos, [r_pos[0],r_pos[1],r_pos[2],r_pos[3]]) ||
+		CheckCrossLines(l_pos, [r_pos[2],r_pos[3],r_pos[4],r_pos[5]]) ||
+		CheckCrossLines(l_pos, [r_pos[4],r_pos[5],r_pos[6],r_pos[7]]) ||
+		CheckCrossLines(l_pos, [r_pos[6],r_pos[7],r_pos[0],r_pos[1]]))
+	{
+		return(false);
+	}
+	else
+	{
+		return(true);
+	}
+}
+
+
+// lib_Player.dnhのやつと同じ
+
+// プレイヤー当たり判定管理
+// []を入れるとデフォ値に戻す
+task ResetPlayerCollision(col)
+{
+	if (length(col) <= 0)
+	{
+		let col = GetAreaCommonData(CAREA_SYSTEM, "PlayerCollision", [0, 0]);
+		ObjPlayer_ClearIntersection( GetPlayerObjectID );
+		ObjPlayer_AddIntersectionCircleA1( GetPlayerObjectID, 0, 0, col[0], col[1] );
+	}
+	else
+	{
+		SetAreaCommonData(CAREA_SYSTEM, "PlayerCollision", col);
+		ObjPlayer_ClearIntersection( GetPlayerObjectID );
+		ObjPlayer_AddIntersectionCircleA1( GetPlayerObjectID, 0, 0, col[0], col[1] );
+	}
+}
+// 無敵時間
+task ResetPlayerInvincibility(frame)
+{
+	let col = GetAreaCommonData(CAREA_SYSTEM, "PlayerCollision", [0, 0]);
+	let inv = GetAreaCommonData(CAREA_SYSTEM, "PlayerInvincibility", 0);
+	if (inv > frame) { return; }
+	
+	ObjPlayer_ClearIntersection( GetPlayerObjectID );
+	ObjPlayer_AddIntersectionCircleA2( GetPlayerObjectID, 0, 0, col[0]+col[1] );
+
+	while(frame > 0)
+	{
+		if (GetAreaCommonData(CAREA_SYSTEM, "PlayerInvincibility", 0) > frame) { return; }
+		frame--;
+		SetAreaCommonData(CAREA_SYSTEM, "PlayerInvincibility", frame);
+		yield;
+	}
+	ResetPlayerCollision([]);
+}

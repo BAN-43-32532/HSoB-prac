@@ -1,0 +1,399 @@
+// ÉtÉHÉìÉgê›íË
+let baseFont = "Œ¢»Ì—≈∫⁄";
+let baseFontSize = 40;
+let baseFontBold = true;
+let baseFontLinePitch = 14;
+let baseFontSidePitch = -2;
+let baseFontScale = 0.55;	// ï∂éöägëÂó¶
+
+// êÅÇ´èoÇµç≈ëÂïùÅiÇ±ÇÍÇÊÇËïùÇ™çLÇ≠Ç»ÇÈèÍçáÇÕï∂éöÇÃâ°ïùÇèkÇﬂÇÈÅj
+let fukidashiMaxWidth = 700;
+
+let FUKIDASHI_NORMAL	= 0;	// Ç”Ç¬Ç§ÇÃ
+let FUKIDASHI_ANGER	= 1;	// ÉnÉQÇµÇ¢ÅI
+let FUKIDASHI_THINK	= 2;	// Ç©ÇÒÇ™Ç¶ÇøÇ„Ç§
+let FUKIDASHI_AFRAID	= 3;	// Ç”ÇÌÇ”ÇÌ
+
+let FUKIDASHI_LEFT = 0;
+let FUKIDASHI_RIGHT = 1;
+let FUKIDASHI_TOP_LEFT = 2;
+let FUKIDASHI_TOP_RIGHT = 3;
+
+//êÅÇ´èoÇµÉZÉbÉg
+function MakeFukidashi(x, y, type, f_position, text, flg_refresh)
+{
+	return(_MakeFukidashi(x, y, type, f_position, text, priorityTalk+1, flg_refresh));
+}
+//Åiç≈ëOñ Åj
+function MakeFukidashiFront(x, y, type, f_position, text, flg_refresh)
+{
+	return(_MakeFukidashi(x, y, type, f_position, text, 99, flg_refresh));
+}
+
+// êÅÇ´èoÇµÇê›íuÇ∑ÇÈ
+function _MakeFukidashi(x, y, type, f_position, text, t_priority, flg_refresh)
+{
+	// ÉeÉLÉXÉgçÏÇÈÇÊÅI
+	let objText = ObjText_Create();
+	Obj_SetRenderPriorityI(objText, t_priority+1);
+	ObjText_SetFontType(objText, baseFont);
+	ObjText_SetFontSize(objText, baseFontSize);
+	ObjText_SetFontBold(objText, baseFontBold);
+	ObjText_SetLinePitch(objText, baseFontLinePitch);
+	ObjText_SetSidePitch(objText, baseFontSidePitch);
+	ObjText_SetText(objText, text);
+	ObjRender_SetScaleXYZ(objText, baseFontScale, baseFontScale, baseFontScale);
+
+	// èdÇÀóp
+	let objTextShadow = ObjText_Create();
+	Obj_SetRenderPriorityI(objTextShadow, t_priority+1);
+	ObjText_SetFontType(objTextShadow, baseFont);
+	ObjText_SetFontSize(objTextShadow, baseFontSize);
+	ObjText_SetFontBold(objTextShadow, baseFontBold);
+	ObjText_SetLinePitch(objTextShadow, baseFontLinePitch);
+	ObjText_SetSidePitch(objTextShadow, baseFontSidePitch);
+	ObjText_SetText(objTextShadow, text);
+	ObjRender_SetScaleXYZ(objTextShadow, baseFontScale, baseFontScale, baseFontScale);
+	ObjRender_SetBlendType(objTextShadow, BLEND_SUBTRACT);
+	
+	let wrate = fukidashiMaxWidth / max(fukidashiMaxWidth, ObjText_GetTotalWidth(objText));
+	Obj_SetValue(objText, "W_RATE", wrate);
+	
+	let text_width = ObjText_GetTotalWidth(objText)*baseFontScale*wrate;
+	let text_height = ObjText_GetTotalHeight(objText)*baseFontScale;
+	let f_width = ceil((text_width+172)/16)*16;	// â°ïù
+	let f_height = text_height+68;		// ècïù
+	
+	//êÅÇ´èoÇµÉZÉbÉg
+	let objFukidashi = MakeFukidashiObj(type, f_width, f_height);
+	
+	Obj_SetRenderPriorityI(objFukidashi, t_priority);
+	ObjRender_SetPosition(objFukidashi, x, y, 0);
+	if (f_position == FUKIDASHI_LEFT || f_position == FUKIDASHI_RIGHT)
+		{ ObjRender_SetAngleX(objFukidashi, 180); }
+	if (f_position == FUKIDASHI_RIGHT || f_position == FUKIDASHI_TOP_RIGHT)
+		{ ObjRender_SetAngleY(objFukidashi, 180); }
+	
+	// ï∂éöÇÃî˜í≤êÆ
+	if (f_position == FUKIDASHI_RIGHT) {
+		let ox = -(48+text_width) / (baseFontScale*wrate);
+		let oy = -(30+text_height) / baseFontScale;
+		ObjRender_SetPosition(objText, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objText, -ox, -oy);
+		ObjRender_SetPosition(objTextShadow, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objTextShadow, -ox, -oy);
+	} else if (f_position == FUKIDASHI_LEFT) {
+		let ox = 36 / (baseFontScale*wrate);
+		let oy = -(30+text_height) / baseFontScale;
+		ObjRender_SetPosition(objText, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objText, -ox, -oy);
+		ObjRender_SetPosition(objTextShadow, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objTextShadow, -ox, -oy);
+	} else if (f_position == FUKIDASHI_TOP_RIGHT) {
+		let ox = -(48+text_width) / (baseFontScale*wrate);
+		let oy = 36 / baseFontScale;
+		ObjRender_SetPosition(objText, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objText, -ox, -oy);
+		ObjRender_SetPosition(objTextShadow, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objTextShadow, -ox, -oy);
+	} else {
+		let ox = 36 / (baseFontScale*wrate);
+		let oy = 36 / baseFontScale;
+		ObjRender_SetPosition(objText, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objText, -ox, -oy);
+		ObjRender_SetPosition(objTextShadow, x+ox, y+oy, 0);
+		ObjText_SetTransCenter(objTextShadow, -ox, -oy);
+	}
+	ObjText_SetAutoTransCenter(objText, false);
+	ObjText_SetAutoTransCenter(objTextShadow, false);
+	ObjRender_SetColor(objText, 0, 0, 0);
+	ObjRender_SetColor(objTextShadow, 128, 128, 128);
+	FukidashiMotion(objFukidashi, objText, objTextShadow, flg_refresh);
+	
+	return(objText);
+	
+	task FukidashiMotion(objFukidashi, objText, objTextShadow, flg_refresh)
+	{
+		if (!flg_refresh)
+		{
+			ascent(i in 0 .. 8)
+			{
+				let tmp = (i+1)/8;
+				ObjRender_SetScaleX(objFukidashi, tmp);
+				ObjRender_SetScaleX(objText, tmp*baseFontScale*wrate);
+				ObjRender_SetScaleX(objTextShadow, tmp*baseFontScale*wrate);
+				yield;
+			}
+		}
+		ObjRender_SetScaleX(objFukidashi, 1);
+		ObjRender_SetScaleX(objText, baseFontScale*wrate);
+		ObjRender_SetScaleX(objTextShadow, baseFontScale*wrate);
+
+		while(!Obj_IsDeleted(objFukidashi) && !Obj_IsDeleted(objText))
+		{
+			if (Obj_GetValueD(objText, "DELETED", false)) { break; }
+			yield;
+		}
+		if (!Obj_GetValueD(objText, "REFRESH", 0))
+		{
+			descent(i in 0 .. 8)
+			{
+				let tmp = (i+1)/8;
+				ObjRender_SetScaleX(objFukidashi, tmp);
+				ObjRender_SetScaleX(objText, tmp*baseFontScale*wrate);
+				ObjRender_SetScaleX(objTextShadow, tmp*baseFontScale*wrate);
+				yield;
+			}
+		}
+		Obj_Delete(objFukidashi);
+		Obj_Delete(objText);
+		Obj_Delete(objTextShadow);
+	}
+}
+
+//êÅÇ´èoÇµçÌèú
+function DeleteFukidashi(obj, flg_refresh)
+{
+	Obj_SetValue(obj, "DELETED", true);
+	Obj_SetValue(obj, "REFRESH", flg_refresh);
+}
+
+//êÅÇ´èoÇµÉIÉuÉWÉFÉNÉgçÏê¨
+function MakeFukidashiObj(type, f_width, f_height)
+{
+	//èâä˙ê›íË
+	let rectX = 0; let rectY = 0;
+	
+	alternative(type)
+	case(FUKIDASHI_NORMAL)
+		{ rectX = 0; rectY = 0; }
+	case(FUKIDASHI_ANGER)
+		{ rectX = 0; rectY = 128; }
+	case(FUKIDASHI_THINK)
+		{ rectX = 0; rectY = 256; }
+	case(FUKIDASHI_AFRAID)
+		{ rectX = 0; rectY = 384; }
+	
+	//f_width=96ÇÊÇËè¨Ç≥Ç¢ÉTÉCÉYÇÕñ¢ëŒâûÅï16ÇÃî{êîÇÃÇ›
+	f_width = ceil(max(f_width-96, 0)/16) * 16;
+	
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, 6*9);
+	ObjPrim_SetTexture(obj, imgEffectBaloon);
+	
+	// íÜêSïîÇÃÉTÉCÉY
+	let fuki_t = min(48, max(0, (f_height-64)/2)+32);	// è„êÿÇËéÊÇËïîï™
+	let fuki_h = max(0, f_height - fuki_t*2);
+	let fuki_w = max(0, f_width - 96);
+	
+	// ç∂
+	let base_vc = 0; let fuki_x = 0; let fuki_y = 0;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+0, rectY+0, 48, fuki_t,
+			fuki_x, fuki_y, 48, fuki_t);
+	base_vc += 6; fuki_y += fuki_t;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+0, rectY+fuki_t, 48, 128-fuki_t*2,
+			fuki_x, fuki_y, 48, fuki_h);
+	base_vc += 6; fuki_y += fuki_h;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+0, rectY+128-fuki_t, 48, fuki_t,
+			fuki_x, fuki_y, 48, fuki_t);
+	// ê^ÇÒíÜÉãÅ[Évïîï™
+	fuki_y = 0; fuki_x += 48;
+	base_vc += 6;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+0, rectY+512, fuki_w, fuki_t,
+			fuki_x, fuki_y, fuki_w, fuki_t);
+	base_vc += 6; fuki_y += fuki_t;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+0, rectY+512+fuki_t, fuki_w, 128-fuki_t*2,
+			fuki_x, fuki_y, fuki_w, fuki_h);
+	base_vc += 6; fuki_y += fuki_h;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+0, rectY+512+128-fuki_t, fuki_w, fuki_t,
+			fuki_x, fuki_y, fuki_w, fuki_t);
+	// âE
+	fuki_y = 0; fuki_x += fuki_w;
+	base_vc += 6;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+48, rectY+0, 48, fuki_t,
+			fuki_x, fuki_y, 48, fuki_t);
+	base_vc += 6; fuki_y += fuki_t;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+48, rectY+fuki_t, 48, 128-fuki_t*2,
+			fuki_x, fuki_y, 48, fuki_h);
+	base_vc += 6; fuki_y += fuki_h;
+	AddImg_Triangle01(obj, base_vc,
+			rectX+48, rectY+128-fuki_t, 48, fuki_t,
+			fuki_x, fuki_y, 48, fuki_t);
+	return (obj);
+
+	//6í∏ì_ÇÃç¿ïWÇí«â¡
+	function AddImg_Triangle01(obj, base_vc,
+			x1, y1, w, h,		//êÿÇËéÊÇËîÕàÕ
+			to_x, to_y, to_w, to_h	//ì\ÇËïtÇØîÕàÕ
+		)
+	{
+		ObjPrim_SetVertexUVT(obj, base_vc+0, x1, y1);
+		ObjPrim_SetVertexUVT(obj, base_vc+1, x1, y1+h);
+		ObjPrim_SetVertexUVT(obj, base_vc+2, x1+w, y1);
+		ObjPrim_SetVertexUVT(obj, base_vc+3, x1+w, y1);
+		ObjPrim_SetVertexUVT(obj, base_vc+4, x1, y1+h);
+		ObjPrim_SetVertexUVT(obj, base_vc+5, x1+w, y1+h);
+		ObjPrim_SetVertexPosition(obj, base_vc+0, to_x, to_y, 0);
+		ObjPrim_SetVertexPosition(obj, base_vc+1, to_x, to_y+to_h, 0);
+		ObjPrim_SetVertexPosition(obj, base_vc+2, to_x+to_w, to_y, 0);
+		ObjPrim_SetVertexPosition(obj, base_vc+3, to_x+to_w, to_y, 0);
+		ObjPrim_SetVertexPosition(obj, base_vc+4, to_x, to_y+to_h, 0);
+		ObjPrim_SetVertexPosition(obj, base_vc+5, to_x+to_w, to_y+to_h, 0);
+	}
+}
+
+// --- à»â∫ÇÕínÇÃï∂ópÇÃâÔòbòg
+
+// êÅÇ´èoÇµÇê›íuÇ∑ÇÈ
+function _MakeDescriptive(text, t_priority)
+{
+	let baseWidth = MaxX;
+	let baseHeight = 96;
+	let baseX = MinX;
+	let baseY = MaxY - baseHeight;
+	let baseTextX = baseX+16;
+	let baseTextY = baseY+10;
+	
+	// ÉeÉLÉXÉgçÏÇÈÇÊÅI
+	let objText = MakeDescriptiveText(text, baseTextX, baseTextY, baseWidth, baseHeight, t_priority);
+	
+	//êÅÇ´èoÇµÉZÉbÉg
+	let objFukidashi = MakeDescriptiveObj(baseWidth, baseHeight);
+	Obj_SetRenderPriorityI(objFukidashi, t_priority);
+	ObjRender_SetPosition(objFukidashi, baseX, baseY+baseHeight, 0);
+	
+	DescriptiveMotion(objFukidashi, objText);
+	return(objText);
+	
+	task DescriptiveMotion(objFukidashi, objText)
+	{
+		ascent(i in 0 .. 8)
+		{
+			let tmp = (i+1)/8;
+			ObjRender_SetScaleY(objFukidashi, tmp);
+			ObjRender_SetScaleY(objText, tmp);
+			yield;
+		}
+		while(!Obj_IsDeleted(objFukidashi) && !Obj_IsDeleted(objText))
+		{
+			if (Obj_GetValueD(objText, "DELETED", false)) { break; }
+			yield;
+		}
+		descent(i in 0 .. 8)
+		{
+			let tmp = (i+1)/8;
+			ObjRender_SetScaleY(objFukidashi, tmp);
+			ObjRender_SetScaleY(objText, tmp);
+			yield;
+		}
+		Obj_Delete(objFukidashi);
+		Obj_Delete(objText);
+	}
+}
+
+//êÅÇ´èoÇµÉIÉuÉWÉFÉNÉgçÏê¨
+function MakeDescriptiveObj(tx, ty)
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgEffectTFrame);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, tx, ty);
+	ObjSprite2D_SetDestRect(obj, 0, -ty, tx, 0);
+	ObjRender_SetAlpha(obj, 128);
+	return (obj);
+}
+
+
+// --- ínÇÃâÔòbï∂ópÅAëIëéà
+
+// êÅÇ´èoÇµÇê›íuÇ∑ÇÈ
+function _MakeChoiseWindow(bx, by, select_texts, t_priority)
+{
+	let baseWidth = GetClipWidth;
+	let baseHeight = 96;
+	let baseX = MinX;
+	let baseY = MaxY - baseHeight;
+	let baseTextX = baseX+16;
+	let baseTextY = baseY+10;
+	
+	let select_count = length(select_texts);
+	let selectValue = 0;
+	
+	// ÉeÉLÉXÉgçÏÇÈÇÊÅI
+	let objSelects = [];
+	ascent(i in 0 .. select_count)
+	{
+		let tmp_obj = MakeDescriptiveText(select_texts[i], bx, by+i*24, GetScreenWidth, 32, t_priority);
+		ObjRender_SetColor(tmp_obj, 128, 128, 128);
+		objSelects = objSelects ~ [tmp_obj];
+	}
+	
+	ascent(i in 0 .. 8)
+	{
+		let tmp = (i+1)/8;
+		ascent(i in 0 .. length(objSelects))
+		{
+			ObjRender_SetAlpha(objSelects[i], tmp*255);
+		}
+		yield;
+	}
+	while(IsGame())
+	{
+		if (GetVirtualKeyState(VK_UP) == KEY_PUSH) { selectValue = (selectValue+select_count-1)%select_count; }
+		else if (GetVirtualKeyState(VK_DOWN) == KEY_PUSH) { selectValue = (selectValue+1)%select_count; }
+		else if (GetVirtualKeyState(VK_OK) == KEY_PUSH) { break; }
+		
+		ascent(i in 0 .. length(objSelects))
+		{
+			if (selectValue == i) { ObjRender_SetColor(objSelects[i], 255, 255, 255); }
+			else { ObjRender_SetColor(objSelects[i], 128, 128, 128); }
+		}
+		yield;
+	}
+	descent(i in 0 .. 8)
+	{
+		let tmp = (i+1)/8;
+		ascent(i in 0 .. length(objSelects))
+		{
+			ObjRender_SetAlpha(objSelects[i], tmp*255);
+		}
+		yield;
+	}
+	ascent(i in 0 .. length(objSelects))
+	{
+		Obj_Delete(objSelects[i]);
+	}
+	
+	return(selectValue);
+}
+
+// ÉeÉLÉXÉgçÏÇÈÇÊÅI
+function MakeDescriptiveText(text, baseX, baseY, baseWidth, baseHeight, t_priority)
+{
+	let objText = ObjText_Create();
+	Obj_SetRenderPriorityI(objText, t_priority+1);
+	ObjText_SetFontType(objText, baseFont);
+	ObjText_SetFontSize(objText, baseFontSize);
+	ObjText_SetFontBold(objText, false);
+	ObjText_SetLinePitch(objText, baseFontLinePitch);
+	ObjText_SetMaxWidth(objText, baseWidth-32);
+	ObjText_SetFontBorderWidth(objText, 1);
+	ObjText_SetFontBorderColor(objText, 64, 64, 64);
+	ObjText_SetFontBorderType(objText, BORDER_SHADOW);
+	ObjText_SetText(objText, text);
+	
+	ObjText_SetAutoTransCenter(objText, false);
+	ObjRender_SetPosition(objText, baseX, baseY, 0);
+	ObjText_SetTransCenter(objText, 0, baseHeight);
+	ObjRender_SetColor(objText, 255, 255, 255);
+	
+	return(objText);
+}

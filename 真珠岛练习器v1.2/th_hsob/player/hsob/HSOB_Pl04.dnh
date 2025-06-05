@@ -1,0 +1,27 @@
+	#東方弾幕風[Player]
+	#ScriptVersion[3]
+	#ID["HSOB_PL04"]
+	#Title["真珠島　輝夜"]
+	#Text[""]
+	#ReplayName["HSOB_PL04"]
+	
+	//　プレイヤーナンバー( 霊夢:0 魔理沙:1 咲夜:2 輝夜:3 )
+	let PlayerNumber	= 3;
+	
+	//　パラメータの設定ファイル
+	#include "./lib/PlayerStateSetting.dnh"
+	//　自機共通
+	#include "./lib/lib_Player.dnh"
+	#include "./lib/lib_Option.dnh"
+	#include "./lib/lib_PlayerShot.dnh"
+	#include "./lib/lib_PlayerBomb.dnh"
+	#include "./lib/lib_PlayerEvent.dnh"
+	
+	@Initialize{ PlayerInitialize( PlayerNumber ); }
+	
+	@MainLoop{ yield; }
+	
+	@Event{
+		AddArchiveFile(GetCurrentScriptDirectory() ~ "plimg.dat");
+		PlayerEvent();
+	}

@@ -1,0 +1,108 @@
+// 効果音ロード
+#include "./lib/lib_System.dnh"
+
+//効果音
+let SOUNDS = [
+/* 0*/	seDIR ~ "BossEnd_Begin.wav",
+/* 1*/	seDIR ~ "BossEnd_End.wav",
+/* 2*/	seDIR ~ "spellcard.wav",
+/* 3*/	seDIR ~ "getspellcard.wav",
+/* 4*/	seDIR ~ "Failed.wav",
+/* 5*/	seDIR ~ "timer1.wav",
+/* 6*/	seDIR ~ "timer2.wav",
+/* 7*/	seDIR ~ "seScore.wav",
+/* 8*/	seDIR ~ "seScore2.wav",
+/* 9*/	seDIR ~ "mo.wav",
+/*10*/	seDIR ~ "moUP.wav",
+/*11*/	seDIR ~ "enemy_vanish_B.wav",
+/*12*/	seDIR ~ "boon.wav",
+/*13*/	seDIR ~ "power3.wav",
+/*14*/	seDIR ~ "power2.wav",
+/*15*/	seDIR ~ "power_logo.wav",
+/*16*/	seDIR ~ "power_logo2.wav",
+/*17*/	seDIR ~ "power_logo3.wav",
+/*18*/	seDIR ~ "shot1.wav",
+/*19*/	seDIR ~ "shot2.wav",
+/*20*/	seDIR ~ "shot3.wav",
+/*21*/	seDIR ~ "shot4.wav",
+/*22*/	seDIR ~ "shot5.wav",
+/*23*/	seDIR ~ "shot6.wav",
+/*24*/	seDIR ~ "Laser01.wav",
+/*25*/	seDIR ~ "Laser02.wav",
+/*26*/	seDIR ~ "flare.wav",
+/*27*/	seDIR ~ "bulletbreak.wav",
+/*28*/	seDIR ~ "fire00.wav",
+/*29*/	seDIR ~ "freeze05.wav",
+/*30*/	seDIR ~ "crash16_b.wav",
+/*31*/	seDIR ~ "one07.wav",
+/*32*/	seDIR ~ "se1UP.wav",
+/*33*/	seDIR ~ "status03.wav",
+/*34*/	seDIR ~ "se_extend2.wav",
+/*35*/	seDIR ~ "shot7.wav",
+/*36*/	seDIR ~ "se_shutter.wav",
+/*37*/	seDIR ~ "pi64.wav",
+/*38*/	seDIR ~ "swing11.wav",
+/*39*/	seDIR ~ "se_extend4.wav",
+/*40*/	seDIR ~ "chapter_c.wav",
+/*41*/	seDIR ~ "chapter_d.wav",
+/*42*/	seDIR ~ "se_nep00.wav",
+/*43*/	seDIR ~ "metal33_a.wav",
+/*44*/	seDIR ~ "mecha07.wav",
+/*45*/	seDIR ~ "noise02.wav",
+	];
+
+let objSounds = [];
+
+@Initialize
+{
+	SetAutoDeleteObject(true);	//オブジェクトの自動削除ON
+	SetAreaCommonData(CAREA_SYSTEM, "ScriptSound", GetOwnScriptID());	//ID記録
+	TMain();
+}
+
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_CallSound)
+	{
+		let seID = GetEventArgument(0);
+		if (seID >= 0 && seID < length(objSounds))
+		{
+			ObjSound_Play(objSounds[seID]);
+		}
+	}
+	case(ev_CallSoundEx)
+	{
+		let seID = GetEventArgument(0)[0];
+		if (seID >= 0 && seID < length(objSounds))
+		{
+			let seVol = GetSoundVolume() * GetEventArgument(0)[1];
+			ObjSound_SetVolumeRate(objSounds[seID], seVol);
+			ObjSound_Play(objSounds[seID]);
+		}
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+//サウンドロード
+task TMain()
+{
+	let tmp_volume = GetSoundVolume();
+	ascent(i in 0 .. length(SOUNDS))
+	{
+		let obj = ObjSound_Create();
+		ObjSound_Load(obj, SOUNDS[i]);
+		ObjSound_SetVolumeRate(obj, tmp_volume);
+		ObjSound_SetSoundDivision(obj, SOUND_SE);
+		objSounds = objSounds ~ [obj];
+	}
+}

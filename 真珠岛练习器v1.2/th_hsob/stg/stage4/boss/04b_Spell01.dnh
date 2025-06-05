@@ -1,0 +1,299 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["上人スペカ1"]
+#Text["E-N:翔来「鳥の仏法僧」　H:梟符「真の仏法僧」　L:紫鸞「姿も心も完璧に仏法僧」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Siran.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(420);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(55);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 32;
+	let SPELL_NAME = [2, 2, 3, 4][Difficult];
+
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	// アイテム数
+	bossDropItem = 150;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SIRAN);	//ボスセット
+	SetSiranRosary();	// 数珠配置
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"04a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	//数珠の画像を操作したい場合は、GetBossImageID(objEnemyRosary)　で数珠の画像IDを取得する
+	
+	standBy(objEnemy, CenX, 160, 45);
+	SetActionSiran(objEnemy, ACT_MOVE, 120);
+	waitObj(objEnemy, 60);	// ちょっとだけ処理待ち
+	if(Difficult <= D_HARD){
+		Easy_Hard();
+	}else{
+		Lunatic();
+	}
+	
+}
+
+task Easy_Hard(){
+	SetActionSiran(objEnemy, ACT_SHOT1, 9999);
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 30);
+	let D = 1;
+	let way = [6, 7, 9, 12][Difficult];
+	let wt = [10, 8, 7, 5][Difficult];
+	let wt2 = [270, 270, 210, 210][Difficult];
+	let color = [EFF_BLUE, EFF_BLUE, EFF_ORANGE, EFF_YELLOW][Difficult];
+	while(CanShotBullet(objEnemy)){
+		BossCharge(objEnemy);
+		waitObj(objEnemy, 90);
+		CallSound(sndShot7);
+		SetFamilierA(way, wt, -360*D, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, -90+rand(-180/way, 180/way), 0.46*D, 1, color);
+		waitObj(objEnemy, wt2);
+		D = -D;
+	}
+}
+task Lunatic(){
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 30);
+	SetActionSiran(objEnemy, ACT_SHOT1, 9999);
+	let D = 1;
+	SetFamilierA(12, 5, -360, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, -90, 0.46, -1, EFF_YELLOW);
+	wait(30);
+	SetFamilierA(12, 5, 360, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, -90, -0.46, -1, EFF_YELLOW);
+	wait(240);
+	CallSound(sndFlare);
+	GritterEffect(objEnemy, [255,255,0], 90, 60);
+	waitObj(objEnemy, 60);
+	BossCharge(objEnemy);
+	waitObj(objEnemy, 90);
+	SetFamilierB(50, -56.8*(50/54),  0.57, 1, EFF_YELLOW);
+	SetFamilierB(54,  56.8        , -0.57, 1, EFF_YELLOW);
+}
+
+task SetFamilierA(way, wt, arc, x, y, spd, ang, ang_spd, D, color){
+	ascent(iW in 0 .. way){
+		if(!eAlive){return;}
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), spd, ang+arc*iW/way, ang_spd, D, color);
+		wait(wt);
+	}
+}
+
+task SetFamilierB(wt, arc, ang_spd, D, color){
+	let ang = 90;
+	while(eAlive)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, ang, ang_spd, D, color);
+		ang += arc;
+		wait(wt);
+	}
+}
+
+// ブッポウソウ
+task SetFamilier01(x, y, spd, ang, ang_spd, D, color)
+{
+	let eSize = ENEMY_M;
+	let eColor = color;
+
+	
+	let RMax = 360;
+	let objFamilier = MakeEnemyFamilier(x+RMax*cos(ang), y+RMax*sin(ang), 80, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.75);	// ボスと体力連動
+	SetEnemyVisible(objFamilier, false);
+	DrawBirdOption2(objFamilier, eColor, ang, 1, 0.05, true);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 8, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+//		waitObj(objFamilier, 60);
+//		SetEnemyVisible(objFamilier, true);
+
+	}
+	
+	task TMove(){
+//		let objImgID = Obj_GetValueD(objFamilier, "IMAGE_ID_ALL", []);
+		let R = RMax;
+		let angle = ang;
+		let way = 1;
+		let grap = [	[BGW_SCALE_BLUE, -1],					[BGW_SCALE_BLUE, BGB_BALL_S_WHITE],
+						[BGW_SCALE_ORANGE, BGB_BALL_S_WHITE],	[BGW_SCALE_YELLOW, BGB_BALL_S_WHITE]][Difficult];
+		let ITV = [	[2, 30, 18],	[2, 16, 8],		[2, 12, 6],	[2, 18, 8]][Difficult];
+		let BSP = [1.2,		1.8,		1.5,		1.8][Difficult];
+
+		let Time = 180;
+		let R_Acce = 2*(R/(Time^2));
+		let R_Spd = 0;
+		R = R*(0.5-0.5*D);
+		let old_x = x+R*cos(angle);
+		let old_y = y+R*sin(angle);
+		ObjMove_SetPosition(objFamilier, old_x, old_y);
+		TLaser();
+		ascent(t in 0 .. Time){
+			if(!CanShotBullet(objFamilier)){break;}
+			let X = x+R*cos(angle);
+			let Y = y+R*sin(angle);
+			ObjMove_SetPosition(objFamilier, X, Y);
+
+			let a = atan2(Y-old_y, X-old_x);
+			if(t%ITV[0] == 1 && t%ITV[1] < ITV[2]){
+				CallSound(sndShot2);
+//				let s = BSP[0]+BSP[1]*(trunc(t/ITV[1])%2);
+				let s = BSP;
+				My_CreateShotA2(X, Y, 0, a+180*(0.5+0.5*D), s/240, s, grap[0], 10);
+
+			}else if(t%ITV[0] == 1 && t%ITV[1] < ITV[2]+ITV[0] && grap[1] != -1 && CheckDispIN(objFamilier, 8)){
+				CallSound(sndShot2);
+//				let s = BSP[0]+BSP[1];
+				let s = BSP;
+				let a = GetAngleToPlayer(objFamilier)+180*(trunc(t/ITV[1])%2);
+				My_CreateShotA2(X, Y, 0, a, s/120, s, grap[1], 10);
+
+			}
+			R_Spd += R_Acce;
+			R += R_Spd*D;
+			old_x = X;
+			old_y = Y;
+			angle += ang_spd;
+			yield;
+		}
+
+		EraseEnemy(objFamilier);
+
+
+		function Render(objImgID, scale, alpha){
+			ascent(i in 0 .. length(objImgID)){
+				ObjRender_SetScaleXYZ(objImgID[i], scale, scale, scale);
+				ObjRender_SetAlpha(objImgID[i], alpha);
+			}
+		}
+	}
+	task TLaser(){
+		let R = RMax;
+		let angle = ang;
+//		let objImgID = Obj_GetValueD(objFamilier, "IMAGE_ID_ALL", []);
+		let grap = [	BGW_BEAM_L_BLUE,		BGW_BEAM_L_BLUE,
+						BGW_BEAM_L_ORANGE,	BGW_BEAM_L_YELLOW][Difficult];
+		let Time = 45;
+		let R_Acce = 2*(R/(Time^2));
+		let R_Spd = 0;
+		R = R*(0.5-0.5*D);
+		let old_x = x+R*cos(angle);
+		let old_y = y+R*sin(angle);
+		let objC = CreateCurveLaserA1(old_x, old_y, 0, angle, 90, 12, grap, 0);
+		ObjShot_SetIntersectionEnable(objC, false);
+		ObjShot_SetAutoDelete(objC, false);
+		ascent(t in 0 .. Time){
+			if (Obj_IsDeleted(objC)) { break; }
+			let X = x+R*cos(angle);
+			let Y = y+R*sin(angle);
+			ObjMove_SetPosition(objC, X, Y);
+
+			let a = atan2(Y-old_y, X-old_x);
+			R_Spd += R_Acce;
+			R += R_Spd*D;
+			old_x = X;
+			old_y = Y;
+			angle += ang_spd*4;
+			yield;
+		}
+		wait(90);
+		Obj_Delete(objC);
+//		EraseEnemy(objFamilier);
+	}
+}
+
+task GritterEffect(parent, color, size, delay)
+{
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+	ascent(i in 0 .. 3)
+	{
+		let iy = [0, 512, 512][i];
+		Obj_SetRenderPriorityI(obj[i], 31);
+		ObjPrim_SetTexture(obj[i], imgEffectNuclear);
+		ObjSprite2D_SetSourceRect(obj[i], 0, 0+iy, 512, 512+iy);
+		ObjSprite2D_SetDestCenter(obj[i]);
+		ObjRender_SetBlendType(obj[i], BLEND_ADD_ARGB);
+	}
+	ObjRender_SetAlpha(obj[1], 192);
+	ObjRender_SetAlpha(obj[2], 96);
+	
+	let t = 0;
+	let sz = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		sz = size;
+		if (t < delay)
+		{
+			sz *= sin((t+1)/delay*90);
+		}
+		
+		let sc = (sz+12)/160;
+		let col = color;
+		ObjRender_SetColor(obj[1], col[0], col[1], col[2]);
+		ObjRender_SetColor(obj[2], col[0], col[1], col[2]);
+		
+//		ObjShot_SetIntersectionCircleA1(parent, sz);
+		ascent(i in 0 .. 2)
+		{
+			ObjRender_SetPosition(obj[i], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+			ObjRender_SetScaleXYZ(obj[i], sc, sc, 1);
+		}
+		ObjRender_SetPosition(obj[2], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		ObjRender_SetScaleXYZ(obj[2], sc*1.5, sc*1.5, 1);
+		ObjRender_SetAngleZ(obj[0], -t/5);
+		ObjRender_SetAngleZ(obj[1], t*133);
+		ObjRender_SetAngleZ(obj[2], -t*133);
+		t++;
+		yield;
+	}
+	descent(i in 0 .. 30)
+	{
+		let sc = ((sz+12)*sin((i+1)/30*90))/160;
+		ascent(i in 0 .. 2)
+		{
+			ObjRender_SetScaleXYZ(obj[i], sc, sc, 1);
+		}
+		ObjRender_SetScaleXYZ(obj[2], sc*1.5, sc*1.5, 1);
+		ObjRender_SetAngleZ(obj[0], -t/3);
+		ObjRender_SetAngleZ(obj[1], t*133);
+		ObjRender_SetAngleZ(obj[2], -t*133);
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. 3)
+	{
+		Obj_Delete(obj[i]);
+	}
+}

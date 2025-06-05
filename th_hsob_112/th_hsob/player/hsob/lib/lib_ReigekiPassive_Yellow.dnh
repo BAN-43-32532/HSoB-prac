@@ -1,0 +1,121 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　真珠島　霊撃・皇
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+// 初期設定
+function InitYellow( v_obj, v_playerNo )
+{
+	// スペカゲージ倍率
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_ITEM_MULTI", 1.34);
+	// オプション追加
+	AddYellowOption( v_obj, v_playerNo );
+}
+
+//　オプション追加
+task AddYellowOption( v_obj, v_playerNo ){
+	
+	
+	let stgArea = [ MinX(), MinY(), MaxX(), MaxY() ];
+	let i;
+	let frame = 0;
+	let count = 0;
+	let shtflag = false;
+	let laserObj = [];
+	let ang = 64;
+	let v_color = GetPlayerWeapon();
+	
+	let OptionObjArray = [
+		CreateYellowOption( v_playerNo, 64, 80, 90-ang, 0-ang, 4 ),
+		CreateYellowOption( v_playerNo, 64, 80, 90+ang, 180+ang, 4 ),
+	];
+	
+	while(!Obj_IsDeleted(v_obj) && v_color == GetPlayerWeapon())
+	{
+		let pos = [ GetPlayerX(), GetPlayerY() ];
+		let key = GetVirtualKeyState(VK_SHOT);
+		
+		//　フラグ初期化
+		if( count > 30 ){ shtflag = false; }
+		
+		if( key == KEY_HOLD ){
+			count = 0;
+			shtflag = true;
+		}
+		else{
+			count++;
+		}
+		
+		//　ショット発射フラグ真のとき
+		if( shtflag && GetPlayerState() == STATE_NORMAL && IsPermitPlayerShot() ){
+			let pang = GetPlayerAngle();
+
+			alternative( v_playerNo )
+			case( 0 ){
+				//　ホーミング札
+				if( frame%8 == 0 ){
+					ascent( i in 0..length( OptionObjArray ) ){
+						let ang = 270+pang;
+						let gpos = [
+							ObjRender_GetX(OptionObjArray[i]) + 8 * cos( ang ),
+							ObjRender_GetY(OptionObjArray[i]) + 8 * sin( ang ),
+						];
+						let obj = CreateShotPL( gpos[0], gpos[1], 16, ang, YL_PL01_SP, 1, [ "VISION_HUDA", "YELLOW" ] );
+						HomingMove( obj, 4 );
+					}
+				}
+			}
+			case( 1 ){
+				//　ぐるぐるレーザー
+				//　レーザー配列に何も入ってなければ生成
+				if( length(laserObj) <= 0 ){
+					ascent( i in 0..length( OptionObjArray ) ){
+						laserObj = laserObj ~ [ CreateLaserPL( OptionObjArray[i], 270+pang, 16, 512, YL_PL02_SP, [ "LASER01", "YELLOW" ], true, false ) ];
+					}
+				}
+			}
+			case( 2 ){
+				if( frame%4 == 0 ){
+					//　ナイフ
+					ascent( i in 0..length( OptionObjArray ) ){
+						let ang = 270+pang;
+						let gpos = [
+							ObjRender_GetX(OptionObjArray[i]) + 8 * cos( ang ),
+							ObjRender_GetY(OptionObjArray[i]) + 8 * sin( ang ),
+						];
+						let obj = CreateShotPL( gpos[0], gpos[1], 24, ang, YL_PL03_SP, 32, [ "KNIFE", "YELLOW" ] );
+					}
+				}
+			}
+			case( 3 ){
+				//　貫通しないレーザー
+				//　レーザー配列に何も入ってなければ生成
+				if( length(laserObj) <= 0 ){
+					ascent( i in 0..length( OptionObjArray ) ){
+						let ang = [ 270-2, 270+2 ][i] + pang;
+						laserObj = laserObj ~ [ CreateLaserPL( OptionObjArray[i], ang, 12, 512, YL_PL04_SP, [ "LASER02", "YELLOW" ], false, true ) ];
+					}
+				}
+			}
+			frame++;
+		}
+		else{
+			frame = 0;
+			//　レーザー配列に詰まってるやつらを削除
+			ascent( i in 0..length( laserObj ) ){
+				Obj_Delete( laserObj[i] );
+			}
+			laserObj = [];
+		}
+		yield;
+	}
+	ascent( i in 0..length( OptionObjArray ) ){
+		Obj_Delete(OptionObjArray[i]);
+	}
+	//　レーザー配列に詰まってるやつらを削除
+	ascent( i in 0..length( laserObj ) ){
+		Obj_Delete( laserObj[i] );
+	}
+}
+

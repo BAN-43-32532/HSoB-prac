@@ -1,0 +1,123 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["6面　道中会話"]
+#Text["6面　道中会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HOROU);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(15);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk_T06(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+//  会話終了（ショット禁止継続）
+function FinishTalk_T06(fadeOut)
+{
+	if (fadeOut) { FINISH_TALK = true; }
+	// 吹き出し削除
+	DeleteAllFukidashi();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_DUMMY, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_KAGUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinBoss1, true);
+			ChangeTalkTexture(cutinPlayer1, I_WORRY5);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			SetTalkEx2(cutinBoss1, "姫様、私について来なさい", -84, -256);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_THINK);
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "ほんとに来たよこの人");
+		}
+		case(2)
+		{
+			SetTalkEx2(cutinBoss1, "姫様、ちゃんと止まったふりを[r]していて貰わないと", -72, -256);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_THINK);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "あ、はい");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

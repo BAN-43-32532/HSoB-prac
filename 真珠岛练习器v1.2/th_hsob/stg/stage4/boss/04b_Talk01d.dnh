@@ -1,0 +1,233 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　ボス会話前半"]
+#Text["4面　ボス会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Siran.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
+	SetSiranRosary();	// 数珠配置
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_KAGUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "那个看起来挺狂的无疑就是上人了。[r]好，我马上就要成为解决异变的英雄了！ ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx2(cutinBoss1, "唔，这公主真是何等地充满着无明烦恼啊。 ", -48, -280);
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "愚者外表聪明，[r]其实却是愚不可及。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "那么看起来很厉害的你，[r]也是个死脑筋的笨蛋啰？ ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "月球那帮人，已经沦落到[r]把力量借给这种妖怪的地步了吗？ ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "小僧只不过是[r]想要实现烦恼着的门徒的愿望而已。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			SetTalkEx(cutinBoss1, "想在有信仰之人也无法得救的这个现世里 ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "想在有信仰之人也无法得救的这个现世里[r]要让人们得到哪怕些微的救赎，希望并相 ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "想在有信仰之人也无法得救的这个现世里[r]要让人们得到哪怕些微的救赎，希望并相[r]信着一定能够帮助别人，这种行为真的是 ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "想在有信仰之人也无法得救的这个现世里[r]要让人们得到哪怕些微的救赎，希望并相[r]信着一定能够帮助别人，这种行为真的是[r]徒劳而愚蠢的吗？ ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "想在有信仰之人也无法得救的这个现世里[r]要让人们得到哪怕些微的救赎，希望并相[r]信着一定能够帮助别人，这种行为真的是[r]徒劳而愚蠢的吗？[r]！ ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY4);
+			SetTalkEx(cutinPlayer1, "是是，「想要信徒」四个大字[r]都写在你脸上了。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "喔，小僧确实[r]最想要信徒和布施了。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "然而小僧的欲望毫无节操，[r]更是不知餍足。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "因此小僧希望谁来承认小僧。[r]小僧会为了拜托小僧的人掀起异变。 ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "好了，你真的有资格[r]断定小僧之行是愚者所为吗？ ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL6);
+			SetTalkEx(cutinPlayer1, "在封闭的世界里自相完结，仅限于当事人本人的幸福，[r]真是个完美的构造（system）啊。 ");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "毕竟如果有人用暴力强迫你们打破这一状况，[r]那这么做的人就成了罪人，[r]而被这么做的你们就成了可怜的受害者。 ");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "对啊，正因为这样，[r]我才要用暴力镇压你们。 ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA3);
+			SetTalkEx(cutinPlayer1, "封闭的永远的幸福，[r]怎么可能给你们呢。 ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "真是遗憾。不过，宗教家就是要跨过迫害，[r]才能青史留名。 ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "现在正是检验小僧信心的好时候！ ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "门徒们啊！[r]一个人悲哀的时候，你是两个人！ ");
+
+			PlayMusicWithName( 9, 30, 30 );
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER2);
+			SetTalkEx(cutinBoss1, "两个人悲哀的时候，你是三个人！[r]其中一个，便是小僧！ ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetActionSiran(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

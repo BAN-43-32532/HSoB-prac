@@ -1,0 +1,349 @@
+
+let IMG = GetCurrentScriptDirectory() ~ "./../../../img/world/stg6img/enm06a_eff.png";
+
+#include "./lib_HorouEffect01.dnh"
+#include "./lib_HorouEffect02.dnh"
+#include "./lib_HorouEffect03.dnh"
+#include "./lib_HorouEffect04.dnh"
+
+//　エフェクト設置（ｵﾌﾞｼﾞｪｸﾄIDが配列で返ります
+//　どれかを動かすときは対象IDを指定して動かせますが、
+//　個別に動き付いてる奴ら（機械羽、飛翔体）は動作未検証なのでどうなるかわかりません（
+/*
+	以下、内訳
+	[
+		//　通常翼
+		[ 汎用翼左上奥, バサバサ ],
+		//　機械翼（左下）
+		[ 汎用翼左下奥, 機械翼根元, 機械羽1, 機械羽2, 機械羽3, 機械羽4, 機械羽5, 機械羽6 ],
+		//　ウジャト翼
+		[ 汎用翼右上奥, 菱形翼, 眼, 瞳, 飛翔体1, 機械羽2, 機械羽3, 機械羽4 ],
+		//　機械翼（右）
+		[ 機械翼1, 機械翼2, 機械翼3 ],
+	]
+*/
+function SetEffect06(v_enm){
+	//　全オブジェクト
+	let objects = [ [], [], [], [] ];
+	objects[0] = SetEffect06a(v_enm);
+	objects[1] = SetEffect06b(v_enm);
+	objects[2] = SetEffect06c(v_enm);
+	objects[3] = SetEffect06d(v_enm);
+	// アニメ用
+	Effect06_Main(v_enm);
+	// 当たり判定登録
+	SetDummyHitbox([96, 0], 48);
+	SetDummyHitbox([-96, 0], 48);
+	
+	return objects;
+}
+
+// ------------------- 追加分 ------------------- //
+
+// SetEffect06の前に実行するやつ
+// opening_motion：1なら簡易モーション、2ならじっくりモーション
+// del_motion：1なら削除時モーションあり、2なら削除時モーション（縮小）
+function SetEffect06_Opt(v_enm, opening_motion, del_motion){
+	// 通しでない時は強制ON
+	if (del_motion != 2 && GetPlayMode() == GAME_SPELL)
+	{
+		opening_motion = 1;
+		del_motion = 1;
+	}
+	SetEffect06_Opt_Ex(v_enm, opening_motion, del_motion);
+}
+function SetEffect06_Opt_Ex(v_enm, opening_motion, del_motion){
+	Obj_SetValue(v_enm, "E6_OPENING", opening_motion);
+	Obj_SetValue(v_enm, "E6_DEL", del_motion);
+}
+// 眼の追跡状況
+function SetEffect06_SetEyeMotion(v_enm, val){
+	Obj_SetValue(v_enm, "E6_EYE_MOTION", val);
+}
+// オブジェクト取得
+function GetHorouEyeObj(v_obj){
+	return(v_obj[2][2]);
+}
+// アニメ用
+task Effect06_Main(v_enm)
+{
+	let frame = GetAreaCommonData(CAREA_STAGE, "HOROU_OPT_FR", 0);
+	while(!Obj_IsDeleted(v_enm))
+	{
+		SetAreaCommonData(CAREA_STAGE, "HOROU_OPT_FR", frame);
+		frame++;
+		waitObj(v_enm, 1);
+	}
+}
+
+// ------------------- 追加分 ------------------- //
+
+//　通常翼
+function SetEffect06a(v_enm){
+	let GetBossImgID = GetBossImageID(v_enm);
+	let objects = [];
+	let LAYER	= [ 31, 35 ];
+	let SCALE	= [ [0.5,-0.5], [0.5,-0.5] ];
+	let DIST	= [ [8,8], [16,16] ];
+	let ANGLE	= [ 180+32, 192 ];
+	let VERTEX	= 8;
+	let RECT	= [ 512, 256 ];
+	let FLAP	= 32;
+	
+	ascent( let i in 0..length(LAYER) ){
+		objects = objects ~ [ CreateSpriteObj(LAYER[i]) ];
+	}
+	
+	//　汎用翼（左上奥）
+	SetBaseWings(objects[0]);
+	L6BE_Init_AddScaleYIn(v_enm, objects[0], SCALE[0]);
+	L6BE_Idle_DistPosition(GetBossImgID, objects[0], DIST[0], ANGLE[0]);
+	L6BE_Finl_Delete(v_enm, objects[0]);
+	
+	//　バサバサしてるやつ
+	SetNormalWings(objects[1], VERTEX, RECT);
+	NormalWingFlap(objects[1], VERTEX, RECT, FLAP);
+	L6BE_Init_AddScaleYIn(v_enm, objects[1], SCALE[1]);
+	L6BE_Idle_DistPosition(GetBossImgID, objects[1], DIST[1], ANGLE[1]);
+	L6BE_Finl_Delete(v_enm, objects[1]);
+	
+	return objects;
+}
+
+//　機械翼
+function SetEffect06b(v_enm){
+	let GetBossImgID = GetBossImageID(v_enm);
+	let objects = [];
+	let LAYER	= [ 31, 32, 31 ];
+	let SCALE	= [ [0.5,-0.5], [0.6,0.6], [0.5,-0.4] ];
+	let DIST	= [ [16,16], [64,64], [16,16] ];
+	let ANGLE	= [ 164, 164, 164 ];
+	let COUNT	= 6;
+	
+	ascent( let i in 0..length(LAYER) ){
+		objects = objects ~ [ CreateSpriteObj(LAYER[i]) ];
+	}
+	
+	//　汎用翼（左下奥）
+	SetBaseWings(objects[0]);
+	L6BE_Init_AddScaleYIn(v_enm, objects[0], SCALE[0]);
+	L6BE_Idle_DistPosition(GetBossImgID, objects[0], DIST[0], ANGLE[0]);
+	L6BE_Finl_Delete(v_enm, objects[0]);
+	
+	//　丸いやつ
+	SetMachineBases(objects[1]);
+	L6BE_Init_AddSpinIn(v_enm, objects[1], SCALE[1], -90+ANGLE[1]);
+	L6BE_Idle_DistPosition(GetBossImgID, objects[1], DIST[1], ANGLE[1]);
+	L6BE_Finl_Delete(v_enm, objects[1]);
+	
+	//　機械羽
+	ascent( i in 0..COUNT ){
+		let dis = [ DIST[2][0]-i*8, DIST[2][1]-i*8 ];
+		let ang = ANGLE[2] + 40 - i*12;
+		objects = objects ~ [ CreateSpriteObj(LAYER[2]) ];
+		SetMachineWings(v_enm, objects[1], objects[2+i], SCALE[2], dis, ang);
+		L6BE_Finl_Delete(v_enm, objects[2+i]);
+	}
+	
+	return objects;
+}
+
+//　ホルス翼
+function SetEffect06c(v_enm){
+	let GetBossImgID = GetBossImageID(v_enm);
+	let objects = [];
+	let LAYER	= [ 31, 35, 34, 34, 36 ];
+	let SCALE	= [ [0.5,0.5], [0.8,0.8], [0.5,0.5], [0.25,0.25], [0.3,0.3] ];
+	let DIST	= [ [8,8], [48,48], [24,16], [12,12], [64,48] ];
+	let ANGLE	= [ -32, -8 ];
+	let COUNT	= 4;
+	let EYES_MVSPEED = [ 10, 15 ];
+	let EYES_BLSPEED = 10;
+	let EYES_MOVECDR = [ [30,60], [15,45] ];
+	let EYES_MVANGLE = [ [-90,90], [0,360] ];
+	let EYES_BLNKCDR = [ 30, 60 ];
+	
+	ascent( let i in 0..length(LAYER) ){
+		objects = objects ~ [ CreateSpriteObj(LAYER[i]) ];
+	}
+	
+	//　汎用翼（右上奥）
+	SetBaseWings(objects[0]);
+	L6BE_Init_AddScaleYIn(v_enm, objects[0], SCALE[0]);
+	L6BE_Idle_DistPosition(GetBossImgID, objects[0], DIST[0], ANGLE[0]);
+	L6BE_Finl_Delete(v_enm, objects[0]);
+	
+	//　外郭◇
+	SetUdjyatWings(objects[1]);
+	L6BE_Init_AddScaleYIn(v_enm, objects[1], SCALE[1]);
+	L6BE_Idle_DistPosition(GetBossImgID, objects[1], DIST[1], ANGLE[1]);
+	L6BE_Finl_Delete(v_enm, objects[1]);
+	
+	//　目
+	SetUdjyatEyes(objects[2]);
+	SetEyesMoving(objects[1], objects[2], DIST[2], EYES_MVSPEED[0], EYES_MOVECDR[0], EYES_MVANGLE[0]);
+	L6BE_Init_AddSpinIn(v_enm, objects[2], SCALE[2], ANGLE[1]);
+	L6BE_Finl_Delete(v_enm, objects[2]);
+	
+	//　瞳
+	SetUdjyatEyesPupil(objects[3]);
+	SetEyesMoving(objects[2], objects[3], DIST[3], EYES_MVSPEED[1], EYES_MOVECDR[1], EYES_MVANGLE[1]);
+	SetEyesBlink(objects[3], SCALE[3], EYES_BLSPEED, EYES_BLNKCDR);
+	L6BE_Init_AddSpinIn(v_enm, objects[3], SCALE[3], ANGLE[1]);
+	L6BE_Finl_Delete(v_enm, objects[3]);
+	
+	//　飛翔体　4~
+	ascent( i in 0..COUNT ){
+		//　調整角度 - 差分角度
+		let ang = 80 - i*30;
+		objects = objects ~ [ CreateSpriteObj(LAYER[4]) ];
+		SetUdjyatFlyers(v_enm, objects[1], objects[4+i], SCALE[4], DIST[4], ANGLE[1] + ang);
+		L6BE_Finl_Delete(v_enm, objects[4+i]);
+	}
+
+	return objects;
+}
+
+//　不滅っぽい翼
+function SetEffect06d(v_enm){
+	let GetBossImgID = GetBossImageID(v_enm);
+	let objects = [];
+	let LAYER	= [ 33, 32, 31 ];
+	let SCALE	= [ [0.5,0.5], [0.4,0.4], [0.3,0.3] ];
+	let DIST	= [ [4,4], [8,8], [16,16] ];
+	let ANGLE	= [ -16, 0, 16 ];
+	let COUNT	= 3;
+	
+	//　右奥ガシャガシャしてるやつ
+	ascent( let i in 0..COUNT ){
+		objects = objects ~ [ CreateSpriteObj(LAYER[i]) ];
+		SetImmortalWing(objects[i]);
+		SetImmortalMoveing(GetBossImgID, objects[i], DIST[i], 8+ANGLE[i]);
+		L6BE_Init_AddScaleYIn(v_enm, objects[i], SCALE[i]);
+		L6BE_Finl_Delete(v_enm, objects[i]);
+	}
+	return objects;
+}
+
+
+//　汎用翼パーツ
+task SetBaseWings(v_obj){
+	ObjPrim_SetPrimitiveType(v_obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(v_obj, 4);
+	ObjPrim_SetVertexPosition(v_obj, 0, 0, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 1, 0, 64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 2, 256, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 3, 256, 64, 0);
+	ObjPrim_SetVertexUVT(v_obj, 0, 0, 256);
+	ObjPrim_SetVertexUVT(v_obj, 1, 0, 384);
+	ObjPrim_SetVertexUVT(v_obj, 2, 256, 256);
+	ObjPrim_SetVertexUVT(v_obj, 3, 256, 384);
+}
+
+
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+//　2d primitive
+function CreateSpriteObj(v_lay){
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, IMG);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+	Obj_SetRenderPriorityI(obj, v_lay);
+	return obj;
+}
+
+
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+//　共通挙動
+task L6BE_Init_AddScaleYIn(v_enm, v_obj, v_scaleArray){
+	let move1 = 0;
+	let moveA = 0;
+	if (Obj_GetValueD(v_enm, "E6_OPENING", 1)) {
+		while( !Obj_IsDeleted(v_obj) && move1 < 1 ){
+			move1 = 1 * sin( moveA );
+			ObjRender_SetScaleXYZ(v_obj, v_scaleArray[0], move1*v_scaleArray[1], 0);
+			moveA += 2;
+			yield;
+		}
+	} else {
+		ObjRender_SetScaleXYZ(v_obj, v_scaleArray[0], v_scaleArray[1], 0);
+	}
+}
+
+task L6BE_Init_AddSpinIn(v_enm, v_obj, v_scaleArray, v_angle){
+	let move1 = 0;
+	let moveA = 0;
+	if (Obj_GetValueD(v_enm, "E6_OPENING", 1)) {
+		while( !Obj_IsDeleted(v_obj) && move1 < 1 ){
+			move1 = 1 * sin( moveA );
+			ObjRender_SetAngleXYZ(v_obj, 0, 0, v_angle + move1*360);
+			ObjRender_SetScaleXYZ(v_obj, move1*v_scaleArray[0], move1*v_scaleArray[1], 0);
+			moveA += 2;
+			yield;
+		}
+	} else {
+		ObjRender_SetScaleXYZ(v_obj, v_scaleArray[0], v_scaleArray[1], 0);
+		ObjRender_SetAngleXYZ(v_obj, 0, 0, v_angle);
+	}
+}
+
+task L6BE_Idle_DistPosition(v_objParent, v_obj, v_distArray, v_angle){
+	ObjRender_SetAngleXYZ(v_obj, 0, 0, v_angle);
+	while( !Obj_IsDeleted(v_objParent) ){
+		let pos = [
+			ObjRender_GetX(v_objParent) + v_distArray[0] * cos( v_angle ),
+			ObjRender_GetY(v_objParent) + v_distArray[1] * sin( v_angle ),
+		];
+		ObjRender_SetPosition(v_obj, pos[0], pos[1], 0);
+		yield;
+	}
+}
+
+task L6BE_Finl_Delete(v_enm, v_obj){
+	let speed = 0;
+	let accel = rand(0.5,1);
+	let move1 = 0;
+	let moveA = 0;
+	let angle = 90 + rand(-32,32);
+	let scale = [];
+	let wait = rand(0,60);
+	let del_pattern = Obj_GetValueD(v_enm, "E6_DEL", 1);
+	while( eAlive && !Obj_IsDeleted(v_enm) ){ yield; }
+	if (del_pattern == 1)
+	{
+		waitEx(wait);
+		scale = [ ObjRender_GetScaleX(v_obj), ObjRender_GetScaleY(v_obj) ];
+		while( move1 < 1 ){
+			move1 = 1 * sin( moveA );
+			let pos = [
+				ObjRender_GetX(v_obj) + speed * cos( angle ),
+				ObjRender_GetY(v_obj) + speed * sin( angle ),
+			];
+			ObjRender_SetPosition(v_obj, pos[0], pos[1], 0);
+			ObjRender_SetScaleY(v_obj, scale[1] - move1*scale[1]);
+			moveA += 1;
+			speed += accel;
+			yield;
+		}
+	}
+	else if (del_pattern == 2)
+	{
+		scale = [ ObjRender_GetScaleX(v_obj), ObjRender_GetScaleY(v_obj) ];
+		while( move1 < 1 ){
+			move1 = 1 - 1 * cos( moveA );
+			let pos = [
+				ObjRender_GetX(v_obj),
+				ObjRender_GetY(v_obj),
+			];
+			ObjRender_SetPosition(v_obj, pos[0], pos[1], 0);
+			ObjRender_SetScaleX(v_obj, scale[0] - move1*scale[0]);
+			ObjRender_SetScaleY(v_obj, scale[1] - move1*scale[1]);
+			moveA += 2;
+			yield;
+		}
+	} else {
+		yield;
+	}
+	Obj_Delete( v_obj );
+}

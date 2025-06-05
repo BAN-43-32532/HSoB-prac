@@ -1,0 +1,268 @@
+#東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["Stage2道中"]
+#Text["Stage2道中"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road02_Zako.dnh"
+#include "./../../lib/lib_ChapterSkip.dnh"
+
+
+@Initialize
+{
+	STAGE_ID = 2;		//ステージID記録
+	NEXT_STAGE_ID = 3;	//次のステージIDを記録
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+
+task TStage
+{
+	// 保険
+	yield;
+
+	let dest=GetStartChapter(2);
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld02.dnh";	//背景
+//	let pathMBoss	= dir ~ "boss/01a_plural.dnh";	//中ボス
+	let pathBoss	= dir ~ "boss/02b_plural.dnh";	//ボス
+	
+	// BGM
+	// 道中曲 : 1拍23.15fくらい
+
+	//　ボスロード
+	StartScriptInThread(pathBoss);
+	//  背景配置
+	SetStageBackGround(pathBG);
+
+	wait(60);
+	if(dest<=4){
+		PlayMusicWithName( 4, 30, 95 );
+	}
+	else{
+		PlayMusicWithName( 5, 30, 30 );
+	}
+	wait(75);
+	
+// ------------------------ 前半
+	if(dest<=1){
+		WaitRoad(10);
+		CHAPTER_1();
+		WaitRoad(60*20-10);
+	}
+
+	
+	if(dest<=2){
+		CHAPTER_2();
+		WaitRoad(60*38);
+	}
+
+	if(dest<=3){
+		CHAPTER_3();
+		WaitRoad(60*19+10);
+	}
+	if(dest<=4){
+		CHAPTER_4();
+		WaitRoad(60*36);
+	}
+
+
+
+// ------------------------ ボス
+	KillAllEnemy();
+	DeleteShotAll_Effect(CenX, CenY);
+	SetItemCollect(120);
+
+	CallBoss();
+
+	// 待機とロード
+	WaitForBossKilled();
+	wait(45);
+
+	StageEND();
+}
+
+task CHAPTER_1()
+{
+	ChapterStart(STAGE_ID, 0, CHAPTER_ROAD);
+	
+	H01([CenX-86,MinY+64], 8, 1);
+	WaitRoad(70);
+	H01([CenX+32,MinY+80], 8, -1);
+	WaitRoad(70*3-5);
+	H01([CenX+96,MinY+96], 8, -1);
+	WaitRoad(70);
+	H01([CenX-40,MinY+48], 8, 1);
+	WaitRoad(70*3-5);
+	H01([CenX-96,MinY+96], 8, 1);
+	WaitRoad(70);
+	H01([CenX-32,MinY+32], 8, -1);
+	WaitRoad(70);
+	H01([CenX+32,MinY+80], 8, 1);
+	WaitRoad(70);
+	H01([CenX+96,MinY+48], 8, -1);
+
+	DisplayStage(STAGE_ID, 0);	// タイトル表示
+}
+
+task CHAPTER_2()
+{
+	ChapterStart(STAGE_ID, 1, CHAPTER_ROAD);
+	let value = 0;
+	I01([MinX-16,MinY-450], 90, -0.25, 16, 35, value);
+	WaitRoad(70*5);
+	value += 70*5;
+	
+	I01([MaxX+16,MinY-450], 90, 0.25, 16, 35, value);
+	WaitRoad(70*4-50);
+	value += 70*4-50;
+	
+//	H01([CenX+96,MinY+48], 8, -1);
+	WaitRoad(70*2);
+	H01([CenX+80,MinY+32], 8, 1);
+	WaitRoad(70*2);
+	H01([CenX-16,MinY+0], 8, -1);
+	WaitRoad(70*2);
+	H01([CenX-96,MinY+16], 8, 1);
+	WaitRoad(70*1+50);
+	value += 70*7+50;
+	
+	I01([MaxX+16,MinY-450], 90, 0.25, 16, 35, value);
+	WaitRoad(70*5);
+	value += 70*5;
+	I01([MinX-16,MinY-450], 90, -0.25, 16, 35, value);
+}
+
+task CHAPTER_3()
+{
+	ChapterStart(STAGE_ID, 2, CHAPTER_ROAD);
+
+	SetEnemyChii01(CenX+64, MinY+210, 0, 0, 0, 0);
+	WaitRoad(70*8-15);
+	ascent(i in 0 .. 4)
+	{
+		let tmp = i/3;
+		if (i == 0)
+		{
+			SetEnemyChii03(CenX+tmp*128, MinY, 2, 90-tmp*15, 0, 0);
+			SetEnemyChii03(CenX+tmp*128+12, MinY, 3, 90-tmp*15-5, 0, 0);
+			SetEnemyChii03(CenX+tmp*128-12, MinY, 3, 90-tmp*15+5, 0, 0);
+		}
+		else
+		{
+			SetEnemyChii03(CenX+tmp*128+8, MinY, 3, 90-tmp*15-5, 0, 0);
+			SetEnemyChii03(CenX+tmp*128-8, MinY, 2, 90-tmp*15+5, 0, 0);
+			SetEnemyChii03(CenX-tmp*128+8, MinY, 2, 90+tmp*15-5, 0, 0);
+			SetEnemyChii03(CenX-tmp*128-8, MinY, 3, 90+tmp*15+5, 0, 0);
+		}
+		WaitRoad(70);
+	}
+}
+
+task CHAPTER_4()
+{
+	ChapterStart(STAGE_ID, 3, CHAPTER_ROAD);
+	
+	Chii03_Side([MinX,MinY+64], [0, 64], 3, 23);
+	WaitRoad(70);
+	Chii03_Side([MaxX,MinY+64], [0, 64], 3, 23);
+	WaitRoad(70);
+	Chii02_Side([CenX+24,MinY], [48, 0], 90, 5, 23);
+	Chii02_Side([CenX-24,MinY], [-48, 0], 90, 5, 23);
+	WaitRoad(280);
+	SetEnemyChii04(CenX, MinY, 0.75, 90+1, 0, 0);
+	WaitRoad(280);
+	Chii03_Side([MinX,MinY], [64, 0], 3, 23);
+	Chii03_Side([MaxX,MinY], [-64, 0], 3, 23);
+	WaitRoad(140);
+	Chii03_Side([MinX,MinY+32], [0, 64], 5, 23);
+	WaitRoad(140);
+	SetEnemyChii04(MaxX, MinY+150, 0.75, 180+15, 0, 0);
+	WaitRoad(280);
+	Chii03_Side([MaxX,MinY], [-64, 0], 3, 23);
+	WaitRoad(70);
+	Chii03_Side([MinX,MinY], [64, 0], 3, 23);
+	WaitRoad(70);
+	SetEnemyChii04(CenX, MinY, 0.75, 90-1, 0, 0);
+	WaitRoad(280);
+	Chii03_Side([MinX-24,MinY+32], [0, 84], 6, 23);
+	Chii03_Side([MaxX+24,MinY+32], [0, 84], 6, 23);
+}
+
+
+
+// -------------------------- 敵配置用 -------------------------- //
+task H01(pos, count, muki)
+{
+	let ba = randStage(0, 360);
+	ascent(i in 0 .. count)
+	{
+		let ex = pos[0];
+		let ey = pos[1];
+		let ea = ba + i*360/count;
+		SetEnemyH01(ex, ey, muki, ea, 0, 0);
+	}
+}
+
+task I01(pos, angle, add_angle, count, wt, value)
+{
+	ascent(i in 0 .. count)
+	{
+		let ex = pos[0];
+		let ey = pos[1] + i*wt*S2_ZAKO_SPD_Y;
+		let ea = angle;
+		let er = 450;
+		SetEnemyI01(ex, ey, add_angle, ea, er, value + i*wt);
+		WaitRoad(wt);
+	}
+}
+
+task Chii02_Side(pos, add_pos, shot_angle, count, wt)
+{
+	ascent(i in 0 .. count)
+	{
+		let ex = pos[0] + add_pos[0]*i;
+		let ey = pos[1] + add_pos[1]*i;
+
+		let tmp = (ey-MinY)/GetClipHeight;
+		let ea = atan2(CenY-ey, CenX-ex);
+		let es = 2;
+		SetEnemyChii02(ex, ey, es, ea, 1, shot_angle);
+		WaitRoad(wt);
+	}
+}
+
+task Chii03_Side(pos, add_pos, count, wt)
+{
+	ascent(i in 0 .. count)
+	{
+		let ex = pos[0] + add_pos[0]*i;
+		let ey = pos[1] + add_pos[1]*i;
+
+		let tmp = (ey-MinY)/GetClipHeight;
+		let ea = atan2(CenY-ey, CenX-ex);
+		let es = 2;
+		SetEnemyChii03(ex, ey, es, ea, 1, 0);
+		WaitRoad(wt);
+	}
+}

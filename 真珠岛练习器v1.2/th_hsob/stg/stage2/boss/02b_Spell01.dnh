@@ -1,0 +1,372 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ちぃスペカ1"]
+#Text["ちぃスペカ1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Chii.dnh"
+
+let objSword = [];
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(210);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(50);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 11;
+	let SPELL_NAME = [0, 0, 1, 2][Difficult];
+	// アイテム数
+	bossDropItem = 100;
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_CHII);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"02a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.75, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	waitObj(objEnemy, 60);
+
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 60);
+	
+	let loop_t = 0;
+	while(eAlive)
+	{
+		// モーション関係
+		let loop_ct = 3;
+		let all_timer = 0;
+		let timer = 0;
+		let wt = 0;
+		
+		if (Difficult == D_EASY)
+		{
+			loop_ct = 3 + trunc(min(1, loop_t/3));
+			let add_t = max(3-loop_t,0)*30 + 30;
+
+			all_timer = loop_ct*60;
+			timer = all_timer-60 + add_t;
+			wt = 180 + add_t;
+		}
+		else if (Difficult == D_NORM)
+		{
+			loop_ct = 3 + trunc(min(2, loop_t/2));
+			let add_t = max(3-loop_t,0)*30;
+
+			all_timer = loop_ct*60;
+			timer = all_timer-60 + add_t;
+			wt = 180 + add_t;
+		}
+		else if (Difficult == D_HARD)
+		{
+			loop_ct = 3 + trunc(min(2, loop_t/2));
+			let add_t = max(3-loop_t,0)*30;
+
+			all_timer = loop_ct*60;
+			timer = all_timer-60 + add_t;
+			wt = 180 + add_t;
+		}
+		else if (Difficult == D_LUNA)
+		{
+			loop_ct = 3 + trunc(min(2, loop_t/2));
+			let add_t = max(3-loop_t,0)*30;
+
+			all_timer = loop_ct*60;
+			timer = all_timer-60 + add_t;
+			wt = 180 + add_t;
+		}
+
+		let pos = [];
+		ascent(i in 0 .. loop_ct-1)
+		{
+			let muki = [1,-1][(loop_t+i)%2];
+			pos = pos ~ [[CenX+rand(128,180)*muki,MinY+rand(60,180)]];
+		}
+		pos = pos ~ [[CenX,MinY+140]];
+		
+		
+		// ショット関係
+		let speed =		[ 2				, 2.5			, 3.5		, 2.5][Difficult];
+		let way =		[ 4				, 4				, 4			, 6][Difficult];
+		let way_angle = [45		 		,45				,36			,36][Difficult];
+		let graphic =	BGW_STICK_YELLOW;
+		let shot_wt =	[10		 		, 6				, 4			, 4][Difficult];
+		let color =		[[EFF_YELLOW]	,[EFF_YELLOW]	,[EFF_RED]	,[EFF_YELLOW, EFF_WHITE]][Difficult];
+
+		let speed2 =	[2.00			, 2.5			, 3.00		, 3.00][Difficult];
+		let s2_acce =	[0				, 0				, 0			, 3.00][Difficult];
+		let way2 =		[0				, 0				, 5			, 7][Difficult];
+		ascent(i in 0 .. length(color)){
+			S01ChiiSword(90, all_timer, color[i]);
+		}
+		CallSound(sndPower3);
+		waitObj(objEnemy, 90);
+
+		if (!eAlive) { return; }
+		MoveChiiSword(objSword, 0, -16, 0, 24);
+
+		let st = 0;
+		let all_t = 0;
+		ascent(i in 0 .. length(pos))
+		{
+			if (!eAlive) { return; }
+			MoveTo(objEnemy, pos[i][0], pos[i][1], 60);
+			SetAction(objEnemy, ACT_MOVE, 60);
+			
+			ascent(t in 0 .. 60)
+			{
+				if (!eAlive) { return; }
+				if (t%shot_wt == 0)
+				{
+					let tmp = all_t/all_timer;
+					let sx = ObjMove_GetX(objEnemy) + rand(-64,64);
+					let sy = ObjMove_GetY(objEnemy) + rand(-32,0);
+					let sa = atan2(GetPlayerY-sy, GetPlayerX-sx);
+					let ss = speed * rand(0.5, 1);
+					let wa = (1 - tmp*(2/3)) * way_angle * (1 + st%3);
+//					BlinkTumaShot(sx, sy, ss, sa, graphic, 30, way, wa, trunc(timer));
+					TumaShotEx(sx, sy, ss, sa, graphic, way, wa, trunc(timer));
+					CallSound(sndShot3);
+					st++;
+				}
+				if (t%shot_wt == trunc(shot_wt/2))
+				{
+					let s = speed2+s2_acce*(i+t/60)/length(pos);
+					CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+						s*3, GetAngleToPlayer(objEnemy), -s/7.5, s, BGW_STICK_RED, 5, way2, 120/(way2-1), 0);
+					CallSound(sndShot3);
+				}
+				timer -= 0.5;
+				all_t++;
+				waitObj(objEnemy, 1);
+			}
+		}
+		waitObj(objEnemy, wt);
+		loop_t++;
+	}
+}
+
+task TumaShotEx(sx, sy, ss, sa, graphic, way, wa, time){
+	let objS = My_CreateShotA1(sx, sy, 0, sa, graphic, 30);
+	loop(time){
+		ObjMove_SetAngle(objS, GetAngleToPlayer(objS));
+		wait(1);
+	}
+	if (Obj_IsDeleted(objS)) { return; }
+	BlinkTumaShot(sx, sy, ss, GetAngleToPlayer(objS), graphic, 0, way, wa, 0);
+	Obj_Delete(objS);
+
+}
+
+// ぶしゃーってやつ
+task SwordSplashShot(x, y, speed, angle, graphic, f_speed, add_a)
+{
+	let obj = CreateShotA1(x, y, f_speed, angle, graphic[0], 0);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, -f_speed/90, add_a, f_speed/10);
+	ObjMove_AddPatternA2(obj, 90, NO_CHANGE, NO_CHANGE, -f_speed/90, 0, f_speed/10);
+	ObjShot_SetIntersectionEnable(obj, false);
+	
+	let alpha = 128;
+	ascent(i in 0 .. 30)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		if (Difficult < D_HARD || GetDistance( [ObjMove_GetX(obj), ObjMove_GetY(obj)], [GetPlayerX(), GetPlayerY()] ) > 60) {
+			alpha = min(128, alpha+8);
+		} else {
+			alpha = max(0, alpha-8);
+		}
+		let tmp_a = (i+1)/30 * alpha;
+		ObjRender_SetAlpha(obj, tmp_a);
+		wait(1);
+	}
+	loop(90)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		if (Difficult < D_HARD || GetDistance( [ObjMove_GetX(obj), ObjMove_GetY(obj)], [GetPlayerX(), GetPlayerY()] ) > 60) {
+			alpha = min(128, alpha+8);
+		} else {
+			alpha = max(0, alpha-8);
+		}
+		ObjRender_SetAlpha(obj, alpha);
+		wait(1);
+	}
+	if (Obj_IsDeleted(obj)) { return; }
+	if (Difficult < D_HARD || GetDistance( [ObjMove_GetX(obj), ObjMove_GetY(obj)], [GetPlayerX(), GetPlayerY()] ) > 60) {
+		CallSound(sndShot5);
+		descent(i in 0 .. length(graphic)){
+			let s = speed*(1+0.02*i);
+			My_CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, ObjMove_GetAngle(obj), s/90, s, graphic[i], 30);
+		}
+	}else{
+	}
+	Obj_Delete(obj);
+}
+
+// モーションとかいろいろセット
+task S01ChiiSword(act_timer, wait_timer, color)
+{
+	SetAction(objEnemy, ACT_SHOT2, act_timer);
+	waitObj(objEnemy, 15);
+	if (!eAlive) { return; }
+	let objS = CreateChiiSword(ObjMove_GetX(objEnemy)-16, ObjMove_GetY(objEnemy)-24, -90, 120, color, 30);
+	objSword = objSword ~ [objS];
+	let Num = length(objSword);
+	let D = -1 + 2*(Num%2);
+	Obj_SetValue(objS, "X", -16);
+	Obj_SetValue(objS, "Y", -24);
+	Obj_SetValue(objS, "A", -90);
+	ChiiSword_BaseMotion(objS);
+	waitObj(objEnemy, act_timer-30);
+	
+	if (!eAlive) { return; }
+	MoveChiiSword(objS, +20-20*D, 32, -10-110*D, 10);
+	waitObj(objEnemy, wait_timer);
+	
+	if (!eAlive) { return; }
+	SetAction(objEnemy, ACT_SHOT2, 120);
+	waitObj(objEnemy, 15+90*(Num-1));
+
+	if (!eAlive) { return; }
+	CallSound(sndBoon);
+	SlashChiiSword(ObjMove_GetX(objS), ObjMove_GetY(objS), ObjStLaser_GetAngle(objS), color);
+	descent(i in 0 .. length(objSword)){
+		if(objS == objSword[i]){
+			Obj_Delete(objSword[i]);
+			objSword = erase(objSword, i);
+			break;
+		}
+	}
+	
+	task ChiiSword_BaseMotion(objSword)
+	{
+		while(!Obj_IsDeleted(objSword))
+		{
+			if (!eAlive) { break; }
+			ObjMove_SetPosition(objSword, ObjMove_GetX(objEnemy)+Obj_GetValueD(objSword,"X",0), ObjMove_GetY(objEnemy)+Obj_GetValueD(objSword,"Y",0)+sin(aTime(objEnemy)*3)*aPosition(objEnemy));
+			ObjStLaser_SetAngle(objSword, Obj_GetValueD(objSword,"A",0));
+			yield;
+		}
+	}
+}
+
+task MoveChiiSword(objSword, add_x, add_y, add_a, timer)
+{
+	let x = Obj_GetValueD(objSword, "X", 0);
+	let y = Obj_GetValueD(objSword, "Y", 0);
+	let a = Obj_GetValueD(objSword, "A", 0);
+	ascent(t in 0 .. timer)
+	{
+		let tmp = GetCurve((t+1)/timer);
+		Obj_SetValue(objSword, "X", add_x*tmp+x);
+		Obj_SetValue(objSword, "Y", add_y*tmp+y);
+		Obj_SetValue(objSword, "A", add_a*tmp+a);
+		waitObj(objEnemy, 1);
+	}
+}
+
+// ちぃソード射出部分
+task SlashChiiSword(x, y, angle, color)
+{
+	let to_x = x+16;
+	let to_y = y-96;
+	let timer = 60;
+	
+	let obj = CreateChiiSword(x, y, angle, 120, color, 0);
+	ObjShot_SetAutoDelete(obj, true);
+	
+	let objTarget = TargetEffect(GetPlayerX, GetPlayerY, timer, timer+15, 1);
+	
+	let la = angle;
+	ascent(t in 0 .. 90)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+
+		let tmp = GetCurve_ad((t+1)/90) * 1.75;
+		to_x -= cos(la)*tmp; to_y -= sin(la)*tmp;
+
+		if (t < timer)
+		{
+			let tmp = GetCurve_a((t+1)/timer);
+			let to_a = atan2(GetPlayerY-to_y, GetPlayerX-to_x);
+			let add_a = (to_a - la)%360;
+			if (add_a > 180) { add_a -= 360; }
+			la += add_a*tmp;
+			ObjMove_SetPosition(obj, x*(1-tmp)+to_x*tmp, y*(1-tmp)+to_y*tmp);
+			ObjMove_SetPosition(objTarget, GetPlayerX, GetPlayerY);
+			ObjStLaser_SetAngle(obj, la);
+		}
+		else
+		{
+			ObjMove_SetPosition(obj, to_x, to_y);
+		}
+		if (t == timer)
+		{
+			CallSound(sndBulletBreak);
+		}
+		wait(1);
+	}
+	if (!eAlive) { return; }
+	CallSound(sndShot4);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, la, 1/3, 0, 16);
+	
+	let f_speed = [0.75, 1.00, 2.25, 2.25][Difficult];
+	let shot_speed = [2.00, 2.00, 1.10, 1.20][Difficult];
+	let shot_count = [0, 2, 4, 3][Difficult];
+	let w_angle = [48, 48, 35, 35][Difficult];
+	let graphic = [BGW_SCALE_RED + SHOT_COLOR[color], BGB_SCALE_RED + SHOT_COLOR[color]];
+	let stimer = [60, 55, 90, 90][Difficult];
+	let muki = [1, -1][cos(la)>0];
+	
+	let st = 0;
+	let t = 0;
+	if (Difficult >= D_HARD) { la = rand(0, 360); }
+	while(!Obj_IsDeleted(obj) && t < stimer)
+	{
+		// ぶしゃーって出るやつ
+//		if (CheckDispIN(obj, 0))
+//		{
+			loop(shot_count)
+			{
+				let sa = la+rand(-w_angle/2, w_angle/2);
+				let fs = (t/30)*f_speed;
+				if (Difficult >= D_HARD) { sa = la+180+st*w_angle*muki; }
+				else { fs = rand(0,fs); muki = -muki; }
+				SwordSplashShot(ObjMove_GetX(obj), ObjMove_GetY(obj), shot_speed, sa, graphic, fs, 2*muki);
+				st++;
+			}
+			t++;
+//		}
+		wait(1);
+	}
+	Obj_Delete(obj);
+}

@@ -1,0 +1,246 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EX　会話前半"]
+#Text["EX　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "话说回来，时间刚一恢复流动，[r]这帮家伙怎么就又闹起来了啊。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE2);
+			SetTalkEx(cutinPlayer1, "她们真的全是鸟头不成吗。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CALM2);
+			SetTalkEx(cutinPlayer1, "算了，[r]有这个卡诺匹斯罐在手就相当于是两个我的实力，[r]不管是杂鱼还是黑幕，统统都给消毒掉~！ ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx2(cutinBoss1, "“黑幕~”，我是该这么说吗？ ", -48, -280);
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "这场骚乱的源头是我。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "可能她们确实是鸟头笨蛋，[r]但一切并不是她们的错。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "在我看来包括你在内，[r]全部都是笨蛋加鸟头。 ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "或许是吧。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "但是真正愚蠢的人，不是别的，[r]或许正是我才对。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "我想起来了，虽然换了个马甲，[r]但你不就是赛特吗？ ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "居然还没放弃侵略幻想乡，[r]真是不知死活啊。 ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "我确实曾是赛特。 ", -96, -96);
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx3(cutinBoss1, "然而我现在已经不是赛特了。 ", 0, 0);
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx2(cutinBoss1, "我确实曾是赛特。 ", -96, -96);
+			SetTalkEx3(cutinBoss1, "然而我现在已经不是赛特了。[r]虽然如此，但原本的我也已经不存在了。 ", 0, 0);
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "所残剩下的我所能做的，[r]不是只有燃尽这条性命，[r]向这世界报一箭之仇了吗？ ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL3);
+			SetTalkEx(cutinPlayer1, "破罐子破摔的抵抗……就因为你是濑户物（瓷器）？ ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "所以说，摔盘子又没什么美感可言，[r]自爆完全没有任何价值。 ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "你说得对。要是能做到，我也想摔烂博丽的巫女，[r]摔烂这幻想乡的规矩。 ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "到那时，或许我这一存在，[r]能够从『我』这一没有『姓名』的『什么东西』，[r]升华成为某种别的东西吧，我是这么期待着的。 ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "要是能打倒博丽的巫女，[r]确实你就已经不能算是濑户物了。 ");
+		}
+		case(20)
+		{
+			// BGM
+			PlayMusicWithName( 15, 30, 30 );
+
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "没办法……我就教教你吧。 ");
+		}
+		case(21)
+		{
+			ResetTalkImagePosition(cutinPlayer1, -32, -108, 0.85);	// おまえはそこでずれていけ
+			ChangeTalkTexture(cutinPlayer1, I_CUTIN2);
+			SetTalkEx(cutinPlayer1, "……正因为这样，我才必然会赢！[r]不管倒转时间续关多少次！ ");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "曾是我的东西啊……[r]集合在我身边吧。 ");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinBoss1, I_CUTIN);
+			ResetTalkImagePosition(cutinBoss1, -64, 16, 1.1);	// おまえはそこでずれていけ
+
+			SetTalkEx(cutinBoss1, "曾是我的东西啊！[r]现在，将你们所不曾得到的『可能性』，[r]统统托付给我吧！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

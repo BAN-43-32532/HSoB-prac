@@ -1,0 +1,61 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ほろうちゃんすSpellBGTest"]
+#Text[""]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(9999);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 71;
+	let SPELL_NAME = [0, 0, 1, 2][Difficult];
+
+	// アイテム数
+	bossDropItem = 100;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HOROU);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), -1, CHAPTER_BOSS);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 160, 60);
+	waitObj(objEnemy, 60);
+	
+	CallSpellCard(true);	//スペカ起動
+	
+	while(eAlive)
+	{
+		waitObj(objEnemy, 180);
+		EnemyRandomMove(objEnemy, 160, 32);
+		waitObj(objEnemy, 120);
+	}
+}

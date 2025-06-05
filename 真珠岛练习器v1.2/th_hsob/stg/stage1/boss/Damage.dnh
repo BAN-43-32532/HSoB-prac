@@ -1,0 +1,130 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ダメージ確認くん"]
+#Text["ダメージ確認くん"]
+#System["./../../../system/System.dnh"]
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+//----------------------------------------------------
+//敵の動作
+//----------------------------------------------------
+@Event
+{
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)
+	{
+		//敵ライフを要求された
+		SetScriptResult(2500);//ライフを500に設定
+	}
+}
+
+@Initialize
+{
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_RANRAN);	//ボスセット
+	SetEffectResist(objEnemy, 0.5);
+
+	TMain;
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task TMain
+{
+	let maxlife = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+
+	ObjEnemy_SetDamageRate(objEnemy, 100, 100);
+	standBy(objEnemy, CenX, 140, 15);
+
+	//文字列
+	let objText = [0, 0, 0, 0];
+	
+	ascent(i in 0 .. 4)
+	{
+		objText[i] = ObjText_Create();
+		Obj_SetRenderPriorityI(objText[i], 79);
+		ObjText_SetText(objText[i], "");
+		ObjText_SetFontType(objText[i], "ＭＳ Ｐゴシック");
+		ObjText_SetFontSize(objText[i], 16);
+		ObjText_SetFontBold(objText[i], true);
+		ObjText_SetFontBorderType(objText[i], BORDER_SHADOW);
+		ObjText_SetFontBorderWidth(objText[i], 1);
+		ObjText_SetFontBorderColor(objText[i], 16, 16, 16);
+		ObjRender_SetPosition(objText[i], MinX+16, MinY+32+i*20, 0);
+	}
+
+	TShot;
+	TName;
+
+	let t = 0;
+	let damagestop_ct = 0;
+	let damagestop_flag = 0;
+	let beforelife = 0;
+	loop
+	{
+		let bosslife = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+		ObjText_SetText(objText[0], "Life : " ~ IntToString(bosslife) ~ "/" ~ IntToString(maxlife));
+		ObjText_SetText(objText[1], "合計dmg : " ~ ToString(maxlife-bosslife));
+		
+		if (!damagestop_flag && bosslife != maxlife)
+		{
+			t++;
+			ObjText_SetText(objText[2], "フレームdmg : " ~ ToString((maxlife-bosslife)/t));
+			ObjText_SetText(objText[3], "フレーム数 : " ~ IntToString(t));
+		}
+		if (t > 0)
+		{
+			if (beforelife != bosslife)
+			{
+				damagestop_ct = 0;
+			}
+			else
+			{
+				damagestop_ct++;
+			}
+			if (damagestop_ct > 29) { damagestop_flag = 1; }
+		}
+		beforelife = bosslife;
+		yield;
+	}
+}
+
+task TName
+{
+	let objPlayer = GetPlayerObjectID;
+	while (Obj_IsDeleted(objPlayer)) { objPlayer = GetPlayerObjectID(); yield; }
+
+	let objText = ObjText_Create();
+	Obj_SetRenderPriorityI(objText, 71);
+	ObjText_SetText(objText, GetPlayerObjectID());
+	ObjText_SetFontType(objText, "ＭＳ Ｐゴシック");
+	ObjText_SetFontSize(objText, 16);
+	ObjText_SetFontBold(objText, true);
+	ObjText_SetFontBorderType(objText, BORDER_SHADOW);
+	ObjText_SetFontBorderWidth(objText, 1);
+	ObjText_SetFontBorderColor(objText, 16, 16, 16);
+	ObjRender_SetPosition(objText, 240, 32, 0);
+}
+task TShot
+{
+	let way = 48;
+	loop(11112)
+	{
+		let a = GetAngleToPlayer(objEnemy);
+		ascent(i in 0 .. way)
+		{
+			ascent(j in 0 .. 1)
+			{
+				CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					(j+1)*0.5+3, (i+0.5)/way*360+a, 1, 0);
+			}
+		}
+		loop(10) { yield; }
+	}
+}

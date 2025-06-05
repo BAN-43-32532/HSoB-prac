@@ -1,0 +1,259 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　ボス会話前半"]
+#Text["5面　ボス会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SET);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SET, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "见鬼，为什么魔法森林变成沙漠了啊！ ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "我家哪儿去了！ ");
+		}
+		case(2)
+		{
+			SetTalkEx2(cutinBoss1, "喔，原来那不是藏宝库吗。 ", -48, -280);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "高兴吧，[r]你那里的众多魔法道具，确实帮了大忙。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "变成了这禁咒塔的魔力基础了啊。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "是吗，我很高兴垃圾山能派上用场。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetTalkEx(cutinPlayer1, "言归正传，把幻想乡的时间还回来，[r]还有给我准备一处新家吧。 ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "要像这个禁咒塔一样金闪闪的啊。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "你不知道金斧头的寓言么。[r]想把普通房子换成金房子，真是厚颜无耻。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "我家肯定有黄金级的价值的吧？[r]那就别斤斤计较，区区一个黄金屋快点给我。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "算了，等一切结束之后，[r]我把这座禁咒塔送你吧。 ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "剩下的魔力你可以尽情使用。[r]死后沉眠于此还能够转生。 ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx3(cutinBoss1, "差不多，大概，将来肯定给。 ", -96, -96);
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "不要不要，我想要不老不死。 ");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "何等贪婪的人啊。如果是这样，[r]岂不正应该老老实实被止住时间才好吗…… ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx(cutinPlayer1, "不，开什么玩笑，那是两回事。 ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			SetTalkEx(cutinPlayer1, "没有梦想，饭也吃不上，[r]这样的人生能说是活着吗？ ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "这难道不是连转世投胎都不能的永远的死吗？ ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
+			SetTalkEx(cutinPlayer1, "你停止时间是要做什么？[r]支配死之世界就满足了吗？ ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "我早就不去想这些了。[r]我的目的只有复仇而已！ ");
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "无论是手段还是之后要怎样，[r]对我来说都无所谓了！ ");
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "那么，我要打倒你。[r]因为我想要快快乐乐地活着。 ");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "我想要幸福快乐地，[r]吃好吃的饭，度过每一天！ ");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "你那种人类式的心，[r]总会有一天在某个地方如仇樱般凋落。 ");
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "但我不一样，那种东西[r]我留在和我分离的胴体里了。 ");
+
+			PlayMusicWithName( 11, 30, 30 );
+		}
+		case(25)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "我名赛特，是伟大者，[r]是庞大力量的象征。 ");
+		}
+		case(26)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "作为对手足够了。我是雾雨魔理沙，[r]所谓力量，也是我的独家专卖！ ");
+		}
+		case(27)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			SetTalkEx(cutinBoss1, "尽管高兴吧，你这便要沐浴（物理）在真正的力量，[r]也就是众神之智之中！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

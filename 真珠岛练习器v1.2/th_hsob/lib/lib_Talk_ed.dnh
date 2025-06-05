@@ -1,0 +1,364 @@
+#include "./lib_effect.dnh"
+#include "../img/ed/ed_files.dnh"
+
+let FINISH_TALK = false;
+let SKIP_FLAG = 0;
+
+let priorityTalk = 90;
+let objTalkObject = [];
+
+// ÉtÉHÉìÉgê›íË
+let baseFont = "Œ¢»Ì—≈∫⁄";
+let baseFontSize = 28;
+let baseFontBold = true;
+let baseFontLinePitch = -1;
+
+//  âÔòbäJén
+sub StartTalk
+{
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+}
+
+//  âÔòbèIóπ
+function FinishTalk(fadeOut)
+{
+	if (fadeOut) { FINISH_TALK = true; }
+	// êÅÇ´èoÇµçÌèú
+	DeleteAllFukidashi();
+	wait(45);
+	SetForbidPlayerShot(false);
+	SetForbidPlayerSpell(false);
+}
+
+//  É{É^Éìë“ã@
+function WaitNext()
+{
+	let t = 0;
+	loop
+	{
+		if (t > 2 && (GetVirtualKeyState(VK_OK) == KEY_PUSH || SKIP_FLAG > 45 || t > 1200))
+			{ return(1); }
+		if (GetVirtualKeyState(VK_OK) == KEY_PUSH || GetVirtualKeyState(VK_OK) == KEY_HOLD)
+			{ SKIP_FLAG++; }
+		else { SKIP_FLAG = 0; }
+		t++;
+		yield;
+	}
+}
+//  É^ÉCÉ}Å[ëóÇË
+function WaitNextTimer(timer)
+{
+	wait(timer);
+}
+
+// âÔòbÉÅÉbÉZÅ[ÉWÅiêÅÇ´èoÇµè¡ãéã@î\Ç¬Ç´Åj
+function SetTalkEx(obj, text, color)
+{
+	// êÅÇ´èoÇµçÌèú
+	DeleteAllFukidashi();
+	// âÔòb
+	SetTalk(obj, text, color);
+	// ÉJÉbÉgÉCÉìÇëOñ Ç…èoÇ∑
+	ChangeImageFoward(obj);
+}
+
+// êÅÇ´èoÇµçÌèú
+sub DeleteAllFukidashi()
+{
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		SetTalk(objTalkObject[i], "", [0, 0, 0]);
+	}
+}
+
+
+// âÔòbÉÅÉbÉZÅ[ÉW
+function SetTalk(obj, text, color)
+{
+	Obj_SetValue(obj, "NEXT", true);
+	Obj_SetValue(obj, "TEXT", text);
+	Obj_SetValue(obj, "COLOR", color);
+}
+
+function SetImageFoward(obj, tmp_value)
+{
+	Obj_SetValue(obj, "FW", tmp_value);
+}
+function SetImageVisible(obj, tmp_value)
+{
+	Obj_SetValue(obj, "VIS", tmp_value);
+}
+// âÊëúÇéËëOÇ…
+function ChangeImageFoward(obj)
+{
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		if (obj == objTalkObject[i]) { Obj_SetValue(objTalkObject[i], "FW", true); }
+		else { Obj_SetValue(objTalkObject[i], "FW", false); }
+	}
+}
+// è„ÇÃï°êîÉoÅ[ÉWÉáÉìÅAà¯êîÇÕîzóÒ
+function ChangeImageFowardEx(objs)
+{
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		Obj_SetValue(objTalkObject[i], "FW", false);
+	}
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		ascent(j in 0 .. length(objs))
+		{
+			if (objs[j] == objTalkObject[i]) { Obj_SetValue(objTalkObject[i], "FW", true); break; }
+		}
+	}
+}
+
+task FadeTalkImage(obj, timer)
+{
+	let move_position = Obj_GetValueD(obj, "POSITION", 1);
+	if (timer > 0)
+	{
+		let tmp_t = timer;
+		let bx = ObjRender_GetX(obj);
+		let by = ObjRender_GetY(obj);
+		ascent(t in 0 .. tmp_t)
+		{
+			ObjRender_SetPosition(obj,
+				bx+(tmp_t-t-1)/tmp_t*64*move_position, by+(tmp_t-t-1)/tmp_t*64, 0);
+			ObjRender_SetAlpha(obj, 255*(t+1)/tmp_t);
+			yield;
+		}
+	}
+	else
+	{
+		let tmp_t = -timer;
+		let bx = ObjRender_GetX(obj);
+		let by = ObjRender_GetY(obj);
+		descent(t in 0 .. tmp_t)
+		{
+			ObjRender_SetPosition(obj,
+				bx+(tmp_t-t-1)/tmp_t*64*move_position, by+(tmp_t-t-1)/tmp_t*64, 0);
+			ObjRender_SetAlpha(obj, 255*(t+1)/tmp_t);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// êÅÇ´èoÇµïœçXäƒéãÅiínÇÃï∂ópÅj
+task ChangeDescriptive(parent)
+{
+	let objFukidashi = -1;
+	let f_position = Obj_GetValueD(parent, "F_POSITION", 1);
+	while(!Obj_IsDeleted(parent))
+	{
+		if (Obj_GetValueD(parent, "NEXT", false))
+		{
+			if (objFukidashi != -1) { DeleteFukidashi(objFukidashi); }
+			let tx = Obj_GetValueD(parent, "TEXT", "");
+			if (length(tx) > 0)
+			{
+				objFukidashi = _MakeDescriptive(tx, 99,
+					Obj_GetValueD(parent, "COLOR", [0, 0, 0]));
+			}
+			Obj_SetValue(parent, "TEXT", "");
+			Obj_SetValue(parent, "NEXT", false);
+		}
+		yield;
+	}
+	if (objFukidashi != -1) { DeleteFukidashi(objFukidashi); }
+}
+
+// ínÇÃï∂ÇèoÇµÇΩÇ¢èÍçáÇÕÇ±ÇøÇÁÅI
+function CreateDescriptiveObject()
+{
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetValue(obj, "DES", true);		// ínÇÃï∂ÉtÉâÉOóßÇƒ
+	Obj_SetValue(obj, "FW", false);
+	ChangeDescriptive(obj);
+	objTalkObject = objTalkObject ~ [obj];	//îzóÒÇ…ìoò^
+	return(obj);
+}
+
+
+// --- à»â∫ÇÕínÇÃï∂ópÇÃâÔòbògÅ@ÉGÉìÉfÉBÉìÉOóp
+
+// êÅÇ´èoÇµÇê›íuÇ∑ÇÈ
+function _MakeDescriptive(text, t_priority, color)
+{
+	let baseWidth = GetScreenWidth-128;
+	let baseHeight = 60;
+	let baseX = 64;
+	let baseY = 0 + GetScreenHeight - baseHeight - 64;
+	let baseTextX = baseX+16;
+	let baseTextY = baseY+10;
+	
+	// ÉeÉLÉXÉgçÏÇÈÇÊÅI
+	let objText = ObjText_Create();
+	DescriptText(objText);
+	let objText2 = ObjText_Create();
+	DescriptText(objText2);
+	ObjRender_SetBlendType(objText2, BLEND_ADD_ARGB);
+//	ObjRender_SetColor(objText2, 128, 128, 128);
+	DescriptiveMotion([objText, objText2]);
+	
+	return(objText);
+	
+	task DescriptiveMotion(objTexts)
+	{
+		ascent(i in 0 .. 5)
+		{
+			let tmp = (i+1)/5;
+			ascent(j in 0 .. length(objTexts)) { ObjRender_SetAlpha(objTexts[j], (i+1)/5*192); }
+			yield;
+		}
+		while(!Obj_IsDeleted(objTexts[0]))
+		{
+			if (Obj_GetValueD(objTexts[0], "DELETED", false)) { break; }
+			yield;
+		}
+		descent(i in 0 .. 5)
+		{
+			let tmp = (i+1)/5;
+			ascent(j in 0 .. length(objTexts)) { ObjRender_SetAlpha(objTexts[j], (i+1)/5*192); }
+			yield;
+		}
+		ascent(j in 0 .. length(objTexts)) { Obj_Delete(objTexts[j]); }
+	}
+	
+	function DescriptText(objText)
+	{
+		Obj_SetRenderPriorityI(objText, t_priority+1);
+		ObjText_SetFontType(objText, baseFont);
+		ObjText_SetFontSize(objText, baseFontSize);
+		ObjText_SetFontBold(objText, false);
+		ObjText_SetLinePitch(objText, baseFontLinePitch);
+		ObjText_SetSidePitch(objText, -1);
+		ObjText_SetMaxWidth(objText, baseWidth-32);
+		ObjText_SetFontColorTop(objText, color[0], color[1], color[2]);
+		ObjText_SetFontColorBottom(objText, color[0], color[1], color[2]);
+		ObjText_SetFontBorderWidth(objText, 2);
+		ObjText_SetFontBorderColor(objText, 0, 0, 0);
+		ObjText_SetFontBorderType(objText, BORDER_FULL);
+		ObjText_SetText(objText, text);
+		
+		ObjText_SetAutoTransCenter(objText, false);
+		ObjRender_SetPosition(objText, baseX, baseY, 0);
+		ObjText_SetTransCenter(objText, 0, baseHeight);
+		ObjRender_SetColor(objText, 255, 255, 255);
+		ObjRender_SetPosition(objText, baseTextX, baseTextY, 0);
+	}
+}
+
+//êÅÇ´èoÇµçÌèú
+function DeleteFukidashi(obj)
+{
+	Obj_SetValue(obj, "DELETED", true);
+}
+
+task TBackground()
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 95);
+	ObjSprite2D_SetDestRect(obj, 0, 0, GetScreenWidth, GetScreenHeight);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+
+	let cr = 255; let cg = 255; let cb = 255;
+	let to_cr = cr; let to_cg = cg; let to_cb = cb;
+	
+	ObjRender_SetColor(obj, cr, cg, cb);
+	
+	ascent(i in 0 .. 180)
+	{
+		let tmp = sin((i+1)/180*90);
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	loop
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+let EDPIC_FLAG = 0;
+task TEndingImage(path, delay)
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 96);
+	ObjPrim_SetTexture(obj, path);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, GetScreenWidth, GetScreenHeight);
+	ObjSprite2D_SetDestRect(obj, 0, 0, GetScreenWidth, GetScreenHeight);
+
+	let cr = 255; let cg = 255; let cb = 255;
+	let to_cr = cr; let to_cg = cg; let to_cb = cb;
+	
+	ObjRender_SetColor(obj, cr, cg, cb);
+	
+	EDPIC_FLAG++;
+	let tmp_flg = EDPIC_FLAG;
+	ascent(i in 0 .. delay)
+	{
+		let tmp = sin((i+1)/delay*90);
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	while(!FINISH_TALK)
+	{
+		if (tmp_flg != EDPIC_FLAG)
+		{
+			wait(30);
+			Obj_Delete(obj);
+			return;
+		}
+		yield;
+	}
+	descent(i in 0 .. 120)
+	{
+		let tmp = sin((i+1)/120*90);
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task TalkFlame()
+{
+	let cut		= 8;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(obj, 97);
+	ObjPrim_SetVertexCount( obj, (cut+1)*2 );
+	ObjPrim_SetPrimitiveType( obj, PRIMITIVE_TRIANGLESTRIP );
+	ObjRender_SetBlendType( obj, BLEND_SUBTRACT );
+	
+	ascent(i in 0 .. cut+1)
+	{
+		let tmp = i/cut;
+		let py = GetScreenHeight - (1-tmp)*118;
+		let tmp_c =  (1-cos(min(1,tmp*2)*180)) * 255;
+		ObjPrim_SetVertexPosition( obj, i*2+0, 0, py, 0 );
+		ObjPrim_SetVertexPosition( obj, i*2+1, GetScreenWidth, py, 0 );
+		ObjPrim_SetVertexColor( obj, i*2+0, tmp_c, tmp_c, tmp_c );
+		ObjPrim_SetVertexColor( obj, i*2+1, tmp_c, tmp_c, tmp_c );
+	}
+
+	let t = 0;
+	while(!FINISH_TALK)
+	{
+		if (t < 60)
+		{
+			let tmp = GetCurve_d((t+1)/60);
+			ObjRender_SetAlpha( obj, tmp*144 );
+		}
+		t++;
+		yield;
+	}
+	descent(t in 0 .. 30)
+	{
+		let tmp = GetCurve_d((t+1)/60);
+		ObjRender_SetAlpha( obj, tmp*144 );
+		yield;
+	}
+	Obj_Delete(obj);
+}

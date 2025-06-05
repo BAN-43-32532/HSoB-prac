@@ -1,0 +1,67 @@
+// 乗算描画にもα値を適用できるよ！
+//================================================================
+//大域設定値
+//Texture
+sampler sampler0_ : register(s0);
+
+//--------------------------------
+
+float alpha_;		//α値
+
+
+//================================================================
+//--------------------------------
+//ピクセルシェーダ入力値
+struct PS_INPUT
+{
+	float4 diffuse : COLOR0;  //ディフューズ色
+	float2 texCoord : TEXCOORD0; //テクスチャ座標
+	float2 vPos : VPOS; //描画先座標
+};
+
+//--------------------------------
+//ピクセルシェーダ出力値
+struct PS_OUTPUT
+{
+    float4 color : COLOR0; //出力色
+};
+
+
+//================================================================
+// シェーダ
+//--------------------------------
+//ピクセルシェーダ
+PS_OUTPUT PscMultiAlpha( PS_INPUT In ) : COLOR0
+{
+	PS_OUTPUT Out;
+
+	//--------------------------------
+	//テクスチャの色
+	float4 colorTexture = tex2D(sampler0_, In.texCoord);
+
+	//頂点ディフーズ色
+	float4 colorDiffuse = In.diffuse;
+
+	//合成
+	float4 color = colorTexture * colorDiffuse;
+
+	//色を変化させる
+	color.rgb = 1 - (1 - color.rgb) * color.a;
+
+	Out.color = color;
+
+	return Out;
+}
+
+
+//================================================================
+//--------------------------------
+//technique
+technique TecMultiAlpha
+{
+	pass P0
+	{
+		PixelShader = compile ps_3_0 PscMultiAlpha();
+	}
+}
+

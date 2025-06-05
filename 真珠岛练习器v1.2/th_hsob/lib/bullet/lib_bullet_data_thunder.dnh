@@ -1,0 +1,32 @@
+#UserShotData
+
+//　テクスチャへのパス
+shot_image = "./../../img/shot_thunder.png"
+delay_color = (255,255,255)
+
+//--------------------------------------------------------------------------------------------------------------
+//　雷レーザー
+ShotData{
+	id = 555
+	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA
+	render = ALPHA
+	collision = 1
+	AnimationData{
+		animation_data = (2, 0, 0, 32, 256 )
+		animation_data = (2, 32, 0, 64, 256 )
+		animation_data = (2, 64, 0, 96, 256 )
+		animation_data = (2, 96, 0, 128, 256 )
+	}
+}
+ShotData{
+	id = 556
+	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA
+	render = ALPHA
+	collision = 1
+	AnimationData{
+		animation_data = (2, 128, 0, 160, 256 )
+		animation_data = (2, 160, 0, 192, 256 )
+		animation_data = (2, 192, 0, 224, 256 )
+		animation_data = (2, 224, 0, 256, 256 )
+	}
+}

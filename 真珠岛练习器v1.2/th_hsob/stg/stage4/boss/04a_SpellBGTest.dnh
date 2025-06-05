@@ -1,0 +1,68 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["上人SpellBGTest"]
+#Text["上人通常1（道中）"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Siran.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(9999);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 71;
+	let SPELL_NAME = [0, 0, 1, 2][Difficult];
+
+	// アイテム数
+	bossDropItem = 100;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SIRAN);	//ボスセット
+	SetSiranRosary();	// 数珠配置
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"04a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), -1, CHAPTER_BOSS);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	//数珠の画像を操作したい場合は、GetBossImageID(objEnemyRosary)　で数珠の画像IDを取得する
+	
+	standBy(objEnemy, CenX, 160, 60);
+	SetActionSiran(objEnemy, ACT_MOVE, 120);
+	waitObj(objEnemy, 60);
+	
+	CallSpellCard(true);	//スペカ起動
+	
+	while(eAlive)
+	{
+		SetActionSiran(objEnemy, ACT_SHOT2, 120);
+		waitObj(objEnemy, 180);
+		EnemyRandomMove(objEnemy, 160, 32);
+		SetActionSiran(objEnemy, ACT_MOVE, 120);
+		waitObj(objEnemy, 120);
+	}
+}

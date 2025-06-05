@@ -1,0 +1,156 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EX　会話後半"]
+#Text["EX　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "カノプスの壺が壊されるなんて…[r]あんた中々やるじゃない。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "だが、やはり世界は私を愛さなかった。私は[r]罪を背負い一人生き続ける宿命なのか");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "世界があんたを愛さなかったんじゃない。[r]あんたが世界を愛さなかっただけよ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "そうなのかも知れない。");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "だが私はこの生き方以外を知らない。では何[r]をすれば良かったかも分からない。");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "私が何度生まれ変わっても、この選択をし続[r]けるのだと思わずにはいられない");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "あんたに足りない物をきっと私は知ってるよ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "例え口から出まかせでも、[r]興味深いと言わざるを得ない");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "答えが知りたきゃ神社の宴会に顔を出す事ね");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "全く意味不明であるが承知はした。");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "私の役目は何だ、[r]矢張り晩餐を盛り付ける器の手配か");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "その手があったか。[r]ご来賓が喜ぶように綺麗なのを頼むわよ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

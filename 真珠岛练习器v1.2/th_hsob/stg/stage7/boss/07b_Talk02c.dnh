@@ -1,0 +1,158 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EX　会話後半"]
+#Text["EX　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			SetTalkEx(cutinPlayer1, "虽然战斗是我赢了，可没想到，[r]却是我的卡诺匹斯罐先坏掉啊。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "果然世界并没有爱着我。[r]我的命，就该是背负着罪恶孤独地活下去吗。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "不是你自己恣意妄为才把周围闹成这个样子的吗？[r]所以，能不能不要再说些什么[r]自己是不被周围人理解的可怜人啊？ ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "那么，『愚蠢的托辞』也就不必了。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "做什么『妹妹大人的小丑』也好什么也好都随意。[r]这就是我的命运。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "让自暴自弃的家伙就这么死了，[r]某种意义上讲也是她的胜利啊。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
+			SetTalkEx3(cutinPlayer1, "那就这么办吧。 ", 108, -96);
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "红魔馆的花瓶和餐具准备换了。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "我要你去准备好我们希望的东西交过来。 ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "咕，恶魔的女仆比我还疯。 ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "我能收集的只有被抛弃的陈旧濑户物，[r]根本没有什么新品或者良品…… ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx2(cutinPlayer1, "所以才要你加油找嘛。[r]在这个过程中，你的疯狂也多半会消除的。 ", -16, -32);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

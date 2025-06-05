@@ -1,0 +1,260 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　ボス会話前半"]
+#Text["5面　ボス会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SET);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SET, true);
+	let cutinPlayer1   = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "この辺は時間が動いているのね。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "で、それはそうと何で砂漠になってるのよ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx2(cutinBoss1, "砂漠は良いぞ。[r]太陽光発電にうってつけと言える", -48, -280);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "こんな田舎でも次世代エネルギーに[r]注目していると聞くしな");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "そんなの河童や守矢とかだけよ。[r]ここ魔理沙んちとかあったでしょ、返してよ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "ふふ、出来ん相談だ。見ての通り、[r]この禁呪塔は大絶賛稼働中であるぞ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "どっちかと言うと『金字塔』ね[r]外から見た時『金』の字の形してたもん");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "よくぞ気付いた。金は王権の、[r]そして絶対的な力の象徴である。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "故にこの俺も、仮初めの[r]身体でも黄金の輝きを纏う");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SPECIAL);
+			SetTalkEx(cutinPlayer1, "禁呪塔ごと解体して、[r]神社のお賽銭に充てるしか無いわね");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "まあ実際の禁呪塔は黄色い石を[r]積んでるだけなんだけどな");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "あんたの身ぐるみだけでも剥いで[r]香霖堂に持ち込むわよ。");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL3);
+			SetTalkEx(cutinPlayer1, "幻想郷の時間を止めるなんて何が目的？");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "馬鹿め、俺の野望はこんな田舎には収まらん[r]この現世全体の時間を止めてやったのだ。");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "[ruby rb=\"太陽神\" rt=\"　ラ　ー\"]、[ruby rb=\"知恵者\" rt=\"　ト　ト\"]、[ruby rb=\"天空神\" rt=\"　ホルス\"]…");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "夜の世界に旅立った連中には、[r]もうこの世界に干渉する術はあるまい！");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "盛り上がってる所悪いけど、[r]うちは大結界で外界から守られているの。");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			ChangeTalkTexture(cutinBoss1, I_SURPRISE);
+			SetTalkEx(cutinPlayer1, "結界の中で時間を止めても、[r]多分外は何も起こってないわよ。");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CALM);
+			SetTalkEx(cutinPlayer1, "それに、大結界内部の時も今から動き出す。[r]なぜなら私は博麗霊夢、大結界の守護者。");
+		}
+		case(19)
+		{
+			SetTalkEx2(cutinPlayer1, "私ごと時間を止めて出し抜いたつもり[r]だったようだけど、残念だったわね", 0, 0);
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx3(cutinPlayer1, "あー咲夜が居なけりゃ危なかったー…", 64, -96);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "ぬぬぬ、ならば俺が貴様を倒し、[r]まず大結界を破壊してくれよう");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "霊と夢、それはどちらも触れられない儚い物。");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "霊夢の名を持つこの私には、[r]何者の攻撃も届きはしない。");
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetTalkEx(cutinPlayer1, "結界は私が守る！届かない手を虚空に伸ばし[r]絶望に塗れて一回休みなさい！");
+		}
+		case(25)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "仮初めのこの身体は特別製。この手が[r]届かなくば、手を飛ばして掴み潰すまで！");
+		}
+		case(26)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "俺の名はセト、[r]偉大なる者にして、嵐と暴風の領主。");
+
+			PlayMusicWithName( 11, 30, 30 );
+		}
+		case(27)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			SetTalkEx(cutinBoss1, "力、即ち、美。力無き弾幕美など、[r]俺[ruby rb=\"の力\" rt=\"　ちから\"]弾幕には通用せぬと知れ！");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

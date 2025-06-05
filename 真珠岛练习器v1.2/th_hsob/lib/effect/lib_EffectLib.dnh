@@ -1,0 +1,344 @@
+// -------------------- エフェクトのレイヤー
+let priorityEffect	= 49;
+let priorityEffectBack	= 30;
+let prioritySpellBG	= 25;
+
+// -------------------- エフェクトカラー用定数（一部敵カラーにも対応）
+let EFF_RED    = 0;
+let EFF_ORANGE = 1;
+let EFF_YELLOW = 2;
+let EFF_GREEN  = 3;
+let EFF_SKY    = 4;
+let EFF_BLUE   = 5;
+let EFF_PURPLE = 6;
+let EFF_WHITE  = 7;
+
+
+// PRIMITIVEでSPRITE2Dっぽい使い方ができる関数
+function SetVeterex2D(obj, x, y, w, h, scale)
+{
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(obj, 4);
+
+	ObjPrim_SetVertexUVT(obj, 0, x, y);
+	ObjPrim_SetVertexUVT(obj, 1, x, y+h);
+	ObjPrim_SetVertexUVT(obj, 2, x+w, y);
+	ObjPrim_SetVertexUVT(obj, 3, x+w, y+h);
+
+	ObjPrim_SetVertexPosition(obj, 0, -w*scale/2, -h*scale/2, 0);
+	ObjPrim_SetVertexPosition(obj, 1, -w*scale/2,  h*scale/2, 0);
+	ObjPrim_SetVertexPosition(obj, 2,  w*scale/2, -h*scale/2, 0);
+	ObjPrim_SetVertexPosition(obj, 3,  w*scale/2,  h*scale/2, 0);
+}
+function SetVeterex2D_UVT(obj, x, y, w, h)
+{
+	ObjPrim_SetVertexUVT(obj, 0, x, y);
+	ObjPrim_SetVertexUVT(obj, 1, x, y+h);
+	ObjPrim_SetVertexUVT(obj, 2, x+w, y);
+	ObjPrim_SetVertexUVT(obj, 3, x+w, y+h);
+}
+
+//カラー取得
+function GetEffectColor(color_type)
+{
+	alternative(color_type)
+	case(EFF_RED)		{ return([255, 0, 0]); }
+	case(EFF_ORANGE)	{ return([255, 128, 0]); }
+	case(EFF_YELLOW)	{ return([255, 255, 0]); }
+	case(EFF_GREEN)		{ return([0, 255, 0]); }
+	case(EFF_SKY)		{ return([0, 255, 255]); }
+	case(EFF_BLUE)		{ return([0, 0, 255]); }
+	case(EFF_PURPLE)	{ return([255, 0, 255]); }
+	others			{ return([255, 255, 255]); }
+}
+//輝度均一化っぽいバージョン
+function GetEffectColorL(color_type)
+{
+	alternative(color_type)
+	case(EFF_RED)		{ return([255, 32, 32]); }
+	case(EFF_ORANGE)	{ return([255, 128, 0]); }
+	case(EFF_YELLOW)	{ return([210, 210, 0]); }
+	case(EFF_GREEN)		{ return([0, 255, 0]); }
+	case(EFF_SKY)		{ return([0, 220, 220]); }
+	case(EFF_BLUE)		{ return([32, 64, 255]); }
+	case(EFF_PURPLE)	{ return([255, 0, 255]); }
+	others			{ return([192, 192, 192]); }
+}
+//反転カラー取得
+function GetEffectSubtractColor(color_type)
+{
+	alternative(color_type)
+	case(EFF_RED)		{ return([0, 255, 255]); }
+	case(EFF_ORANGE)	{ return([0, 128, 255]); }
+	case(EFF_YELLOW)	{ return([0, 0, 255]); }
+	case(EFF_GREEN)		{ return([255, 0, 255]); }
+	case(EFF_SKY)		{ return([255, 0, 0]); }
+	case(EFF_BLUE)		{ return([255, 255, 0]); }
+	case(EFF_PURPLE)	{ return([0, 255, 0]); }
+	others			{ return([255, 255, 255]); }
+}
+//集中えへくと用
+function GetEffectColorCharge(color_type)
+{
+	alternative(color_type)
+	case(EFF_RED)		{ return([255, 128, 128]); }
+	case(EFF_ORANGE)	{ return([220, 160, 96]); }
+	case(EFF_YELLOW)	{ return([192, 192, 96]); }
+	case(EFF_GREEN)		{ return([108, 192, 108]); }
+	case(EFF_SKY)		{ return([108, 192, 192]); }
+	case(EFF_BLUE)		{ return([140, 160, 255]); }
+	case(EFF_PURPLE)	{ return([255, 128, 255]); }
+	others			{ return([255, 255, 255]); }
+}
+
+
+// パーティクルなえへくとを制作
+function CreateParticleEffect(pos, scale, eff_type)
+{
+	let ix = (eff_type%4) * 64;
+	let iy = trunc(eff_type/4) * 64;
+	let iw = 64;
+	let ih = 64;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(obj, priorityEffect);
+	ObjPrim_SetTexture(obj, imgEffectParticle);
+	ObjRender_SetPosition(obj, pos[0], pos[1], 0);
+	SetVeterex2D(obj, ix, iy, iw, ih, scale);
+	return(obj);
+}
+function CreateParticleEffect3D(pos, scale, eff_type)
+{
+	let ix = (eff_type%4) * 64;
+	let iy = trunc(eff_type/4) * 64;
+	let iw = 64;
+	let ih = 64;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_3D);
+	Obj_SetRenderPriorityI(obj, priorityEffect);
+	ObjPrim_SetTexture(obj, imgEffectParticle);
+	ObjRender_SetPosition(obj, pos[0], pos[1], pos[2]);
+	ObjSprite3D_SetBillboard(obj, true);
+	SetVeterex2D(obj, ix, iy, iw, ih, scale);
+	return(obj);
+}
+
+function CreateParticleString(pos, scale)
+{
+	let eff_type = trunc(randEffect(0, 23));
+	let ix = (eff_type%8) * 32;
+	let iy = trunc(eff_type/8) * 32;
+	let iw = 32;
+	let ih = 32;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(obj, priorityEffect);
+//	ObjPrim_SetTexture(obj, imgEffectString);
+	ObjRender_SetPosition(obj, pos[0], pos[1], 0);
+	SetVeterex2D(obj, ix, iy, iw, ih, scale);
+	return(obj);
+}
+
+// 数字用
+function SetPrimNumber(obj, keta, num)
+{
+	if (num < 0) {
+		ascent(i in 0 .. 6)
+		{
+			ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+		}
+	} else {
+		let ix = num*32;
+		let iy = 0;
+		ObjPrim_SetVertexUVT(obj, keta*6  , ix, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+1, ix+32, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+2, ix, iy+64);
+		ObjPrim_SetVertexUVT(obj, keta*6+3, ix+32, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+4, ix, iy+64);
+		ObjPrim_SetVertexUVT(obj, keta*6+5, ix+32, iy+64);
+	}
+}
+function SetPrimNumber_Base(obj, keta, x, y, w, h)
+{
+	ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+1, x+w, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+h, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+3, x+w, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+h, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+5, x+w, y+h, 0);
+}
+
+
+// 数字用（小さい）
+function SetPrimMiniNumber(obj, keta, num)
+{
+	if (num < 0) {
+		ascent(i in 0 .. 6)
+		{
+			ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+		}
+	} else {
+		let ix = (num%8)*8;
+		let iy = trunc(num/8)*12;
+		ObjPrim_SetVertexUVT(obj, keta*6  , ix, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+1, ix+8, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+2, ix, iy+10);
+		ObjPrim_SetVertexUVT(obj, keta*6+3, ix+8, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+4, ix, iy+10);
+		ObjPrim_SetVertexUVT(obj, keta*6+5, ix+8, iy+10);
+	}
+}
+function SetPrimMiniNumber_Base(obj, keta, x, y)
+{
+	ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+1, x+8, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+10, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+3, x+8, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+10, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+5, x+8, y+10, 0);
+}
+
+// ノイズえへくと（ピクセルシェーダ）
+task SetNoiseEffect(obj, power)
+{
+	//ゆがみオブジェクトにシェーダを設定
+	ObjShader_SetShaderF(obj, hlslNoise);
+	ObjShader_SetTechnique(obj, "TecNoise");
+
+	//シェーダにパラメータを設定
+	ObjShader_SetFloat(obj, "power_", power);	// power＝歪み率(%)
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		ObjShader_SetFloat(obj, "seed_", t);
+		t++;
+		yield;
+	}
+}
+// ノイズ＆フェードアウト
+task SetNoiseFadeEffect(obj, power, timer)
+{
+	//ゆがみオブジェクトにシェーダを設定
+	ObjShader_SetShaderF(obj, hlslNoise);
+	ObjShader_SetTechnique(obj, "TecNoise");
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < timer)
+	{
+		//シェーダにパラメータを設定
+		ObjShader_SetFloat(obj, "power_", power*t/timer);	// power＝歪み率(%)
+		ObjShader_SetFloat(obj, "seed_", t);
+		ObjRender_SetAlpha(obj, (1-(t+1)/timer)*255);
+		t++;
+		yield;
+	}
+}
+
+// KIRUえへくと
+function CreateShashEffect()
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, priorityEffect);
+	ObjPrim_SetTexture(obj, imgEffectSlash);
+	_CreateShashEffect(obj);
+	return(obj);
+}
+task _CreateShashEffect(obj)
+{
+	let t = 0;
+	ObjSprite2D_SetDestRect(obj, 0, -16, 512/5.12, 16);
+	while(!Obj_IsDeleted(obj))
+	{
+		ObjSprite2D_SetSourceRect(obj, 0, 0+(t%8)*32, 512, 32+(t%8)*32);
+		t++;
+		wait(2);
+	}
+}
+
+
+// 矩形の自由変形
+// pos = 貼付け座標[4][2] 時計回り
+// rect = 画像座標[2][2]
+function SetDistortion2D(obj, pos, rect)
+{
+	// 中心座標
+	let cpos = [(pos[0][0]+pos[1][0]+pos[2][0]+pos[3][0])/4, (pos[0][1]+pos[1][1]+pos[2][1]+pos[3][1])/4];
+	let crect = [(rect[0][0]+rect[1][0])/2, (rect[0][1]+rect[1][1])/2];
+	
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLEFAN);
+	ObjPrim_SetVertexCount(obj, 6);
+	ObjPrim_SetVertexPosition(obj, 0, cpos[0], cpos[1], 0);
+	ObjPrim_SetVertexPosition(obj, 1, pos[0][0], pos[0][1], 0);
+	ObjPrim_SetVertexPosition(obj, 2, pos[1][0], pos[1][1], 0);
+	ObjPrim_SetVertexPosition(obj, 3, pos[2][0], pos[2][1], 0);
+	ObjPrim_SetVertexPosition(obj, 4, pos[3][0], pos[3][1], 0);
+	ObjPrim_SetVertexPosition(obj, 5, pos[0][0], pos[0][1], 0);
+	ObjPrim_SetVertexUVT(obj, 0, crect[0], crect[1]);
+	ObjPrim_SetVertexUVT(obj, 1, rect[0][0], rect[0][1]);
+	ObjPrim_SetVertexUVT(obj, 2, rect[1][0], rect[0][1]);
+	ObjPrim_SetVertexUVT(obj, 3, rect[1][0], rect[1][1]);
+	ObjPrim_SetVertexUVT(obj, 4, rect[0][0], rect[1][1]);
+	ObjPrim_SetVertexUVT(obj, 5, rect[0][0], rect[0][1]);
+}
+function ResetDistortion2D(obj, pos)
+{
+	// 中心座標
+	let cpos = [(pos[0][0]+pos[1][0]+pos[2][0]+pos[3][0])/4, (pos[0][1]+pos[1][1]+pos[2][1]+pos[3][1])/4];
+	ObjPrim_SetVertexPosition(obj, 0, cpos[0], cpos[1], 0);
+	ObjPrim_SetVertexPosition(obj, 1, pos[0][0], pos[0][1], 0);
+	ObjPrim_SetVertexPosition(obj, 2, pos[1][0], pos[1][1], 0);
+	ObjPrim_SetVertexPosition(obj, 3, pos[2][0], pos[2][1], 0);
+	ObjPrim_SetVertexPosition(obj, 4, pos[3][0], pos[3][1], 0);
+	ObjPrim_SetVertexPosition(obj, 5, pos[0][0], pos[0][1], 0);
+}
+
+// 縮小するパーティクルえへくと
+task SingleParticleEffect(pos, scale, eff_type, color, timer)
+{
+	let obj = CreateParticleEffect(pos, scale, eff_type);
+	ObjRender_SetColor(obj, color[0], color[1], color[2]);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetAngleZ(obj, randEffect(0,360));
+	descent(t in 0 .. timer)
+	{
+		let tmp = (t+1)/timer;
+		ObjRender_SetScaleXYZ(obj, tmp, tmp, 1);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+function CircleEffect_INI(Priority){
+	if(Priority > 1){Priority /= 100;}
+	let obj=ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgEffectCircle);//オブジェクトとテスクチャを関連付け
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	Obj_SetRenderPriority(obj, Priority);
+	ObjSprite2D_SetSourceRect(obj,1024, 0, 2048, 1024);
+	ObjSprite2D_SetDestRect(obj, -512, -512, 512, 512);
+	return obj;
+}
+
+function CircleEffect_SetScareToRadius(obj, r){
+	ObjRender_SetScaleXYZ(obj, r/512, r/512, 1.0);
+}
+
+function CircleEffect_SetScareToRadius2(obj, rX, rY){
+	ObjRender_SetScaleXYZ(obj, rX/512, rY/512, 1.0);
+}
+
+function RingEffect_INI(Priority){
+	if(Priority > 1){Priority /= 100;}
+	let obj=ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgEffectCircle);//オブジェクトとテスクチャを関連付け
+	Obj_SetRenderPriority(obj, Priority);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 1024, 1024);
+	ObjSprite2D_SetDestRect(obj, -512, -512, 512, 512);
+	return obj;
+}
+
+function RingEffect_SetScareToRadius(obj, r){
+	CircleEffect_SetScareToRadius(obj, r);
+}
+
+function RingEffect_SetScareToRadius2(obj, rX, rY){
+	CircleEffect_SetScareToRadius2(obj, rX, rY);
+}

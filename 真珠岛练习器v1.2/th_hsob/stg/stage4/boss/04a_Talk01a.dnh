@@ -1,0 +1,102 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　道中会話"]
+#Text["4面　道中会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Siran.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
+	SetSiranRosary();	// 数珠配置
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	EnterBoss();
+	wait(90);
+
+	//会話処理
+	FuncTalk();
+	// こっちでウェイトをかける
+	wait(15+150-59);
+	
+	// 先に次のフェーズへ移動（スペカ宣言）
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+task FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
+	
+	local
+	{
+		// 初期設定
+		SetImageFoward(cutinBoss1, true);
+		ChangeTalkTexture(cutinBoss1, I_DOYA);
+		wait(15);	// 表示しきるまでウェイト
+	}
+	local
+	{
+		ChangeTalkTexture(cutinBoss1, I_DOYA);
+		SetTalkEx(cutinBoss1, "果然还有人能活动啊。 ");
+		WaitNextTimer(150);
+	}
+	local
+	{
+		ChangeTalkTexture(cutinBoss1, I_NORMAL);
+		SetTalkEx(cutinBoss1, "那就让小僧的念佛（Spell），[r]把你们送去极乐净土！ ");
+	}
+	// 少し待ってから会話終了
+	wait(135);
+	FinishTalk(true);
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetActionSiran(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

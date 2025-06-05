@@ -1,0 +1,146 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EX　会話後半"]
+#Text["EX　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_KAGUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinBoss1, true);
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "生存的快乐……『伙伴』……[r]没想到事到如今会被教育这种事情啊。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE2);
+			SetTalkEx(cutinPlayer1, "我也是从某个好对手那里学来的。 ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "我想要成为妖土真宗的『伙伴』。 ");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "这次，我一定要忠实于自己的欲望活下去。");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "我感谢你，不知名的公主啊。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "代替你那个坏掉了的罐子，[r]下次我会送你一件自己的无名异烧。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "柯西科赫柯西科赫。 ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
+			SetTalkEx(cutinPlayer1, "话说，妖土真宗的新人似乎会被强卖牙签，[r]还会剃光头呢（参见Bad Ending）。 ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "咕……你说什么……？我所以为的『伙伴』居然只是幻想……[r]咕，头好痛……！ ");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
+			SetTalkEx(cutinPlayer1, "不要要求别人事事完美，[r]这也是长生的秘诀之一呀。 ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

@@ -1,0 +1,36 @@
+#include "./bullet/MainLib.dnh"
+#include "./bullet/ShotType01.dnh"
+#include "./bullet/LaserLib.dnh"
+#include "./bullet/LaserEffect.dnh"
+#include "./bullet/NuclearShot.dnh"
+#include "./bullet/FistShot.dnh"
+
+#include "./bullet/lib_bullet.dnh"
+#include "./bullet/lib_bullet_ADD.dnh"
+#include "./bullet/lib_bullet_thunder.dnh"
+#include "./bullet/lib_bullet_wing.dnh"
+#include "./bullet/lib_bullet_animal.dnh"
+
+/*--------ショットデータ--------*/
+let pathShotData	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data.dnh";
+let pathShotDataADD	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data_ADD.dnh";
+let pathShotDataThunder	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data_thunder.dnh";
+let pathShotDataWing	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data_wing.dnh";
+let pathShotDataAnimal	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data_animal.dnh";
+
+function LoadAllShotData()
+{
+	LoadEnemyShotData(pathShotData);
+	LoadEnemyShotData(pathShotDataADD);
+	LoadEnemyShotData(pathShotDataThunder);
+}
+
+function LoadWingShotData()
+{
+	LoadEnemyShotData(pathShotDataWing);
+}
+
+function LoadAnimalShotData()
+{
+	LoadEnemyShotData(pathShotDataAnimal);
+}

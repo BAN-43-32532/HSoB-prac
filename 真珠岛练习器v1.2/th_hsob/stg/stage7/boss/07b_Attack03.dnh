@@ -1,0 +1,177 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["通常3"]
+#Text["通常3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 150; }
+	else			{ bossDropItem = 50; }
+
+	//防御率再計算
+	SetMumeiDefence();
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MUMEI);	//ボスセット
+
+	InitMumei();
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 3, CHAPTER_BOSS);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	SetMumeiEffect(objEnemy, false);
+	standBy(objEnemy, CenX, 140, 60);
+	waitObj(objEnemy, 60);
+
+	BossCharge(objEnemy);
+	waitObj(objEnemy, 60);
+	Shot1();
+	
+	task Shot1()
+	{
+		let way = 5;
+		let wt = [120, 210, 120][DifficultEx()];
+		let D = -1;
+		
+		let count = 0;
+		while(eAlive)
+		{
+			let base_angle = 90 - 90*D;
+			SetAction(objEnemy, ACT_SHOT2, 120);
+			CallSound(sndBoon);
+			ascent(i in 0 .. way)
+			{
+				let ea = base_angle + i*360/way*D;
+				DishShot(ea, D);
+			}
+			waitObj(objEnemy, 105);
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 140, 64);
+			waitObj(objEnemy, wt);
+			D = -D;
+			count++;
+		}
+	}
+}
+
+// お皿単品
+task DishShot(B_ThrowAng, Dirc)
+{
+	let eSize = 32;
+	let eLife = [180, 120, 180][DifficultEx()];
+	let objS = PorcelainEnemy(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), PORCELAIN_DISH_W, eSize, 125, eLife, 0.8);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	TMain();
+	
+	task TMain()
+	{
+		TMove();
+		TShot();
+	}
+	task TMove()
+	{
+		
+		let bx = ObjMove_GetX(objEnemy);
+		let by = ObjMove_GetY(objEnemy);
+		
+		let vx = bx;
+		let vy = by;
+		let vr = 0;
+		let va = B_ThrowAng;
+		
+		let t = 0;
+		while(!Obj_IsDeleted(objS))
+		{
+			if (t < 120)
+			{
+				let tmp = GetCurve_d((t+1)/120);
+				vr = tmp*128;
+			}
+			if (t < 180)
+			{
+				let tmp = GetCurve_ad((t+1)/180);
+				vy = by - 96*tmp;
+				va = B_ThrowAng + tmp*180*Dirc;
+			}
+			else
+			{
+				let tmp = min(1, (t-180)/240);
+				va += 0.5*tmp*Dirc;
+				vy += 1*tmp;
+				vr += 0.5*tmp;
+			}
+			let ex = vx + vr*cos(va);
+			let ey = vy + vr*sin(va)/3;
+			ObjMove_SetDestAtFrame(objS, ex, ey, 1);
+			
+			// 範囲外削除
+			if (!CheckDispIN(objS, 128) || (!CheckDispIN(objS, 48) && t > 360)) { break; }
+			t++;
+			waitObj(objS, 1);
+		}
+		Obj_Delete(objS);
+	}
+	task TShot()
+	{
+		waitObj(objS, 180);
+		
+		let speed = [2, 1.5, 2][DifficultEx()];
+		let timer = [600, 600, 600][DifficultEx()];
+		let way = [1, 1, 1][DifficultEx()];
+		let wt = [18, 24, 18][DifficultEx()];
+		let add_angle = Dirc*1;
+		let quant = 2;
+		
+		let t = 0;
+		let st = 0;
+		while(!Obj_IsDeleted(objS) && t < timer)
+		{
+			let base_angle = 90 + cos(B_ThrowAng)*30;
+		//	let base_angle = GetAngleToPlayer(objS);
+			local
+			{
+				let ss = speed * (1 - (st%2)*0.2);
+				let sa = base_angle;
+//				let sa = base_angle + (st%way-(way-1)/2)*45*Dirc;
+				RhombusShotEx(objEnemy, quant, 8.0, 4.8, ObjMove_GetX(objS)+36*cos(sa), ObjMove_GetY(objS)+36/3*sin(sa),
+					ss, sa, BGW_CHRYSTAL_S_WHITE, 10);
+			}
+			CallSound(sndShot5);
+			t += wt;
+			st++;
+		//	sub_way = max(1, sub_way-1);
+			wait(wt);
+		}
+	}
+}

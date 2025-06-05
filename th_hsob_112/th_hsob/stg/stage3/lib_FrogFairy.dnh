@@ -1,0 +1,288 @@
+// -------------------- 妖精描画 -------------------- //
+task DrawFrogFairy( obj, szImage, Type )
+{
+	let m_Delay = 8;		//各コマ間のディレイ
+	let m_Rect_Number = 0;		//コマ番号
+	let m_Con = false;
+	let m_aNum_Rotation_Stand = [ 0, 1, 2, 1 ];
+	let m_aNum_Rotation_Right = [ 4, 5, 6, 5 ];
+	
+	//変数
+	let dRect = DrawFrogFairy_GetRect( Type );
+	let dLength = DrawFrogFairy_GetLength( Type );
+	
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjPrim_SetTexture(objImg, szImage);
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+
+	let beforeX = ObjMove_GetX(obj);
+	let count = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let objImg = Obj_GetValueD(obj, "IMAGE_ID", -1);
+		if (!IsTimeStopObj(obj))
+		{
+			let DirectionState = trunc((ObjMove_GetX(obj)-beforeX)*10);
+			//立ち
+			if( DirectionState == 0 ){
+				m_Rect_Number = m_aNum_Rotation_Stand[ trunc( count % ( 4 * m_Delay ) / m_Delay ) ];
+				Obj_SetValue(obj, "M_CON", true);
+			}
+			//左右
+			else{
+				if( Obj_GetValueD(obj, "M_CON", false) ){
+					m_Rect_Number = 3;	//StandからRight・Leftへの繋ぎコマ番号 = 3
+					Obj_SetValue(obj, "M_CON", false);
+				}
+				else { m_Rect_Number = m_aNum_Rotation_Right[ trunc( count % ( 4 * m_Delay ) / m_Delay ) ]; }
+			}
+			//左なら反転
+			if( DirectionState < 0 ){ ObjRender_SetAngleY( objImg, 180 ); }
+			else{ ObjRender_SetAngleY( objImg, 0 ); }
+			//描画
+			ObjSprite2D_SetSourceRect(objImg,
+				dRect[0] + dLength*m_Rect_Number, dRect[1],
+				dRect[0] + dLength*(m_Rect_Number+1), dRect[1] + dLength);
+			ObjSprite2D_SetDestCenter(objImg);
+			count++;
+		}
+		ObjRender_SetPosition(objImg,
+			round(ObjMove_GetX(obj)+Obj_GetValueD(obj, "OX", 0)),
+			round(ObjMove_GetY(obj)+Obj_GetValueD(obj, "OY", 0)), 0);
+		beforeX = ObjMove_GetX(obj);
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+//一辺の長さを取得
+function DrawFrogFairy_GetLength( let Type ){
+	alternative( Type )
+	case( FAIRY_VERYSMALL	, FAIRY_VERYSMALL_FLUFF )	{ return(32); }
+	case( FAIRY_SMALL	, FAIRY_SMALL_CAP )		{ return(48); }
+	case( FAIRY_MIDDLE	, FAIRY_MIDDLE_RIBBON )		{ return(48); }
+	case( FAIRY_LARGE	, FAIRY_LARGE_FLOWER )		{ return(64); }
+	others					{ assert( 0, "妖精の指定が間違っています" );}
+}
+
+//初期座標（左上）を返す
+function DrawFrogFairy_GetRect( let Type ){
+	alternative( Type )
+	case( FAIRY_VERYSMALL )		{ return([ 0, 0 ]); }
+	case( FAIRY_VERYSMALL_FLUFF )	{ return([ 224, 0 ]); }
+	case( FAIRY_SMALL )		{ return([ 0, 32 ]); }
+	case( FAIRY_SMALL_CAP )		{ return([ 0, 80 ]); }
+	case( FAIRY_MIDDLE )		{ return([ 0, 128 ]); }
+	case( FAIRY_MIDDLE_RIBBON )	{ return([ 0, 176 ]); }
+	case( FAIRY_LARGE )		{ return([ 0, 224 ]); }
+	case( FAIRY_LARGE_FLOWER )	{ return([ 0, 288 ]); }
+	others			{ assert( 0, "妖精の指定が間違っています" ); }
+}
+
+// 登場モーション
+task EnterFrogFairy(objEnemy, pos, scale, timer)
+{
+	let offset_x = 0 * scale;
+	let offset_y = -128 * scale;
+	
+	let to_x = pos[0];
+	let to_y = pos[1];
+	
+	let objImg = GetEnemyImageID(objEnemy);
+	ObjRender_SetAlpha(objImg, 0);
+
+	SetEnemyVisible(objEnemy, false);
+	Obj_SetValue(objEnemy, "RIPPLE_STAY", true);
+	
+	descent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+
+		let tmp = GetCurve_d(t/timer)^2;
+		tmp -= sin(tmp*360*2)*tmp/16;
+		// 消失点：だいたい(320, 0)
+		let r = 0.9 - 0.9/(tmp+1);
+		let ex = to_x*(1-r) + 320*r;
+		let ey = to_y*(1-r) + 0*r;
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		if (t%2 == 0 && (t%40 < 6 || (t%60 >= 15 && t%60 < 21)))
+		{
+			EnterFrogFairyEffect(objEnemy, scale*(1-r)*1.25);
+		}
+		waitObj(objEnemy, 1);
+	}
+	if (Obj_IsDeleted(objEnemy)) { return; }
+	Obj_SetValue(objEnemy, "RIPPLE_STAY", false);
+	// 水しぶき
+	loop(10)
+	{
+		EnterFrogFairyParticle(ObjMove_GetX(objEnemy)+randEffect(-16,16)*scale,
+			ObjMove_GetY(objEnemy)+randEffect(-8,8)*scale);
+	}
+	let bx = ObjMove_GetX(objEnemy);
+	let by = ObjMove_GetY(objEnemy);
+	ObjRender_SetAlpha(objImg, 255);
+	ascent(t in 0 .. 75)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+		let tmp = sin((t+1)/75*90);
+		ObjRender_SetScaleXYZ(objImg, 1, tmp^0.5, 1);
+		ObjMove_SetPosition(objEnemy, bx+offset_x*tmp, by+offset_y*tmp);
+		waitObj(objEnemy, 1);
+	}
+	
+	SetEnemyVisible(objEnemy, true);
+	
+	task EnterFrogFairyEffect(objEnemy, scale)
+	{
+		let x = ObjMove_GetX(objEnemy);
+		let y = ObjMove_GetY(objEnemy);
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, 30);
+		ObjPrim_SetTexture(obj, imgZakoFairyFrog);
+		ObjSprite2D_SetSourceRect(obj, 0, 384, 128, 512);
+		ObjSprite2D_SetDestRect(obj, -64, -64, 64, 64);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAngleX(obj, 75);
+		ObjRender_SetAngleZ(obj, randEffect(0,360));
+		ObjRender_SetColor(obj, 128, 192, 255);
+
+		ascent(t in 0 .. 60)
+		{
+			if (Obj_IsDeleted(objEnemy)) { break; }
+			if (Obj_GetValueD(objEnemy, "RIPPLE_STAY", true))
+			{
+				x = ObjMove_GetX(objEnemy);
+				y = ObjMove_GetY(objEnemy);
+			}
+			let tmp = (t+1)/60;
+			let tmp_c = min(1, 1.5-tmp*1.5);
+			ObjRender_SetScaleXYZ(obj, tmp*scale, tmp*scale, 1);
+			ObjRender_SetAlpha(obj, tmp_c*255);
+			ObjRender_SetPosition(obj, x, y+sin(t*3)*scale*2, 0);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	
+	task EnterFrogFairyParticle(x, y)
+	{
+		let obj = CreateParticleEffect([x,y], randEffect(0.25,0.5)*scale, 0);
+		ObjRender_SetColor(obj, 128, 192, 224);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		
+		let vx = randEffect(-2, 2);
+		let vy = randEffect(-1, -3);
+		let timer = trunc(randEffect(45, 75));
+		ascent(t in 0 .. timer)
+		{
+			if (t < 10) { ObjRender_SetAlpha(obj, (t+1)/10*255); }
+			else { ObjRender_SetAlpha(obj, (timer-t-10)/(timer-10)*255); }
+			ObjRender_SetPosition(obj, x, y, 0);
+			x += vx; y += vy;
+			vy += 0.05;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+/*
+task EnterFrogFairy(objEnemy, pos, scale, timer)
+{
+	let speed = 1.5;
+	let pos3d = [-400+pos[1], -192, -80+pos[0]];	// だいたいの3d座標
+	let offset_x = 0 * scale;
+	let offset_y = -128 * scale;
+	
+	if (IsDrawBackground() < 2) { speed = 0; }	// 背景描画しない場合は動かさない
+	
+	let objImg = GetEnemyImageID(objEnemy);
+	ObjRender_SetAlpha(objImg, 0);
+
+	SetEnemyVisible(objEnemy, false);
+	
+	descent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+
+		let epos = [pos3d[0]-t*speed,pos3d[1],pos3d[2]];
+		if (t%2 == 0 && (t%60 < 6 || (t%60 >= 15 && t%60 < 21)))
+		{
+			EnterFrogFairyEffect(objEnemy, epos, scale);
+		}
+		let epos2d = Get2dPosition(epos[0], epos[1], epos[2]);
+		ObjMove_SetPosition(objEnemy, epos2d[0], epos2d[1]);
+		waitObj(objEnemy, 1);
+	}
+	if (Obj_IsDeleted(objEnemy)) { return; }
+	// 水しぶき
+	loop(10)
+	{
+		EnterFrogFairyParticle(ObjMove_GetX(objEnemy)+randEffect(-16,16)*scale,
+			ObjMove_GetY(objEnemy)+randEffect(-8,8)*scale);
+	}
+	let bx = ObjMove_GetX(objEnemy);
+	let by = ObjMove_GetY(objEnemy);
+	ObjRender_SetAlpha(objImg, 255);
+	ascent(t in 0 .. 75)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+		let tmp = sin((t+1)/75*90);
+		ObjRender_SetScaleXYZ(objImg, 1, tmp^0.5, 1);
+		ObjMove_SetPosition(objEnemy, bx+offset_x*tmp, by+offset_y*tmp);
+		waitObj(objEnemy, 1);
+	}
+	
+	SetEnemyVisible(objEnemy, true);
+	
+	task EnterFrogFairyEffect(objEnemy, pos, scale)
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_3D);
+		Obj_SetRenderPriorityI(obj, 21);
+		ObjPrim_SetTexture(obj, imgZakoFairyFrog);
+		ObjSprite3D_SetSourceRect(obj, 0, 384, 128, 512);
+		ObjSprite3D_SetDestRect(obj, -64, -64, 64, 64);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjSprite3D_SetBillboard(obj, true);
+		ObjRender_SetAngleX(obj, 75);
+		ObjRender_SetAngleZ(obj, randEffect(0,360));
+		ObjRender_SetColor(obj, 128, 192, 255);
+		ObjRender_SetFogEnable(obj, false);
+
+		ascent(t in 0 .. 60)
+		{
+			if (Obj_IsDeleted(objEnemy)) { break; }
+			let tmp = (t+1)/60;
+			let tmp_c = min(1, 1.5-tmp*1.5);
+			ObjRender_SetPosition(obj, pos[0]+t*speed, pos[1]+sin(t*3)*4, pos[2]);
+			ObjRender_SetScaleXYZ(obj, tmp*scale, tmp*scale, 1);
+			ObjRender_SetAlpha(obj, tmp_c*255);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	
+	task EnterFrogFairyParticle(x, y)
+	{
+		let obj = CreateParticleEffect([x,y], randEffect(0.33,0.66)*scale, 0);
+		ObjRender_SetColor(obj, 128, 192, 224);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		
+		let vx = randEffect(-2, 2);
+		let vy = randEffect(-1, -3);
+		let timer = trunc(randEffect(45, 75));
+		ascent(t in 0 .. timer)
+		{
+			if (t < 10) { ObjRender_SetAlpha(obj, (t+1)/10*255); }
+			else { ObjRender_SetAlpha(obj, (timer-t-10)/(timer-10)*255); }
+			ObjRender_SetPosition(obj, x, y, 0);
+			x += vx; y += vy;
+			vy += 0.05;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+*/

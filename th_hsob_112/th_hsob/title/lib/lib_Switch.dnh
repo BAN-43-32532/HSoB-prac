@@ -1,0 +1,173 @@
+
+// 遷移エフェクト
+task CallSwitch(delay, lay)
+{
+	// 背景用
+	let textureName = GetTransitionRenderTargetName();
+	let objImage = ObjPrim_Create(OBJ_SPRITE_2D); //2Dスプライトオブジェクト生成
+	Obj_SetRenderPriorityI(objImage, lay); //描画優先度を設定
+	ObjPrim_SetTexture(objImage, textureName); //テクスチャを設定
+	ObjSprite2D_SetSourceRect(objImage, 0, 0, 640, 480);
+	ObjSprite2D_SetDestRect(objImage, 0, 0, 640, 480);
+	
+	let texMask = GetReservedRenderTargetName(0);
+	
+	let objBack = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objBack, lay);
+	ObjPrim_SetTexture(objBack, texMask);
+	ObjSprite2D_SetSourceRect(objBack, 0, 0, 640, 480);
+	ObjSprite2D_SetDestRect(objBack, 0, 0, 640, 480);
+	ObjShader_SetShaderF(objBack, hlslMask);
+	ObjShader_SetTechnique(objBack, "TecMask");
+	ObjShader_SetTexture(objBack, "textureMask_", imgTtLoadBack);
+
+	let sc = 42;
+	ascent(j in 0 .. 6)
+	{
+		ascent(i in 0 .. 8)
+		{
+			let sx = GetScreenWidth * (i+0.5)/8;
+			let sy = GetScreenHeight * (j+0.5)/6;
+			CallSwitch_single(texMask, [sx, sy], 30, delay, sc, lay, (i+j)*3, (i==0 && j==0));
+		}
+	}
+	
+	let t = 0;
+	loop(delay+3*12-30)
+	{
+		ObjShader_SetFloatArray(objBack, "posFrame_", [t, -t/2, 1024, 512]);
+		t++;
+		yield;
+	}
+	Obj_Delete(objImage);
+	loop(120)
+	{
+		ObjShader_SetFloatArray(objBack, "posFrame_", [t, -t/2, 1024, 512]);
+		t++;
+		yield;
+	}
+	Obj_Delete(objBack);
+}
+
+task CallSwitch_single(texBase, pos, timer, delay, scale, lay, start_delay, reset_render)
+{
+	wait(start_delay);
+	
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjRender_SetPosition(objImg, pos[0], pos[1], 0);
+	Obj_SetRenderPriorityI(objImg, lay );
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB );
+	ObjPrim_SetVertexCount(objImg, 6);
+	ObjPrim_SetPrimitiveType(objImg, PRIMITIVE_TRIANGLEFAN);
+	ObjPrim_SetVertexPosition(objImg, 0, 0, 0, 0);
+	ObjPrim_SetVertexPosition(objImg, 1, scale, scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 2, scale, -scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 3, -scale, -scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 4, -scale, scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 5, scale, scale, 0);
+	Obj_SetVisible(objImg, false);
+	
+	let vx = randEffect(-scale, scale)*3;
+	let vy = 0;
+	
+	ascent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		let tmp_s = 0.25+tmp*0.75;
+		ObjRender_SetAlpha(objImg, tmp*255);
+		ObjRender_SetPosition(objImg, pos[0]+(1-tmp)*vx, pos[1]+(1-tmp)*vy, 0);
+		ObjRender_SetScaleXYZ(objImg, tmp_s, tmp_s, tmp_s);
+
+		RenderToTextureB1(texBase, objImg, reset_render);
+		yield;
+	}
+	loop(delay)
+	{
+		RenderToTextureB1(texBase, objImg, reset_render);
+		ObjRender_SetPosition(objImg, pos[0], pos[1], 0);
+		yield;
+	}
+	descent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		let tmp_s = 0.25+tmp*0.75;
+		ObjRender_SetAlpha(objImg, tmp*255);
+		ObjRender_SetPosition(objImg, pos[0]+(tmp-1)*vx, pos[1]+(tmp-1)*vy, 0);
+		ObjRender_SetScaleXYZ(objImg, tmp_s, tmp_s, tmp_s);
+
+		RenderToTextureB1(texBase, objImg, reset_render);
+		yield;
+	}
+	if (reset_render)
+	{
+		ObjRender_SetScaleXYZ(objImg, 0, 0, 0);
+		loop(120-start_delay)
+		{
+			RenderToTextureB1(texBase, objImg, reset_render);
+			yield;
+		}
+	}
+	Obj_Delete(objImg);
+}
+/*
+task CallSwitch_single(texBase, pos, timer, delay, scale, lay, start_delay, reset_render)
+{
+	wait(start_delay);
+	
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjRender_SetPosition(objImg, pos[0], pos[1], 0);
+	Obj_SetRenderPriorityI(objImg, lay );
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB );
+	ObjPrim_SetVertexCount(objImg, 6);
+	ObjPrim_SetPrimitiveType(objImg, PRIMITIVE_TRIANGLEFAN);
+	ObjPrim_SetVertexPosition(objImg, 0, 0, 0, 0);
+	ObjPrim_SetVertexPosition(objImg, 1, scale, scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 2, scale, -scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 3, -scale, -scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 4, -scale, scale, 0);
+	ObjPrim_SetVertexPosition(objImg, 5, scale, scale, 0);
+	Obj_SetVisible(objImg, false);
+	
+	ascent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		let tmp_c1 = tmp^3*255;
+		let tmp_c2 = tmp*255;
+		ObjPrim_SetVertexColor(objImg, 0, tmp_c1, tmp_c1, tmp_c1);
+		ascent(i in 1 .. 6) { ObjPrim_SetVertexColor(objImg, i, tmp_c2, tmp_c2, tmp_c2); }
+		ObjRender_SetAngleZ(objImg, (1-tmp)*90);
+		ObjRender_SetScaleXYZ(objImg, tmp, tmp, tmp);
+
+		RenderToTextureB1(texBase, objImg, reset_render);
+		yield;
+	}
+	loop(delay)
+	{
+		RenderToTextureB1(texBase, objImg, reset_render);
+		yield;
+	}
+	descent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		let tmp_c1 = tmp^3*255;
+		let tmp_c2 = tmp*255;
+		ObjPrim_SetVertexColor(objImg, 0, tmp_c1, tmp_c1, tmp_c1);
+		ascent(i in 1 .. 6) { ObjPrim_SetVertexColor(objImg, i, tmp_c2, tmp_c2, tmp_c2); }
+		ObjRender_SetAngleZ(objImg, tmp*90);
+		ObjRender_SetScaleXYZ(objImg, tmp, tmp, tmp);
+
+		RenderToTextureB1(texBase, objImg, reset_render);
+		yield;
+	}
+	if (reset_render)
+	{
+		ObjRender_SetScaleXYZ(objImg, 0, 0, 0);
+		loop(120-start_delay)
+		{
+			RenderToTextureB1(texBase, objImg, reset_render);
+			yield;
+		}
+	}
+	Obj_Delete(objImg);
+}
+*/

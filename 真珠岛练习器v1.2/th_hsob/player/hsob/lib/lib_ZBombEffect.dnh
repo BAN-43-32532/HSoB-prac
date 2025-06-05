@@ -1,0 +1,215 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　自機共通のエフェクト
+//　Zボムのモヤ
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+#include "./lib_ZBomb_Player01.dnh"
+#include "./lib_ZBomb_Player02.dnh"
+#include "./lib_ZBomb_Player03.dnh"
+#include "./lib_ZBomb_Player04.dnh"
+
+task ZBombArea( v_frame ){
+	let frame = 0;
+	ZBombBG_CreateBGPolygon( imgPlZbombBg, 32, [768,768], [0,0], BLEND_ALPHA, [255,255,255,128], v_frame );
+	ZBombBG_CreateBGPolygon( imgPlZbombBg2, 32, [768,768], [0,-0.2], BLEND_SUBTRACT, [255,255,255,32], v_frame );
+	ZBombBG_CreateBGPolygon( imgPlZbombBg2, 32, [768,768], [180,0.2], BLEND_SUBTRACT, [255,255,255,32], v_frame );
+	while( frame < v_frame ){
+		if (!IsPermitPlayerSpell()) { break; }
+		frame++;
+		yield;
+	}
+}
+
+task ZBombFog( v_pos, v_scale, v_alpha, v_color ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let path	= imgPlAura01d;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let seed	= randEffect(0,1);
+	let lay		= [ 0, 100 ];
+	
+	//　fxにマスク用テクスチャを渡す
+	let shader	= CreateShaderObject( obj, 5 );
+	//let g_mask	= imgPlMask04a;
+	let g_mask	= CreateRenderTexture( "BG", lay[0], lay[1], true );
+	ObjShader_SetTexture( shader, "g_Texture", g_mask );
+	
+	ObjRender_SetPosition( obj, v_pos[0], v_pos[1], 0 );
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 31 );
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 256, 256 );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	// in
+	while( !Obj_IsDeleted(obj) && move1 >= 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let sca = v_scale/2 + move1*(v_scale/2) + frame/100;
+		ObjRender_SetScaleXYZ( obj, sca, sca, 0 );
+		ObjRender_SetAlpha( obj, move1*v_alpha );
+		
+		//　a値反映レベル(0～1)
+		ObjShader_SetFloat( shader, "m_frame", seed + frame );
+		ObjShader_SetVector( shader, "m_xyzw", (1/255)*v_color[0], (1/255)*v_color[1], (1/255)*v_color[2], (1/255)*0 );
+		ObjShader_SetFloat( shader, "m_param", move1 * ( (1/255)*v_alpha ) );
+		
+		g_mask = CreateRenderTexture( "BG", lay[0], lay[1], true );
+		ObjShader_SetTexture( shader, "g_Texture", g_mask );
+		
+		moveA += 2;
+		frame++;
+		
+		yield;
+	}
+	ObjShader_ResetShader( obj );
+	Obj_Delete( shader );
+	Obj_Delete( obj );
+}
+
+task ZBombBG( v_pos, v_scale, v_angle, v_spin, v_argb, v_frame ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let path	= imgPlZbombBg;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let seed	= randEffect(0,1);
+	//let shader	= CreateShaderObject( obj, 6 );
+	let color	= [ 255, 255, 255 ];
+	
+	ObjRender_SetPosition( obj, v_pos[0], v_pos[1], 0 );
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 30 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 512, 512 );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	ObjRender_SetScaleXYZ( obj, v_scale[0], v_scale[1], 0 );
+	
+	while( !Obj_IsDeleted(obj) && frame < v_frame ){
+
+		if (!IsPermitPlayerSpell()) { break; }
+
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetAngleZ( obj, v_angle );
+		ObjRender_SetAlpha( obj, move1*v_argb[0] );
+		
+		//　a値反映レベル(0～1)
+		//ObjShader_SetFloat( shader, "m_frame", seed + frame );
+		//ObjShader_SetVector( shader, "m_xyzw", (1/255)*v_argb[1], (1/255)*v_argb[2], (1/255)*v_argb[3], (1/255)*0 );
+		//ObjShader_SetFloat( shader, "m_alpha", move1 * ( (1/255)*v_argb[0] ) );
+		
+		v_angle += move1*v_spin;
+		if( move1 < 1 ){ moveA += 2; }
+		frame++;
+		
+		yield;
+	}
+	while( !Obj_IsDeleted(obj) && move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetAngleZ( obj, v_angle );
+		ObjRender_SetAlpha( obj, move1*v_argb[0] );
+		
+		//　a値反映レベル(0～1)
+		//ObjShader_SetFloat( shader, "m_frame", seed + frame );
+		//ObjShader_SetVector( shader, "m_xyzw", (1/255)*v_argb[1], (1/255)*v_argb[2], (1/255)*v_argb[3], (1/255)*0 );
+		//ObjShader_SetFloat( shader, "m_alpha", move1 * ( (1/255)*v_argb[0] ) );
+		
+		v_angle += v_spin;
+		moveA += 2;
+		frame++;
+		
+		yield;
+	}
+	//ObjShader_ResetShader( obj );
+	//Obj_Delete( shader );
+	Obj_Delete( obj );
+}
+
+//　頂点数を奇数するときもくなるよ
+task ZBombBG_CreateBGPolygon( v_path, v_vertex, v_dist, v_angleZArray, v_blend, v_rgba, v_frame ){
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1		= 0;
+	let moveA		= 0;
+	let ang			= 0;
+	let pc			= 0;
+	let i			= 0;
+	let frame		= 0;
+	
+	//　スクロール
+	let scr			= 0;
+	let scrCr		= 0;
+	
+	//　Ｎ角形 + 中心点 + 円になる時の余分な点
+	let ten			=  v_vertex + 1 + 1 ;
+	//　回転の早さ
+	let ang_plus	= v_angleZArray[1];
+	
+	ObjPrim_SetTexture(obj, v_path);
+	Obj_SetRenderPriorityI(obj, 31);
+	ObjRender_SetBlendType(obj, v_blend);
+	ObjRender_SetAngleXYZ(obj, 0, 0, v_angleZArray[0]);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLEFAN);
+	ObjPrim_SetVertexCount(obj, ten);
+	ObjRender_SetAlpha(obj, v_rgba[3]);
+	
+	XFramedDelete( obj, [1,1,0], v_rgba[3], v_frame );
+	
+	while( frame < v_frame ){
+		move1 = 1 * sin( moveA );
+		
+		let pos = [ GetPlayerX(), GetPlayerY() ];
+		ObjRender_SetPosition(obj, pos[0], pos[1], 0 );
+		
+		//　中心となる点　ここから順番に頂点が結ばれていく
+		ObjPrim_SetVertexPosition(obj, 0, 0, 0, 0);
+		ObjPrim_SetVertexUVT(obj, 0, 0, 0-scr);
+		ObjPrim_SetVertexColor(obj, 0, v_rgba[0], v_rgba[1], v_rgba[2]);
+		
+		//　0番目を除いた、残りの頂点設定
+		loop( v_vertex+1 ){
+			ObjPrim_SetVertexPosition(obj, 1+i, move1*v_dist[0] * cos(pc+ang), move1*v_dist[1] * sin(pc+ang), 0);
+			ObjPrim_SetVertexUVT(obj, 1+i, 0+1024*cos(pc), 1024-scr);
+			ObjPrim_SetVertexColor(obj, 1+i, v_rgba[0], v_rgba[1], v_rgba[2]);
+			
+			pc		+= 360/v_vertex;
+			i++;
+		}
+		pc			= 0;
+		i			= 0;
+		
+		ang += ang_plus;
+		if( move1 < 1 ){ moveA += 2; }
+		if( scrCr%2 == 0 ){ scr += 4; }
+		scrCr++;
+		frame++;
+		
+		yield;
+	}
+}
+
+task XFramedDelete( v_obj, v_scaleArray, v_alpha, v_wait ){
+	let move1 = 0;
+	let moveA = 0;
+	loop( v_wait ){
+		if( Obj_IsDeleted(v_obj) ){ break; }
+		yield;
+	}
+	while( !Obj_IsDeleted(v_obj) && move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ(v_obj,
+			v_scaleArray[0]-move1*v_scaleArray[0],
+			v_scaleArray[1]-move1*v_scaleArray[1],
+			v_scaleArray[2]-move1*v_scaleArray[2]
+		);
+		ObjRender_SetAlpha(v_obj, v_alpha-move1*v_alpha);
+		moveA += 5;
+		yield;
+	}
+	Obj_Delete(v_obj);
+}

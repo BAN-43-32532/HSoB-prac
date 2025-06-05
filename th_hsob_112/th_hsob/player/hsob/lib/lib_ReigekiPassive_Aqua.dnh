@@ -1,0 +1,174 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　真珠島　霊撃・碧（これもしかして瑞じゃね・・・？
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+// 初期設定
+function InitAqua( v_obj, v_playerNo )
+{
+	//なし
+}
+
+//　炸裂属性
+task SetSplashDamage( v_obj ){
+	if( Obj_GetValueD( v_obj, "SPLASH", false ) ){ break; }
+	
+	let dis = rand(0,64);
+	let ang = GetGapAngle( [GetPlayerX(),GetPlayerY()], [ObjMove_GetX(v_obj),ObjMove_GetY(v_obj)] );
+	let pos = [
+		ObjMove_GetX(v_obj) + dis * cos( ang+180 ),
+		ObjMove_GetY(v_obj) + dis * sin( ang+180 ),
+	];
+	CreateSplashBullet( pos[0], pos[1], 1, ang + rand(-32,32), SplashDamage/10*GetAddDamageRate(), 10, 120 );
+	Obj_SetValue( v_obj, "SPLASH", true );
+	// 効果音
+	ObjSound_Play( Player_SE[4] );
+	
+	let frame	= 0;
+	let wait	= 5;
+	while( !Obj_IsDeleted(v_obj) && frame < wait ){
+		frame++;
+		yield;
+	}
+	
+	Obj_SetValue( v_obj, "SPLASH", false );
+}
+
+//　炸裂水弾
+task CreateSplashBullet( v_x, v_y, v_speed, v_angle, v_damage, v_penet, v_killFrame ){
+	let obj = CreateShotA2( v_x, v_y, v_speed, v_angle, -v_speed/v_killFrame, 0, 0, 0 );
+	let frame = 0;
+	
+	ObjShot_SetDamage( obj, v_damage );
+	ObjShot_SetPenetration( obj, v_penet );
+	
+	SetSplashDamage_Draw( obj, 0.9, 255 );
+	CreateWaveEffect( obj, 0.6, 96 );
+	
+	while( !Obj_IsDeleted(obj) ){
+		ObjShot_SetIntersectionCircleA1( obj, 64 );
+		if( frame >= v_killFrame ){ Obj_Delete( obj ); }
+		frame++;
+		yield;
+	}
+}
+
+//　炸裂エフェクト描画
+task SetSplashDamage_Draw( v_obj, v_scale, v_alpha ){
+	
+	if (IsDrawEffect() < 1) { return; }
+	
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1		= 0;
+	let moveA		= 0;
+	let animeCtr	= 0;
+	let anime		= 0;
+	
+	//　シェーダ適用
+	let shader	= CreateShaderObject( obj, 1 );
+	let g_mask	= imgPlMask02a;
+	
+	//　fxにマスク用テクスチャを渡す
+	ObjShader_SetTexture( shader, "g_Texture", g_mask );
+	
+	ObjPrim_SetTexture( obj, imgPlAura01b );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 64, 64 );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetScaleXYZ( obj, v_scale, v_scale, 0 );
+	ObjRender_SetAngleZ( obj, randEffect(0,360) );
+	
+	while( !Obj_IsDeleted(v_obj) && !Obj_IsDeleted(obj) ){
+		move1 = 1 * sin( moveA );
+		
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjSprite2D_SetSourceRect( obj, 0 + anime*64, 0, 64 + anime*64, 64 );
+		ObjRender_SetAlpha( obj, (move1*v_alpha)/2 );
+		
+		ObjShader_SetFloat( shader, "m_frame", animeCtr );
+		ObjShader_SetVector( shader, "m_xyzw", (1/255)*255, (1/255)*255, (1/255)*255, (1/255)*0 );
+		ObjShader_SetFloat( shader, "m_param", move1 * ((1/255)*v_alpha) );
+		
+		if( animeCtr > 0 && animeCtr%2 == 0 ){
+			let scp = randEffect( 0, 0.2 ); 
+			ObjRender_SetScaleXYZ( obj, v_scale+scp, v_scale+scp, 0 );
+			anime++;
+		}
+		if( move1 < 1 ){ moveA += 15; }
+		animeCtr++;
+		
+		yield;
+	}
+	move1 = 0;
+	moveA = 0;
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		
+		ObjSprite2D_SetSourceRect( obj, 0 + anime*64, 0, 64 + anime*64, 64 );
+		ObjRender_SetAlpha( obj, (v_alpha - move1*v_alpha)/2 );
+		
+		ObjShader_SetFloat( shader, "m_frame", animeCtr );
+		ObjShader_SetVector( shader, "m_xyzw", (1/255)*255, (1/255)*255, (1/255)*255, (1/255)*0 );
+		ObjShader_SetFloat( shader, "m_param", ((1/255)*v_alpha) - move1 * ((1/255)*v_alpha) );
+		
+		if( animeCtr > 0 && animeCtr%2 == 0 ){
+			let sca = v_scale + move1 * ( v_scale * 2 );
+			ObjRender_SetScaleXYZ( obj, sca, sca, 0 );
+			anime++;
+		}
+		if( move1 < 1 ){ moveA += 5; }
+		animeCtr++;
+		
+		yield;
+	}
+	//　シェーダ適用を解除　オブジェクト削除
+	ObjShader_ResetShader( obj );
+	Obj_Delete( shader );
+	Obj_Delete( obj );
+}
+
+//　炸裂エフェクト描画
+task CreateWaveEffect( v_obj, v_scale, v_alpha ){
+	
+	if (IsDrawEffect() < 1) { return; }
+	
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let pos			= [ 0, 0 ];
+	let move1		= 0;
+	let moveA		= 0;
+	let animeCtr	= 0;
+	let anime		= 0;
+	
+	ObjPrim_SetTexture( obj, imgPlParticle01c );
+	Obj_SetRenderPriorityI( obj, 49 );
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 64, 64 );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetAlpha( obj, v_alpha );
+	
+	while( !Obj_IsDeleted(v_obj) || anime < 3 ){
+		if( !Obj_IsDeleted(v_obj) ){ pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ]; }
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjSprite2D_SetSourceRect( obj, 0 + anime*64, 64, 64 + anime*64, 128 );
+		ObjRender_SetScaleXYZ( obj, move1*v_scale, move1*v_scale, 0 );
+		
+		if( animeCtr > 0 && animeCtr%4 == 0 ){
+			if( anime%4 == 0 ){
+				moveA = 0;
+				ObjRender_SetAngleZ( obj, randEffect(0,360) );
+			}
+			anime++;
+		}
+		if( move1 < 1 ){ moveA += 10; }
+		animeCtr++;
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}

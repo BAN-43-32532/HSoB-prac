@@ -1,0 +1,596 @@
+let SET_RIGHT_HAND = 0;
+let SET_LEFT_HAND = 1;
+let SET_RIGHT_HAND_AVATAR = 2;
+let SET_LEFT_HAND_AVATAR = 3;
+let SET_BASTET_HAND = 4;
+
+let setHandInitialScale = 0.65;
+
+let RT_ANOTHER_DIMENSION;
+
+
+// @Initializeで実行
+task SetHandInitialize
+{
+	if(IsSetHandPositionInitialized(SET_RIGHT_HAND)){
+		SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_POSITION", [-65535, -65535]);
+		SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_ANGLE", 0);
+		SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_SCALE", [setHandInitialScale, setHandInitialScale]);
+		SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_ANIME_COUNT", 0);
+		SetAreaCommonData(CAREA_STAGE, "SET_LEFT_HAND_POSITION", [-65535, -65535]);
+		SetAreaCommonData(CAREA_STAGE, "SET_LEFT_HAND_ANGLE", 180);
+		SetAreaCommonData(CAREA_STAGE, "SET_LEFT_HAND_SCALE", [setHandInitialScale, setHandInitialScale]);
+		SetAreaCommonData(CAREA_STAGE, "SET_LEFT_HAND_ANIME_COUNT", 0);
+	}
+	// rt生成
+	let sLayer	= [ 0, priorityZako - 3 ];
+	RT_ANOTHER_DIMENSION = CreateRenderTexture( "ADimension", sLayer[0], sLayer[1], true );
+	// obj消えるまでrt更新
+	if (!(IsDrawEffect() <= 3 || !CfgIsUseShader()))
+	{
+		while( !Obj_IsDeleted(objEnemy) ){
+			RenderToTextureA1( RT_ANOTHER_DIMENSION, sLayer[0], sLayer[1], true );
+			yield;
+		}
+	}
+}
+function Ini_SetAndSetHand(wtPlus, Boss_x, Boss_y, RH_x, RH_y, LH_x, LH_y){
+	return Ini_SetAndSetHand2(wtPlus, 60, Boss_x, Boss_y, RH_x, RH_y, LH_x, LH_y);
+}
+
+function Ini_SetAndSetHand2(wtPlus, standByWait, Boss_x, Boss_y, RH_x, RH_y, LH_x, LH_y){
+	let objHand = [MakeEnemyFamilier(-65535, -65535, 500000, ENEMY_M), MakeEnemyFamilier(-65535, -65535, 500000, ENEMY_M)];
+	Move(objHand);
+	let NUM = [SET_RIGHT_HAND, SET_LEFT_HAND];
+	ascent(i in 0 .. 2){
+		DrawHandFamilier(objHand[i], NUM[i] , EFF_PURPLE);
+		SetEffectResist(objHand[i], 1-(1/1.75));			// 状態異常耐性(通常の1.75倍に設定)
+		SetTimeResist(objHand[i], 0.5);						// 停止耐性(通常の半分の停止時間に設定)
+	}
+	return objHand;
+
+	task Move(objHand){
+		if(IsSetHandPositionInitialized(SET_RIGHT_HAND)){
+			standBy(objEnemy, Boss_x, Boss_y, wtPlus + standByWait + 90);
+			waitObj(objEnemy, 30+wtPlus);	// ちょっとだけ処理待ち
+			//座標制御
+			let pos_rh =  Get_SetHandPosition(SET_RIGHT_HAND);
+			let pos_lh = Get_SetHandPosition(SET_LEFT_HAND);
+			Ini_HandMove(objHand[0], ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), RH_x, RH_y, 120);
+			Ini_HandMove(objHand[1], ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), LH_x, LH_y, 120);
+			//角度制御
+			Ini_HandAngle(objHand[0], Get_SetHandAngle(SET_RIGHT_HAND), 90, 120);
+			Ini_HandAngle(objHand[1], Get_SetHandAngle(SET_LEFT_HAND), 90, 120);
+			//拡大率制御
+			Ini_HandScale(objHand[0], setHandInitialScale, 120);
+			Ini_HandScale(objHand[1], setHandInitialScale, 120);
+			//倒されるまで座標、角度、拡大率を保存する。
+			HandMovePositionSave(objHand[0], SET_RIGHT_HAND);
+			HandMovePositionSave(objHand[1], SET_LEFT_HAND);
+			
+			waitObj(objEnemy, 120);	// ちょっとだけ処理待ち
+		}else{
+			standBy(objEnemy, Boss_x, Boss_y, wtPlus + standByWait);
+			//座標制御
+			let pos_rh =  Get_SetHandPosition(SET_RIGHT_HAND);
+			let pos_lh = Get_SetHandPosition(SET_LEFT_HAND);
+			ObjMove_SetPosition(objHand[0], pos_rh[0], pos_rh[1]);
+			ObjMove_SetPosition(objHand[1], pos_lh[0], pos_lh[1]);
+			SetMovePositionBrakingEx(objHand[0], RH_x, RH_y, 60, MOVE_BRAKING02);
+			SetMovePositionBrakingEx(objHand[1], LH_x, LH_y, 60, MOVE_BRAKING02);
+			//角度制御
+//			ObjMove_SetAngle(objHand[0], Get_SetHandAngle(SET_RIGHT_HAND));
+//			ObjMove_SetAngle(objHand[1], Get_SetHandAngle(SET_LEFT_HAND));
+			Ini_HandAngle(objHand[0], Get_SetHandAngle(SET_RIGHT_HAND), 90, 60);
+			Ini_HandAngle(objHand[1], Get_SetHandAngle(SET_LEFT_HAND), 90, 60);
+			//拡大率制御
+			let scl_rh = Get_SetHandScale(SET_RIGHT_HAND);
+			let scl_lh = Get_SetHandScale(SET_LEFT_HAND);
+			Obj_SetValue(objHand[0], "SCALE_X", scl_rh[0]);	//IDを記録
+			Obj_SetValue(objHand[0], "SCALE_Y", scl_rh[1]);	//IDを記録
+			Obj_SetValue(objHand[1], "SCALE_X", scl_lh[0]);	//IDを記録
+			Obj_SetValue(objHand[1], "SCALE_Y", scl_lh[1]);	//IDを記録
+			//倒されるまで座標、角度、拡大率を保存する。
+			HandMovePositionSave(objHand[0], SET_RIGHT_HAND);
+			HandMovePositionSave(objHand[1], SET_LEFT_HAND);
+			
+			waitObj(objEnemy, 60+wtPlus);	// ちょっとだけ処理待ち
+		}
+	}
+}
+
+function WaitSetHand(wtPlus){
+	if(IsSetHandPositionInitialized(SET_RIGHT_HAND)){
+		waitObj(objEnemy, 150+wtPlus);	// ちょっとだけ処理待ち
+	}else{
+		waitObj(objEnemy, 60+wtPlus);	// ちょっとだけ処理待ち
+	}
+}
+
+task HandMovePositionSave(objHand, type){
+	if(type != SET_RIGHT_HAND && type != SET_LEFT_HAND){
+		return;
+	}
+	while(CanShotBullet(objHand)){
+		Set_SetHandPosition(type, ObjMove_GetX(objHand), ObjMove_GetY(objHand));
+		Set_SetHandAngle(type, ObjMove_GetAngle(objHand));
+		Set_SetHandScale(type, Obj_GetValueD(objHand, "SCALE_X", setHandInitialScale), Obj_GetValueD(objHand, "SCALE_Y", setHandInitialScale));
+		PlusSetHandAnimeCount(type, 1);
+		waitObj(objHand, 1);
+	}
+}
+
+task Ini_HandMove(objHand, ini_x, ini_y, fin_x, fin_y, frame){
+	let pat = Obj_GetValueD(objHand, "PAT", 0) + 1;
+	Obj_SetValue(objHand, "PAT", pat);
+	
+	let lx = (fin_x - ini_x);
+	let ly = (fin_y - ini_y);
+	ascent(time in 1 .. frame/2+1){
+		if(Obj_IsDeleted(objHand) || pat != Obj_GetValueD(objHand, "PAT", 0)){return;}
+		let t_rate = 180 / frame * time;
+		ObjMove_SetX(objHand, ini_x + 1.5*lx * sin(t_rate));
+		ObjMove_SetY(objHand, ini_y - 0.5*ly * (1-cos(t_rate*2))/2);
+		waitObj(objHand, 1);
+	}
+	ascent(time in frame/2+1 .. frame+1){
+		if(Obj_IsDeleted(objHand) || pat != Obj_GetValueD(objHand, "PAT", 0)){return;}
+		let t_rate = 180 / frame * time;
+		ObjMove_SetX(objHand, ini_x + (1.0 + 0.5 * sin(t_rate)) * lx);
+		ObjMove_SetY(objHand, ini_y + (1.0 - 1.5 * (1-cos(t_rate*2))/2) * ly);
+		waitObj(objHand, 1);
+	}
+	ObjMove_SetX(objHand, fin_x);
+	ObjMove_SetY(objHand, fin_y);
+}
+
+task Ini_HandAngle(objHand, ini_ang, fin_ang, frame){
+	let pat = Obj_GetValueD(objHand, "PAT_ANG", 0) + 1;
+	Obj_SetValue(objHand, "PAT_ANG", pat);
+	ini_ang = ((ini_ang + 90) % 360) - 90;
+	fin_ang = ((fin_ang + 90) % 360) - 90;
+	let la = (fin_ang - ini_ang)/2;
+	let ca = (fin_ang + ini_ang)/2;
+	ascent(time in 1 .. frame+1){
+		if(Obj_IsDeleted(objHand) || pat != Obj_GetValueD(objHand, "PAT_ANG", 0)){return;}
+		let t_rate = 180 / frame * time;
+		ObjMove_SetAngle(objHand, ca - la * cos(t_rate));
+		waitObj(objHand, 1);
+	}
+	ObjMove_SetAngle(objHand, fin_ang);
+}
+
+task Ini_HandScale(objHand, scale, frame){
+	ascent(time in 1 .. frame+1){
+		let t_rate = 90 / frame * time;
+		Obj_SetValue(objHand, "SCALE_X", scale*sin(t_rate));	//IDを記録
+		Obj_SetValue(objHand, "SCALE_Y", scale*sin(t_rate));	//IDを記録
+		waitObj(objHand, 1);
+	}
+}
+
+function IsSetHandPositionInitialized(type){
+	if(type != SET_RIGHT_HAND && type != SET_LEFT_HAND){
+		return false;
+	}else {
+		let pos = Get_SetHandPosition(type);
+		if(pos[0] == -65535 && pos[1] == -65535){return true;}
+		else{return false;}
+	}
+}
+
+//手の角度制御＋Wait関数（凍結＆時間停止中は動かない）
+function waitObj_WithHoming(obj, wt, homingRate){
+	waitObj_WithHoming2(obj, wt, homingRate, homingRate);
+}
+
+function waitObj_WithHomingDecresc(obj, wt, homingRate){
+	waitObj_WithHoming2(obj, wt, homingRate, 0.00);
+}
+
+function waitObj_WithHomingCresc(obj, wt, homingRate){
+	waitObj_WithHoming2(obj, wt, homingRate, 1.00);
+}
+
+function waitObj_WithHoming2(obj, wt, homingRateIni, homingRateFin){
+	let pat = Obj_GetValueD(obj, "PAT_ANG", 0) + 1;
+	Obj_SetValue(obj, "PAT_ANG", pat);
+	let L = homingRateFin-homingRateIni;
+	ascent(t in 1 .. wt+1){
+		if(Obj_IsDeleted(obj) || pat != Obj_GetValueD(obj, "PAT_ANG", 0)){return;}
+		if(!IsTimeStopObj(obj)){
+			SetHomingAngle(obj, homingRateIni+L*t/wt);
+		}
+		wait(1);
+	}
+}
+ 
+function HomingAngle(rate, currentAng, toAng){
+	currentAng %= 360;
+	let A = AngleAdjustment(toAng - currentAng, 180);
+	return currentAng + A * rate;
+/*	currentAng %= 360;
+	toAng %= 360;
+	while(toAng - currentAng > 180){currentAng += 360;}
+	while(toAng - currentAng < -180){currentAng -= 360;}
+	return currentAng + (toAng - currentAng) * rate;*/
+}
+
+function SetHomingAngle(obj, rate){
+	ObjMove_SetAngle(obj, HomingAngle(rate, ObjMove_GetAngle(obj), GetAngleToPlayer(obj)));
+}
+
+function AngleAdjustment(ang, CenterAng){
+	return ((ang + CenterAng)%360) - CenterAng;
+}
+
+
+// -------------------- 手の描画 -------------------- //
+task DrawHandFamilier( obj, Type , color)
+{
+	let rectX = 1090+240 * (Type%2);
+	let rectY = 3 * 166;
+	let rectW = 240;
+	let rectH = 166;
+	if(Type == SET_BASTET_HAND){
+		rectX = 1570;
+		rectY = 512;
+		rectW = 256;
+		rectH = 256;
+	}
+	let txtID = Obj_GetValueD(objEnemy, "HAND_STRING", 0);	// 文字IDは敵本体に格納
+	Obj_SetValue(objEnemy, "HAND_STRING", txtID+1);
+	
+	//エフェクトオブジェクトを作成
+
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjPrim_SetTexture(objImg, Boss_GetBossImage(objEnemy));
+	SetVeterex2D(objImg, rectX, rectY, rectW, rectH, 1);
+
+	let objImg2 = DrawHandDecorateFront(objImg, Type);
+	let objImg3 = DrawHandDecorateBack(objImg, Type);
+
+	Obj_SetValue(obj, "COLOR", Type);	//色を記録
+	Obj_SetValue(obj, "SCALE_X", setHandInitialScale);	//IDを記録
+	Obj_SetValue(obj, "SCALE_Y", setHandInitialScale);	//IDを記録
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+	Obj_SetValue(obj, "IMAGE_ID_ALL", [objImg, objImg2, objImg3]);
+
+	while(!Obj_IsDeleted(obj))
+	{
+		if (!IsTimeStopObj(obj))
+		{
+			let ex = round(ObjMove_GetX(obj));
+			let ey = round(ObjMove_GetY(obj));
+			let ea = atan2(ObjMove_GetY(obj)-ObjMove_GetY(objEnemy), ObjMove_GetX(obj)-ObjMove_GetX(objEnemy));
+			let scale = [
+				Obj_GetValueD(obj, "SCALE_X", setHandInitialScale),
+				Obj_GetValueD(obj, "SCALE_Y", setHandInitialScale),
+			];
+			let count = Get_SetHandAnimeCount(Type);
+			ObjRender_SetPosition(objImg, ex, ey, 0);
+			ObjRender_SetScaleXYZ(objImg, scale[0]*(1+0.05*sin(count*1.8)), scale[1]*(1+0.05*sin(count*1.5)), 1.0);
+			ObjRender_SetAngleZ(objImg, ObjMove_GetAngle(obj)-90);
+			//if(count%32 == 0 ){ DrawHandDecorateSmoke(obj, Type); }
+		}
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+// -------------------- 手の描画（追加） -------------------- //
+function DrawHandDecorateFront(arg_obj, arg_type){
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Move(objImg, arg_obj, arg_type);
+	return objImg;
+	
+	task Move(objImg, arg_obj, arg_type){
+		let rectX = 1570;
+		let rectY = 0;
+		let rectW = 256;
+		let rectH = 256;
+		let correct = 0;
+		let frameCt = 0;
+		let frame = 0;
+		
+		if(arg_type%2){
+			correct = 16;
+		}
+		else{
+			correct = -16;
+		}
+		
+		Obj_SetRenderPriorityI(objImg, priorityZako - 1);
+		ObjPrim_SetTexture(objImg, Boss_GetBossImage(objEnemy));
+		SetVeterex2D(objImg, rectX, rectY, rectW, rectH, 1);
+		TFrameManage(arg_type);
+		while(!Obj_IsDeleted(arg_obj)){
+			let scale = [ObjRender_GetScaleX(arg_obj), ObjRender_GetScaleY(arg_obj)];
+			let dist = 64 * ( (scale[0]+scale[1]) / 2 );
+			let angl = ObjRender_GetAngleZ(arg_obj) + 90 + correct;
+			let ppos = [
+				ObjRender_GetX(arg_obj) + dist * cos(angl),
+				ObjRender_GetY(arg_obj) + dist * sin(angl),
+			];
+			
+			ObjRender_SetPosition(objImg, ppos[0], ppos[1], 0);
+			ObjRender_SetScaleXYZ(objImg, scale[0], scale[1], 0 );
+			ObjRender_SetAngleZ(objImg, frame * 2 + 4 * (4*sin(frame*4)) );
+			waitObj(arg_obj, 1);
+		}
+		Obj_Delete(objImg);
+
+		task TFrameManage(type){
+			if(!IsSetHandAvatar(type)){
+				while(!Obj_IsDeleted(arg_obj)){
+					frame = trunc(Get_SetHandAnimeCount(type)/4)*4;
+					waitObj(arg_obj, 1);
+				}
+			}else{
+				while(!Obj_IsDeleted(arg_obj)){
+					if(frameCt%4 == 0){ frame += 4; }
+					frameCt++;
+					waitObj(arg_obj, 1);
+				}
+			}
+		}
+	}
+}
+
+//　腕輪のぐにゃっとしたもの
+//　恐らく重い部類なのでカット対応する
+function DrawHandDecorateBack(arg_obj, arg_type){
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Move(objImg, arg_obj, arg_type);
+	return objImg;
+	
+	task Move(objImg, arg_obj, arg_type){
+		if(IsDrawEffect() <= 3 || !CfgIsUseShader() || IsSetHandAvatar(arg_type)){
+//		if(IsSetHandAvatar(arg_type)){
+			Obj_Delete(objImg);
+			return;
+		}
+		let texSz = [2048,4096];
+		let _rect = [256,256];
+		let rgba  = [256,0,1024,255];
+		let rectX = 1570;
+		let rectY = 256;
+		let rectW = 256;
+		let rectH = 256;
+		let correct = 0;
+		let frameCt = 0;
+		let frame = 0;
+		
+		if(arg_type%2){
+			correct = 16;
+		}
+		else{
+			correct = -16;
+		}
+		
+		let sLayer	= [ 0, priorityZako - 3 ];
+		
+		Obj_SetRenderPriorityI(objImg, priorityZako - 2);
+		ObjPrim_SetTexture(objImg, Boss_GetBossImage(objEnemy));
+		SetVeterex2D(objImg, rectX, rectY, rectW, rectH, 1);
+		
+		let shd = CreateShaderObject( objImg, 10 );
+		//　レンダリングテクスチャサイズ
+		ObjShader_SetVector( shd, "m_rtSize", 1024, 512, 0, 0 );
+		//　テクスチャ自体の実サイズ
+		ObjShader_SetVector( shd, "m_texSize", texSz[0], texSz[1], 0, 0 );
+		//　矩形選択領域サイズ
+		ObjShader_SetVector( shd, "m_rectSize", _rect[0], _rect[1], 0, 0 );
+		//　テクスチャの矩形選択領域が端からどれだけ先にあるか
+		ObjShader_SetVector( shd, "m_addRect", rectX, rectY, 0, 0 );
+		
+		TFrameManage(arg_type);	
+		while(!Obj_IsDeleted(arg_obj)){
+			let scale = [ObjRender_GetScaleX(arg_obj), ObjRender_GetScaleY(arg_obj)];
+			let dist = 64 * ( (scale[0]+scale[1]) / 2 );
+			let angl = ObjRender_GetAngleZ(arg_obj) + 90 + correct;
+			let ppos = [
+				ObjRender_GetX(arg_obj) + dist * cos(angl),
+				ObjRender_GetY(arg_obj) + dist * sin(angl),
+			];
+			
+			ObjRender_SetPosition(objImg, ppos[0], ppos[1], 0);
+			ObjRender_SetScaleXYZ(objImg, scale[0], scale[1], 0 );
+			
+			ObjShader_SetFloat( shd, "m_frame", frameCt );
+			ObjShader_SetVector( shd, "m_pos", ppos[0], ppos[1], 0, 0 );
+			ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), (rgba[3]*(1/255)) );
+			ObjShader_SetVector( shd, "m_scale", scale[0], scale[1], 0, 0 );
+			ObjShader_SetTexture( shd, "g_Texture", RT_ANOTHER_DIMENSION );		
+			waitObj(arg_obj, 1);
+		}
+		Obj_Delete(shd);
+		Obj_Delete(objImg);
+		
+		task TFrameManage(type){
+			if(!IsSetHandAvatar(type)){
+				while(!Obj_IsDeleted(arg_obj)){
+					frame = trunc(Get_SetHandAnimeCount(type)/4)*4;
+					waitObj(arg_obj, 1);
+				}
+			}else{
+				while(!Obj_IsDeleted(arg_obj)){
+					if(frameCt%4 == 0){ frame += 4; }
+					frameCt++;
+					waitObj(arg_obj, 1);
+				}
+			}
+		}
+	}
+}
+
+//菱形にショットを撃つ
+task RhombusShot(objE, quant, distH, distW, x, y, spd, ang, grap, delay){
+	RhombusShot2(objE, quant, distH, distW, x, y, spd, ang, grap, delay, -9999);
+}
+
+task RhombusShot2(objE, quant, distH, distW, x, y, spd, ang, grap, delay, soundChar){
+	let wayArray = [quant];
+	descent(i in 1 .. quant){
+		wayArray = [i] ~ wayArray ~ [i];
+	}
+	let iWHMinus = (length(wayArray)-1)/2;
+	let bx = x;
+	x = 0;
+	let by = y;
+	y = 0;
+	let count = 0;
+	ascent(i in 0 .. length(wayArray)){
+		if(soundChar != -9999){CallSound(soundChar);}
+		let way = wayArray[i];
+		x = -count*cos(ang);
+		y = -count*sin(ang);
+		count += distH;
+		if(way != 1){
+			let rx = (i-iWHMinus)*distH;
+			let ry = (way-1)*distW;
+			let a = atan2(ry, rx);
+			let r = (ry^2 + rx^2)^0.5;
+			My_CreateShotA2(bx+x+ry*cos(ang+90), by+y+ry*sin(ang+90),  0, ang, spd/80, spd, grap, delay);
+			My_CreateShotA2(bx+x+ry*cos(ang-90), by+y+ry*sin(ang-90),  0, ang, spd/80, spd, grap, delay);
+		}
+		else{
+			let r = (i-iWHMinus)*distH;
+			My_CreateShotA2(bx+x, by+y,  0, ang, spd/80, spd, grap, delay);
+		}
+		while(count >= 0){
+			if(!CanShotBullet(objE)){return;}
+			count -= spd;
+			wait(1);
+		}
+	}
+}
+
+
+function Get_SetHandPosition(type){
+	alternative(type)
+	case(SET_RIGHT_HAND){	return GetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_POSITION", [-65535, -65535]);	}
+	case(SET_LEFT_HAND){	return GetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_POSITION", [-65535, -65535]);	}
+	others{					return [-65535, -65535];}
+}
+
+function Set_SetHandPosition(type, x, y){
+	alternative(type)
+	case(SET_RIGHT_HAND){	SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_POSITION", [x, y]);	}
+	case(SET_LEFT_HAND){	SetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_POSITION", [x, y]);	}
+}
+
+function Get_SetHandAngle(type){
+	alternative(type)
+	case(SET_RIGHT_HAND){	return GetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_ANGLE", 0);	}
+	case(SET_LEFT_HAND){	return GetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_ANGLE", 180);	}
+	others{					return 90;}
+}
+
+function Set_SetHandAngle(type, ang){
+	alternative(type)
+	case(SET_RIGHT_HAND){	SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_ANGLE", ang);	}
+	case(SET_LEFT_HAND){	SetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_ANGLE", ang);	}
+}
+
+function Get_SetHandScale(type){
+	alternative(type)
+	case(SET_RIGHT_HAND){	return GetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_SCALE", [setHandInitialScale, setHandInitialScale]);	}
+	case(SET_LEFT_HAND){	return GetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_SCALE", [setHandInitialScale, setHandInitialScale]);	}
+	others{					return [setHandInitialScale, setHandInitialScale];}
+}
+
+function Set_SetHandScale(type, x_scl, y_scl){
+	alternative(type)
+	case(SET_RIGHT_HAND){	SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_SCALE", [x_scl, y_scl]);	}
+	case(SET_LEFT_HAND){	SetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_SCALE", [x_scl, y_scl]);	}
+}
+
+function Get_SetHandAnimeCount(type){
+	alternative(type)
+	case(SET_RIGHT_HAND){	return GetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_ANIME_COUNT", 0);	}
+	case(SET_LEFT_HAND){	return GetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_ANIME_COUNT", 180);	}
+	others{					return 0;}
+}
+
+function PlusSetHandAnimeCount(type, plus){
+	let count = Get_SetHandAnimeCount(type)+plus;
+	alternative(type)
+	case(SET_RIGHT_HAND){	SetAreaCommonData(CAREA_STAGE, "SET_RIGHT_HAND_ANIME_COUNT", count);	}
+	case(SET_LEFT_HAND){	SetAreaCommonData(CAREA_STAGE,  "SET_LEFT_HAND_ANIME_COUNT", count);	}
+}
+
+//手の分身体かどうか
+function IsSetHandAvatar(type){
+	if(type != SET_RIGHT_HAND && type != SET_LEFT_HAND){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+
+// 君は重いので却下
+/*
+task DrawHandDecorateSmoke(arg_obj, arg_type){
+	let rgba  = [128,0,1024,255];
+	let texSz = [2048,4096];
+	let rectX = 1090+240 * (arg_type%2);
+	let rectY = 3 * 166;
+	let rectW = 240;
+	let rectH = 166;
+	let move1 = 0;
+	let moveA = 0;
+	
+	let sLayer	= [ 0, priorityZako-2 ];
+	
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako-1);
+	ObjPrim_SetTexture(objImg, Boss_GetBossImage(objEnemy));
+	ObjRender_SetBlendType(objImg, BLEND_ALPHA);
+	SetVeterex2D(objImg, rectX, rectY, rectW, rectH, 1);
+	
+	let rt	= CreateRenderTexture( "ADimension", sLayer[0], sLayer[1], true );
+	let shd	= CreateShaderObject( objImg, 9 );
+	//　レンダリングテクスチャサイズ
+	ObjShader_SetVector( shd, "m_rtSize", 1024, 512, 0, 0 );
+	//　テクスチャ自体の実サイズ
+	ObjShader_SetVector( shd, "m_texSize", texSz[0], texSz[1], 0, 0 );
+	//　矩形選択領域サイズ
+	ObjShader_SetVector( shd, "m_rectSize", rectW, rectH, 0, 0 );
+	//　テクスチャの矩形選択領域が端からどれだけ先にあるか
+	ObjShader_SetVector( shd, "m_addRect", rectX, rectY, 0, 0 );
+	
+	RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+	ObjShader_SetTexture( shd, "g_Texture", rt );
+	ObjShader_SetTexture( shd, "g_Mask", fxMask[4] );
+	
+	let count = 0;
+	while(!Obj_IsDeleted(objImg) && move1 < 1)
+	{
+		move1 = 1 * sin( moveA );
+		let ex = round(ObjMove_GetX(arg_obj)) + (move1*16) * cos(ObjMove_GetAngle(arg_obj)+180);
+		let ey = round(ObjMove_GetY(arg_obj)) + (move1*16) * sin(ObjMove_GetAngle(arg_obj)+180);
+		let ea = atan2(ObjMove_GetY(arg_obj)-ObjMove_GetY(objEnemy), ObjMove_GetX(arg_obj)-ObjMove_GetX(objEnemy));
+		let scale = [
+			Obj_GetValueD(arg_obj, "SCALE_X", setHandInitialScale),
+			Obj_GetValueD(arg_obj, "SCALE_Y", setHandInitialScale),
+		];
+		ObjRender_SetPosition(objImg, ex, ey, 0);
+		ObjRender_SetScaleXYZ(objImg, scale[0], scale[1], 0);
+		ObjRender_SetAngleZ(objImg, ObjMove_GetAngle(arg_obj)-90);
+		
+		ObjShader_SetFloat( shd, "m_frame", count );
+		ObjShader_SetVector( shd, "m_pos", ex, ey, 0, 0 );
+		ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), (rgba[3]*(1/255)) );
+		ObjShader_SetVector( shd, "m_scale", scale[0], scale[1], 0, 0 );
+		
+		count++;
+		moveA += 1;
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+*/

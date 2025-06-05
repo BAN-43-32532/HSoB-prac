@@ -1,0 +1,151 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["咲夜エンディング-Bad"]
+#Text["咲夜エンディング-Bad"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdBad[2][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 108, 255];
+	let COL2 = [255, 108, 108];
+	let COL3 = [192, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]红魔馆。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]红魔馆。[r]馆旁的湖的时间还停止着，但恶魔们的时间已经开始流动了。 ", COL0);
+		}
+		case(2)
+		{
+			TEndingImage(imgEdBad[2][1], 30);
+			SetTalkEx(cutinDescri, "咲夜[r]「话说回来，大小姐。我在禁咒塔见到了不可思议的幻象呢。」 ", COL1);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "蕾米[r]「怎么，咲夜，禁咒塔那儿很危险是吗。」 ", COL2);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「红魔馆的状态成功恢复了。我还需要继续去退治黑幕吗？」 ", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "蕾米[r]「难道要让我去吗。咲夜的战斗自然是咲夜来拿下胜利啦。」 ", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "帕秋莉[r]「对我们暗之眷族来说，沙漠直射的阳光实在太亮了。话说以前那次冷得不行的也很难受。」 ", COL3);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「帕秋莉大人还是多在外面运动一下为好吧。您是会在我死后还要一直活下去的，所以要保持健康啊。」 ", COL1);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "可琳[r]「哈啾」 ", COL2);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]红魔馆永远幼小的主人是知道的。[r]只要咲夜重打精神再度一战，这种程度还算不上什么威胁。 ", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]如果红魔馆之名被旁人小觑，在幻想乡也被认作是强者之流的自己，也会面临存在的危机。 ", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]因此w……蕾米莉亚决定，坚持自己不去介入，而是完全让从者去解决异变。 ", [190, 140, 140]);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "[r]这是为了维持对红魔馆的敬畏。绝、绝对不是因为自己不想在太阳底下战斗啦！ ", [210, 120, 120]);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "[r]咲夜！这次一定要加油！[r]在晚上之前搞定回来做饭啊！ ", [255, 108, 108]);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.07　　然而她回来的时候已经是第二天早上了 ", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

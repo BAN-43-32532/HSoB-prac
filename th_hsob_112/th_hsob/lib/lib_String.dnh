@@ -1,0 +1,329 @@
+// 文字関係
+let asciiTextSpacing = 20;
+
+// 文字をテキスト化
+function CreateAsciiText(text)
+{
+	let tlen = length(text);
+	let objString = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objString, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objString, imgSystemAscii2);
+	Obj_SetRenderPriorityI(objString, 80);
+	ObjPrim_SetVertexCount(objString, 6*tlen);
+	ascent(i in 0 .. tlen)
+	{
+		let pos = GetReplayTextPos2([text[i]]);
+		AddImg_Triangle01(objString, 6*i,
+				pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+				0+i*asciiTextSpacing, 0, 32+i*asciiTextSpacing, 32);	//貼り付け範囲
+	}
+	return(objString);
+}
+function CreateAsciiSingleText(text)
+{
+	let tlen = length(text);
+	let objString = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objString, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objString, imgSystemAscii2);
+	Obj_SetRenderPriorityI(objString, 80);
+	ObjPrim_SetVertexCount(objString, 6);
+
+	let pos = GetReplayTextPos2([text[0]]);
+	let posw = pos[2]-pos[0];
+	let posh = pos[3]-pos[1];
+	let offset_x = -trunc(posw-16)/2;
+	let offset_y = -trunc(posh-20)/2;
+	AddImg_Triangle01(objString, 0,
+			pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+			offset_x, offset_y, posw+offset_x, posh+offset_y);	//貼り付け範囲
+	return(objString);
+}
+
+function CreateSystemSingleText(text)
+{
+	let tlen = length(text);
+	let objString = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objString, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objString, imgSystemAscii);
+	Obj_SetRenderPriorityI(objString, 80);
+	ObjPrim_SetVertexCount(objString, 6);
+
+	let pos = GetReplayTextPos([text[0]]);
+	let posw = pos[2]-pos[0];
+	let posh = pos[3]-pos[1];
+	let offset_x = -trunc(posw-16)/2;
+	let offset_y = -trunc(posh-20)/2;
+	AddImg_Triangle01(objString, 0,
+			pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+			offset_x, offset_y, posw+offset_x, posh+offset_y);	//貼り付け範囲
+	return(objString);
+}
+function ChangeSystemSingleText(objString, text)
+{
+	let pos = GetReplayTextPos([text[0]]);
+	let posw = pos[2]-pos[0];
+	let posh = pos[3]-pos[1];
+	let offset_x = -trunc(posw-16)/2;
+	let offset_y = -trunc(posh-20)/2;
+	AddImg_Triangle01(objString, 0,
+			pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+			offset_x, offset_y, posw+offset_x, posh+offset_y);	//貼り付け範囲
+}
+
+// 切り取り範囲指定
+function GetReplayTextPos(char)
+{
+	alternative(char)
+	case("0") { return([0, 0, 16, 20]); }
+	case("1") { return([16, 0, 32, 20]); }
+	case("2") { return([32, 0, 48, 20]); }
+	case("3") { return([48, 0, 64, 20]); }
+	case("4") { return([64, 0, 80, 20]); }
+	case("5") { return([80, 0, 96, 20]); }
+	case("6") { return([96, 0, 112, 20]); }
+	case("7") { return([112, 0, 128, 20]); }
+	case("8") { return([128, 0, 144, 20]); }
+	case("9") { return([144, 0, 160, 20]); }
+	case("/") { return([160, 0, 176, 20]); }
+	case(":") { return([176, 0, 192, 20]); }
+	case("-") { return([192, 0, 208, 20]); }
+	case("*") { return([208, 0, 224, 20]); }
+	case("%") { return([224, 0, 240, 20]); }
+	case(".") { return([240, 0, 256, 20]); }
+	case("+") { return([256, 0, 272, 20]); }
+	case("_") { return([272, 0, 288, 20]); }
+	case("a", "A") { return([0, 20, 16, 40]); }
+	case("b", "B") { return([16, 20, 32, 40]); }
+	case("c", "C") { return([32, 20, 48, 40]); }
+	case("d", "D") { return([48, 20, 64, 40]); }
+	case("e", "E") { return([64, 20, 80, 40]); }
+	case("f", "F") { return([80, 20, 96, 40]); }
+	case("g", "G") { return([96, 20, 112, 40]); }
+	case("h", "H") { return([112, 20, 128, 40]); }
+	case("i", "I") { return([128, 20, 144, 40]); }
+	case("j", "J") { return([144, 20, 160, 40]); }
+	case("k", "K") { return([160, 20, 176, 40]); }
+	case("l", "L") { return([176, 20, 192, 40]); }
+	case("m", "M") { return([192, 20, 208, 40]); }
+	case("n", "N") { return([208, 20, 224, 40]); }
+	case("o", "O") { return([224, 20, 240, 40]); }
+	case("p", "P") { return([240, 20, 256, 40]); }
+	case("q", "Q") { return([256, 20, 272, 40]); }
+	case("r", "R") { return([272, 20, 288, 40]); }
+	case("s", "S") { return([288, 20, 304, 40]); }
+	case("t", "T") { return([304, 20, 320, 40]); }
+	case("u", "U") { return([320, 20, 336, 40]); }
+	case("v", "V") { return([336, 20, 352, 40]); }
+	case("w", "W") { return([352, 20, 368, 40]); }
+	case("x", "X") { return([368, 20, 384, 40]); }
+	case("y", "Y") { return([384, 20, 400, 40]); }
+	case("z", "Z") { return([400, 20, 416, 40]); }
+	case("@") { return([0, 40, 20, 60]); }	// 終 20x20
+	others { return([0, 0, 0, 0]); }
+}
+
+// その２
+function GetReplayTextPos2(char)
+{
+	alternative(char)
+	case("0") { return([ 0, 0, 32, 32]); }
+	case("1") { return([ 32, 0, 64, 32]); }
+	case("2") { return([ 64, 0, 96, 32]); }
+	case("3") { return([ 96, 0, 128, 32]); }
+	case("4") { return([ 128, 0, 160, 32]); }
+	case("5") { return([ 160, 0, 192, 32]); }
+	case("6") { return([ 192, 0, 224, 32]); }
+	case("7") { return([ 224, 0, 256, 32]); }
+	case("8") { return([ 256, 0, 288, 32]); }
+	case("9") { return([ 288, 0, 320, 32]); }
+	case("a") { return([ 320, 0, 352, 32]); }
+	case("b") { return([ 352, 0, 384, 32]); }
+	case("c") { return([ 384, 0, 416, 32]); }
+	case("d") { return([ 416, 0, 448, 32]); }
+	case("e") { return([ 448, 0, 480, 32]); }
+	case("f") { return([ 480, 0, 512, 32]); }
+	case("g") { return([ 0, 32, 32, 64]); }
+	case("h") { return([ 32, 32, 64, 64]); }
+	case("i") { return([ 64, 32, 96, 64]); }
+	case("j") { return([ 96, 32, 128, 64]); }
+	case("k") { return([ 128, 32, 160, 64]); }
+	case("l") { return([ 160, 32, 192, 64]); }
+	case("m") { return([ 192, 32, 224, 64]); }
+	case("n") { return([ 224, 32, 256, 64]); }
+	case("o") { return([ 256, 32, 288, 64]); }
+	case("p") { return([ 288, 32, 320, 64]); }
+	case("q") { return([ 320, 32, 352, 64]); }
+	case("r") { return([ 352, 32, 384, 64]); }
+	case("s") { return([ 384, 32, 416, 64]); }
+	case("t") { return([ 416, 32, 448, 64]); }
+	case("u") { return([ 448, 32, 480, 64]); }
+	case("v") { return([ 480, 32, 512, 64]); }
+	case("w") { return([ 0, 64, 32, 96]); }
+	case("x") { return([ 32, 64, 64, 96]); }
+	case("y") { return([ 64, 64, 96, 96]); }
+	case("z") { return([ 96, 64, 128, 96]); }
+	case("A") { return([ 128, 64, 160, 96]); }
+	case("B") { return([ 160, 64, 192, 96]); }
+	case("C") { return([ 192, 64, 224, 96]); }
+	case("D") { return([ 224, 64, 256, 96]); }
+	case("E") { return([ 256, 64, 288, 96]); }
+	case("F") { return([ 288, 64, 320, 96]); }
+	case("G") { return([ 320, 64, 352, 96]); }
+	case("H") { return([ 352, 64, 384, 96]); }
+	case("I") { return([ 384, 64, 416, 96]); }
+	case("J") { return([ 416, 64, 448, 96]); }
+	case("K") { return([ 448, 64, 480, 96]); }
+	case("L") { return([ 480, 64, 512, 96]); }
+	case("M") { return([ 0, 96, 32, 128]); }
+	case("N") { return([ 32, 96, 64, 128]); }
+	case("O") { return([ 64, 96, 96, 128]); }
+	case("P") { return([ 96, 96, 128, 128]); }
+	case("Q") { return([ 128, 96, 160, 128]); }
+	case("R") { return([ 160, 96, 192, 128]); }
+	case("S") { return([ 192, 96, 224, 128]); }
+	case("T") { return([ 224, 96, 256, 128]); }
+	case("U") { return([ 256, 96, 288, 128]); }
+	case("V") { return([ 288, 96, 320, 128]); }
+	case("W") { return([ 320, 96, 352, 128]); }
+	case("X") { return([ 352, 96, 384, 128]); }
+	case("Y") { return([ 384, 96, 416, 128]); }
+	case("Z") { return([ 416, 96, 448, 128]); }
+	case("!") { return([ 448, 96, 480, 128]); }
+	case("\"") { return([ 480, 96, 512, 128]); }
+	case("#") { return([ 0, 128, 32, 160]); }
+	case("$") { return([ 32, 128, 64, 160]); }
+	case("%") { return([ 64, 128, 96, 160]); }
+	case("&") { return([ 96, 128, 128, 160]); }
+	case("'") { return([ 128, 128, 160, 160]); }
+	case("(") { return([ 160, 128, 192, 160]); }
+	case(")") { return([ 192, 128, 224, 160]); }
+	case("+") { return([ 224, 128, 256, 160]); }
+	case("-") { return([ 256, 128, 288, 160]); }
+	case("*") { return([ 288, 128, 320, 160]); }
+	case("=") { return([ 320, 128, 352, 160]); }
+	case("~") { return([ 352, 128, 384, 160]); }
+	case("^") { return([ 384, 128, 416, 160]); }
+	case("|") { return([ 416, 128, 448, 160]); }
+//	case("`") { return([ 448, 128, 480, 160]); }
+	case("@") { return([ 480, 128, 512, 160]); }
+	case("[") { return([ 0, 160, 32, 192]); }
+	case("]") { return([ 32, 160, 64, 192]); }
+	case("{") { return([ 64, 160, 96, 192]); }
+	case("}") { return([ 96, 160, 128, 192]); }
+	case(":") { return([ 128, 160, 160, 192]); }
+	case(";") { return([ 160, 160, 192, 192]); }
+	case("<") { return([ 192, 160, 224, 192]); }
+	case(">") { return([ 224, 160, 256, 192]); }
+	case("/") { return([ 256, 160, 288, 192]); }
+//	case("\\") { return([ 288, 160, 320, 192]); }	// これでもダメ？
+//	case("_") { return([ 320, 160, 352, 192]); }
+	case(".") { return([ 352, 160, 384, 192]); }
+	case(",") { return([ 384, 160, 416, 192]); }
+	case("_") { return([ 416, 160, 448, 192]); }	//□
+	case("`") { return([ 448, 160, 480, 192]); }	//終
+	case(" ") { return([ 480, 160, 512, 192]); }
+	others { return([0, 0, 0, 0]); }
+}
+
+
+// 文字配置
+task SetSystemAscii(x, y, scale, color, timer, text)
+{
+	let objParent = ObjText_Create();
+	ObjRender_SetPosition(objParent, x, y, 0);
+	
+	let tlen = length(text);
+	ascent(i in 0 .. tlen)
+	{
+		SetSystemAscii_sub(objParent, (14*scale)*(i-tlen-1), 0, scale, color, timer, [text[i]]);
+		timer -= 2;
+		wait(2);
+	}
+	wait(timer+60);
+	Obj_Delete(objParent);
+}
+// 文字配置（スクロール）
+task SetSystemAscii02(scale, color, timer, text)
+{
+	while(GetAreaCommonData(CAREA_SYSTEM, "AsciiTextWait", 0)) { yield; }
+	let x = GetScreenWidth-220-24*scale;
+	let y = GetScreenHeight-30;
+	// スクロール
+	let objTexts = GetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", []);
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTextWait", 1);	// 表示しきるまで待機
+	ascent(i in 0 .. length(objTexts))
+	{
+		ObjRender_SetY(objTexts[i], ObjRender_GetY(objTexts[i])-16);
+	}
+	
+	let objParent = ObjText_Create();
+	ObjRender_SetPosition(objParent, x, y, 0);
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", objTexts~[objParent]);
+	
+	let objs = [];
+	
+	let tlen = length(text);
+	ascent(i in 0 .. tlen)
+	{
+		ascent(j in 0 .. length(objs)) { ObjRender_SetX(objs[j], ObjRender_GetX(objs[j])-13*scale); }
+		objs = objs ~ [SetSystemAscii_sub(objParent, 0, 0, scale, color, timer, [text[i]])];
+		timer -= 2;
+		waitEx(2);
+	}
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTextWait", 0);	// 次表示していいよ
+	waitEx(timer+60);
+	Obj_Delete(objParent);
+	
+	// 配列から削除
+	local
+	{
+		let objTexts = GetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", []);
+		ascent(i in 0 .. length(objTexts))
+		{
+			if (objTexts[i] == objParent)
+			{
+				objTexts = erase(objTexts, i);
+				break;
+			}
+		}
+		SetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", objTexts);
+	}
+}
+function SetSystemAscii_sub(parent, x, y, scale, color, timer, text)
+{
+	let obj = CreateSystemSingleText(text);
+	ObjRender_SetPosition(obj, ObjRender_GetX(parent)+x, ObjRender_GetY(parent)+y, 0);
+	Obj_SetRenderPriorityI(obj, 90);
+	ObjRender_SetColor(obj, color[0], color[1], color[2]);
+	_SetSystemAscii_sub();
+	return(obj);
+	
+	task _SetSystemAscii_sub()
+	{
+		ascent(t in 0 .. 10)
+		{
+			let tmp = (t+1)/10;
+			let tmp_s = (2-tmp*1)^2*scale;
+			ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, 1);
+			ObjRender_SetAlpha(obj, tmp*255);
+//			ObjRender_SetPosition(obj, ObjRender_GetX(parent)+x, ObjRender_GetY(parent)+y-(tmp_s-1)*16, 0);
+			ObjRender_SetY(obj, ObjRender_GetY(parent)+y-(tmp_s-1)*16);
+			yield;
+		}
+		loop(timer)
+		{
+//			ObjRender_SetPosition(obj, ObjRender_GetX(parent)+x, ObjRender_GetY(parent)+y, 0);
+			ObjRender_SetY(obj, ObjRender_GetY(parent)+y);
+			yield;
+		}
+		descent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ObjRender_SetAlpha(obj, tmp*255);
+//			ObjRender_SetPosition(obj, ObjRender_GetX(parent)+x, ObjRender_GetY(parent)+y, 0);
+			ObjRender_SetY(obj, ObjRender_GetY(parent)+y);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}

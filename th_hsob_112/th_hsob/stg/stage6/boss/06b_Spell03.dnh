@@ -1,0 +1,380 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ﾎﾛｳﾁｬﾝスペカ3"]
+#Text["ﾎﾛｳﾁｬﾝスペカ3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Horou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(777);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(77);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 73;
+	let SPELL_NAME = [6, 6, 7, 8][Difficult];
+
+	// アイテム数
+	bossDropItem = 150;
+	//ダメージ透過率
+	dIni_Shot = 20;
+	// 停止無効
+	bossResistTime = 1;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HOROU);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	InitHorou();
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	// オプション配置
+	SetEffect06_Opt(objEnemy, 0, 0);
+	objHorouEffect = SetEffect06(objEnemy);
+
+	standBy(objEnemy, CenX, 160, 60);
+	waitObj(objEnemy, 60);
+	CallSpellCard(true);	//スペカ起動
+	
+	let objHorouEye = objHorouEffect[2][2];
+
+	let timer = [360, 360, 360, 600][Difficult];
+	let wt = [360, 360, 300, 180][Difficult];
+	let laser_color = [SHOT_PURPLE, SHOT_PURPLE, SHOT_WHITE, SHOT_WHITE][Difficult];
+	
+	let STONE_PHASE = 77;
+	
+	let muki = 1;
+	
+	if (Difficult == D_LUNA)
+	{
+		while(eAlive)
+		{
+			SetAction(objEnemy, ACT_SHOT2, 120);
+			waitObj(objEnemy, 60);
+
+			let ba = rand(0,360);
+			ascent(i in 0 .. 7)
+			{
+				if (!eAlive) { return; }
+				TShot_sub(ba, timer-i*10*2, muki, i, STONE_PHASE);
+				waitObj(objEnemy, 10);
+			}
+			waitObj(objEnemy, timer/2-70-240);
+
+			loop(2)
+			{
+				if (!eAlive) { return; }
+				CallSound(sndPower1);
+				waitObj(objEnemy, 60);
+			}
+			if (!eAlive) { return; }
+			BossCharge(objEnemy);
+			CallSound(sndPower1);
+			SetAction(objEnemy, ACT_SHOT1, 180);
+			waitObj(objEnemy, 120);
+
+			if (!eAlive) { return; }
+			SplashLaser(ObjRender_GetX(objEnemy), ObjRender_GetY(objEnemy), 10, 32, 0, 180, laser_color, STONE_PHASE);
+			waitObj(objEnemy, wt);
+			muki = -muki;
+			STONE_PHASE += 10;
+		}
+	}
+	else
+	{
+		while(eAlive)
+		{
+			SetAction(objEnemy, ACT_SHOT2, 120);
+			waitObj(objEnemy, 60);
+
+			if (!eAlive) { return; }
+			TShot_sub(30*muki, timer, muki, 0, STONE_PHASE);
+			waitObj(objEnemy, timer-120);
+
+			if (!eAlive) { return; }
+			BossCharge(objEnemy);
+			SetAction(objEnemy, ACT_SHOT1, 180);
+			waitObj(objEnemy, 120);
+
+			if (!eAlive) { return; }
+			SplashLaser(ObjRender_GetX(objEnemy), ObjRender_GetY(objEnemy), 10, 32, 0, 180, laser_color, STONE_PHASE);
+			waitObj(objEnemy, wt);
+			muki = -muki;
+			STONE_PHASE++;
+		}
+	}
+}
+
+task TShot_sub(offset_angle, timer, muki, shot_type, STONE_PHASE)
+{
+	let size = [160, 160, 160, 320][Difficult];
+	let way = [8, 8, 8, 24][Difficult];
+	let way2 = [6, 8, 8, 8][Difficult];
+	let child_count = [1, 1, 1, 0][Difficult];
+	let shot_colors = [SHOT_PURPLE];
+	let angle = rand(0, 360);
+	
+	let add_angle = 90*muki;
+//	let offset_angle = 30*muki;
+	
+	if (Difficult == D_LUNA)
+	{
+		shot_colors = [SHOT_COLOR[shot_type%7]];
+		size *= (1-(shot_type%7)/7);
+		offset_angle += 10*shot_type*muki;
+		way -= 3*shot_type;
+	}
+	if (Difficult == D_HARD)
+	{
+		shot_colors = [SHOT_WHITE, SHOT_YELLOW];
+	}
+	
+	let st = 0;
+	let sx = ObjMove_GetX(objEnemy)-16;
+	let sy = ObjMove_GetY(objEnemy)-64;
+
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		PurpleChrystalShot(sx, sy, sa, shot_colors[i%length(shot_colors)], 30,
+			timer/2, size, add_angle, offset_angle, way2, CenX, CenY, child_count, STONE_PHASE);
+		CallSound(sndShot2);
+	}
+}
+
+task PurpleChrystalShot(x, y, angle, shot_color, delay, timer, size, add_angle, offset_angle, way, to_x, to_y, child_flg, STONE_PHASE)
+{
+	let graphic = BGW_CHRYSTAL_M_RED + shot_color;
+	let obj = My_CreateShotA1(x, y, 0, 90, graphic, 0);
+	let objEff = My_CreateShotA1(x, y, 0, 90, graphic, 0);
+	Obj_SetValue(obj, "CS", STONE_PHASE);
+	ObjShot_SetAutoDelete(obj, false);
+	ObjShot_SetIntersectionEnable(obj, false);
+	ObjShot_SetSpellResist(obj, true);
+	
+	SetShotDisabled(objEff);
+	ObjShot_SetAutoDelete(objEff, false);
+	ObjRender_SetBlendType(objEff, BLEND_ADD_ARGB);
+	ObjRender_SetColor(objEff, 64, 0, 255);
+	ObjRender_SetScaleXYZ(objEff, 1.5, 1.5, 1);
+	ObjShot_SetSpellResist(objEff, true);
+	
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		//ディレイえへくと部分
+		if (t <= delay)
+		{
+			if (t >= delay) {
+				ObjShot_SetIntersectionEnable(obj, true);
+				ObjRender_SetScaleXYZ(obj, 1, 1, 1);
+				ObjRender_SetAlpha(obj, 255);
+				ObjRender_SetAlpha(objEff, 255);
+			} else {
+				let tmp = GetCurve_a((t+1)/delay);
+				let tmp_s = 2-tmp;
+				let tmp_a = tmp;
+				ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, 1);
+				ObjRender_SetAlpha(obj, tmp*255);
+				ObjRender_SetAlpha(objEff, tmp*255);
+			}
+		}
+		let tmp = GetCurve_ad((t+1)/timer);
+		let sr = size*tmp;
+		let sa = angle + tmp*add_angle;
+		let sx = sr*cos(sa);
+		let sy = sr*sin(sa)*0.66;
+		let pos = Rotate2D_XY(sx, sy, offset_angle);
+		let tx = x*(1-tmp) + to_x*tmp + pos[0];
+		let ty = y*(1-tmp) + to_y*tmp + pos[1];
+		ObjMove_SetPosition(obj, tx, ty);
+		ObjMove_SetPosition(objEff, tx, ty);
+		wait(1);
+	}
+	ObjShot_FadeDelete(objEff);
+	if (Obj_IsDeleted(obj)) { return; }
+	if (child_flg > 0)
+	{
+		let ba = rand(0, 360);
+		ascent(i in 0 .. way)
+		{
+			PurpleChrystalShot(ObjMove_GetX(obj), ObjMove_GetY(obj), ba+i*360/way, shot_color, delay,
+				timer, size, add_angle, offset_angle+90, way, ObjMove_GetX(obj), ObjMove_GetY(obj), child_flg-1, STONE_PHASE);
+		}
+		CallSound(sndShot2);
+		Obj_Delete(obj);
+	}
+	loop(420)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		yield;
+	}
+	ObjShot_FadeDelete(obj);
+}
+
+// 近くの弾をサーチしてレーザーを放つ
+task SplashLaser(x, y, timer, search_r, delay, del_timer, shot_color, STONE_PHASE)
+{
+	del_timer -= delay;
+	wait(delay);
+	let r = search_r;
+	let max_r = search_r*3;
+	let max_shot = 3;
+	while(r <= max_r && del_timer > 0)
+	{
+		if (!eAlive) { return; }
+		let tmp_obj = GetShotIdInCircleA2(x, y, r, TARGET_ENEMY);
+		let hit_obj = -1;
+		let hit_r = 99999999;
+		ascent(i in 0 .. length(tmp_obj))
+		{
+			if (Obj_GetValueD(tmp_obj[i], "CS", 0) == STONE_PHASE)
+			{
+				let r = (ObjMove_GetX(tmp_obj[i])-x)^2 + (ObjMove_GetY(tmp_obj[i])-y)^2;
+				if (r < hit_r) { hit_r = r; hit_obj = i; }
+			}
+		}
+		if (hit_obj >= 0)
+		{
+			SplashLaser_single(x, y, timer, tmp_obj[hit_obj], search_r, del_timer, shot_color, STONE_PHASE);
+			max_shot--;
+			if (max_shot <= 0) { return; }
+		}
+		del_timer--;
+		r += search_r;
+		wait(2);
+	}
+	
+	task SplashLaser_single(x, y, timer, to_obj, search_r, del_timer, shot_color, STONE_PHASE)
+	{
+		let shot_delay = [45, 45, 45, 30][Difficult];
+		HorouLaserS03(x, y, timer, to_obj, 30, 24, shot_color, shot_delay, search_r, del_timer, STONE_PHASE);
+		CallSound(sndBulletBreak);
+	}
+}
+
+task HorouLaserS03(x, y, timer, to_obj, l_len, l_wid, shot_color, delay, search_r, del_timer, STONE_PHASE)
+{
+	if (Obj_IsDeleted(to_obj)) { return; }
+	
+	let laser_delay = [11, 9, 9, 2][Difficult];
+	let shot_speed = [1, 1, 1, 1][Difficult];
+	let shot_way = [3, 5, 5, 3][Difficult];
+	let shot_way_angle = [45, 45, 60, 60][Difficult];
+	
+	let to_color = (ObjShot_GetImageID(to_obj)-1)%8;
+	
+	let graphic = BGW_LIGHT_L_RED+to_color;
+	let graphic2 = BGW_CHRYSTAL_S_RED+to_color;
+	let graphic3 = ([BGW_ICE_RED, BGW_ICE_RED, BGW_COIN_RED, BGW_CHRYSTAL_S_RED][Difficult])+to_color;
+	
+	let obj = CreateHorouLaser(x, y, 0, 0, l_len, l_wid, graphic, delay);
+	
+	let toobj_spd = ObjMove_GetSpeed(to_obj);
+	ObjMove_AddPatternA2(to_obj, 0, NO_CHANGE, NO_CHANGE, -toobj_spd/timer, 0, 0);
+	Obj_SetValue(to_obj, "CS", 0);
+	
+	// 着地時の座標を先読み
+	let to_x = ObjMove_GetX(to_obj) + toobj_spd*(timer+1)/4*cos(ObjMove_GetAngle(to_obj));
+	let to_y = ObjMove_GetY(to_obj) + toobj_spd*(timer+1)/4*sin(ObjMove_GetAngle(to_obj));
+	SplashLaser(to_x, to_y, timer, search_r, laser_delay, del_timer, to_color, STONE_PHASE);
+
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(to_obj)) { break; }
+		let tmp = (t+1)/timer;
+		ObjMove_SetPosition(obj, ObjMove_GetX(obj)*(1-tmp)+ObjMove_GetX(to_obj)*tmp, ObjMove_GetY(obj)*(1-tmp)+ObjMove_GetY(to_obj)*tmp);
+		wait(1);
+	}
+	Obj_Delete(obj);
+	wait(delay);
+	// 追加ショット発射用
+	if (!Obj_IsDeleted(to_obj))
+	{
+		let ba = atan2(to_y-y,to_x-x);
+		if (Difficult == D_LUNA) { ba = atan2(GetPlayerY-to_y,GetPlayerX-to_x); }
+		ascent(i in 0 .. shot_way)
+		{
+			let sa = ba + (i-(shot_way-1)/2)*shot_way_angle;
+			CreateCrashedChrystal(ObjMove_GetX(to_obj), ObjMove_GetY(to_obj), shot_speed, sa, 5);
+		}
+		DeleteBulletEffect(to_obj);
+		// 効果音はこっち
+		CallSound(sndShot4);
+	}
+	
+	task CreateCrashedChrystal(x, y, speed, angle, delay)
+	{
+		let obj = My_CreateShotA2(x, y, 1, angle, -1/15, 0.1, graphic2, delay);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		if (Difficult == D_LUNA)
+		{
+			wait(60);
+			if (Obj_IsDeleted(obj)) { return; }
+
+			ascent(i in 0 .. 3)
+			{
+				let ss = speed * (1-absolute(i-1)*0.025);
+				let sa = angle + (i-1)*1;
+				let obj2 = My_CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, ss/240, ss, graphic3, 0);
+				My_RaiseShotEffect01Ex(obj2, 15, 128, 2);
+			}
+		}
+		else if (Difficult == D_HARD)
+		{
+			wait(120);
+			if (Obj_IsDeleted(obj)) { return; }
+
+			let ss = speed;
+			let sa = angle;
+			let obj2 = My_CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, ss/45/4, ss/4, graphic3, 0);
+			ObjMove_AddPatternB2(obj2, 45, NO_CHANGE, NO_CHANGE, 0, ss/360, 99, ss);
+			My_RaiseShotEffect01Ex(obj2, 15, 128, 2);
+		}
+		else
+		{
+			wait(120);
+			if (Obj_IsDeleted(obj)) { return; }
+
+			ascent(i in 0 .. 3)
+			{
+				let ss = speed * (1-absolute(i-1)*0.025);
+				let sa = angle + (i-1)*1;
+				let obj2 = My_CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, ss/240, ss, graphic3, 0);
+				My_RaiseShotEffect01Ex(obj2, 15, 128, 2);
+			}
+		}
+		ObjShot_FadeDelete(obj);
+		CallSound(sndShot5);
+	}
+}

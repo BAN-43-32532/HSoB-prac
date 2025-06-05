@@ -1,0 +1,184 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["咲夜エンディング-Good"]
+#Text["咲夜エンディング-Good"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdGood[2][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 108, 255];
+	let COL2 = [255, 108, 108];
+	let COL3 = [192, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]红魔馆。 ", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]红魔馆。[r]尽管幻想乡恢复了颜色，但这座馆仍旧是老样子的满目血红。 ", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "蕾米[r]「话说回来，咲夜，禁咒塔那儿很危险是吗。」 ", COL2);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「是啊，大小姐。是一个不可思议的幻象救了我。」 ", COL1);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "帕秋莉[r]「不过最近还真是多啊。外面世界的大人物来访……嘛，住在我们家的倒是个小家伙。」 ", COL3);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "可琳[r]「哈啾」 ", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "[r]幻想乡接受一切，这句话很有名气。然而事实上，对那些不守规矩想要出入幻想乡的人却一点都不宽容。 ", COL0);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "[r]外面世界对神、妖怪的信仰越来越稀薄，与外面世界过度接触，对神与妖怪的乐园——幻想乡来说，是一味毒药。 ", COL0);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]只不过，或许是因为，无视规矩打过来的人，很多都实在是太有名气了，因此这方面就没办法那么严格。 ", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "帕秋莉[r]「和外面世界的接触切切实实地增加着啊……咲夜，在红魔馆外面，幻想乡发生了什么变化吗？」 ", COL3);
+		}
+		case(10)
+		{
+			TEndingImage(imgEdGood[2][1], 30);
+			SetTalkEx(cutinDescri, "咲夜[r]「我想想。付丧神们变成了外面世界的道具，鸟们开始用起了SNS（Saezuri Network System）…… ", COL1);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "蕾米[r]「真、真是相当现代化了呢。反、反正不管怎么样，都敌不过我这种纯粹的强者啦。」 ", COL2);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「大小姐，您的声音在颤抖哦。也许正因为他们是弱者，所以才要为了生存摸索新的手段吧。」 ", COL1);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "[r]自从山上搬来神社以来，来自外面世界的访客忽然就越来越多了。 ", COL0);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r]然后，这也为生活在幻想乡的人与妖怪们，缓缓地带来了变化。 ", COL0);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]外面世界的力量。否定灵异存在的科学之力。如果妖怪或是众神接触到这种力量的话……？[r]他们，以及幻想乡，到底会变成什么样子呢。 ", COL0);
+		}
+		case(16)
+		{
+			TEndingImage(imgEdGood[2][2], 30);
+			SetTalkEx(cutinDescri, "蕾米[r]「我们也去打开潘多拉的盒子看看吗？比如说拥有不死的机械之身的蕾米莉亚博格……」 ", COL2);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "帕秋莉[r]「不会烦恼于哮喘和睡眠不足的帕秋莉博格……」 ", COL3);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「我是真正活着的大小姐的仆人啦。还有帕秋莉大人请多运动。」 ", COL1);
+		}
+		case(19)
+		{
+			SetTalkEx(cutinDescri, "[r]红魔馆。永远的时间不断流动着的洋馆。 ", COL0);
+		}
+		case(20)
+		{
+			SetTalkEx(cutinDescri, "[r]无论红魔馆或它的主人将要踏上怎样的未来，咲夜都决定一生追随左右。[r]当然，前提是那是对主人幸福的未来。 ", COL0);
+		}
+		case(21)
+		{
+			SetTalkEx(cutinDescri, "[r]来吧，首先是要为了主人，保住红魔馆的面子！[r]在Extra扫荡妖怪们的残党吧！ ", COL0);
+		}
+		case(22)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.03　　话说你们本来也是外来的敌人吧 ", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

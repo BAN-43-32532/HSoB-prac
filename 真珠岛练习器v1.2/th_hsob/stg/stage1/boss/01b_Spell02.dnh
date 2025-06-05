@@ -1,0 +1,284 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["乱々スペカ2"]
+#Text["乱々スペカ2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ranran.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(260);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(40);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 3;
+	let SPELL_NAME = [4, 4, 5, 6][Difficult];
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	// アイテム数
+	bossDropItem = 0;
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_RANRAN);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	waitObj(objEnemy, 60);
+	
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 30);
+	
+	let wt = [180, 180, 150, 60][Difficult];
+	let wt2 = [120, 120, 120, 60][Difficult];
+	
+	let t = 0;
+	let muki = rand_dir();
+	
+	if (Difficult < D_LUNA)
+	{
+		while(eAlive)
+		{
+			BossCharge(objEnemy);
+			SetAction(objEnemy, ACT_SHOT1, 180);
+			waitObj(objEnemy, 60);
+			if (!eAlive) { return; }
+			Shot1(t, muki);
+			waitObj(objEnemy, wt);
+
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 140, 64);
+			waitObj(objEnemy, wt2);
+			muki = -muki;
+			t++;
+		}
+	}
+	else
+	{
+		while(eAlive)
+		{
+			if (t%3 == 0)
+			{
+				BossCharge(objEnemy);
+				SetAction(objEnemy, ACT_SHOT1, 180);
+				waitObj(objEnemy, 60);
+			}
+			if (!eAlive) { return; }
+			Shot1(t, muki);
+			waitObj(objEnemy, wt);
+
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 140, 64);
+			waitObj(objEnemy, wt2);
+			muki = -muki;
+			t++;
+			if (t%3 == 0) { waitObj(objEnemy, 120); }
+		}
+	}
+}
+
+function Shot1(tp, muki)
+{
+	alternative(tp%3)
+	case(0)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, muki, 1);
+		waitObj(objEnemy, 30);
+		if (!eAlive) { return; }
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 180, -muki, 0);
+	}
+	case(1)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 180, -muki, 1);
+		waitObj(objEnemy, 30);
+		if (!eAlive) { return; }
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, muki, 0);
+	}
+	case(2)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 180, -muki, 1);
+		waitObj(objEnemy, 15);
+		if (!eAlive) { return; }
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, muki, 0);
+		waitObj(objEnemy, 90);
+		if (!eAlive) { return; }
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 180, -muki, 1);
+		waitObj(objEnemy, 15);
+		if (!eAlive) { return; }
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, muki, 0);
+		waitObj(objEnemy, 90);
+	}
+}
+
+
+
+// 筆ショット
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
+{
+	let baseAngle = 90;
+	
+	let eSize = ENEMY_SS;
+	let eColor = EFF_RED;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 999999, eSize);
+	SetEnemyVisible(objFamilier, false);
+	DrawRanranOption(objFamilier);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+	}
+	
+	task TMove()
+	{
+		let timer = 240;
+		
+		TShot();
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			let tmp = GetCurve_ad((t+1)/timer);
+			let er = 40 + 120*tmp;
+			let ea = iniAngle + 720*tmp*iniMuki;
+			let pos = Rotate2D_XY(er*cos(ea), er/4*sin(ea), tmp*15);
+			let ex = ObjMove_GetX(objEnemy) + pos[0];
+			let ey = ObjMove_GetY(objEnemy) + pos[1];
+			ObjMove_SetPosition(objFamilier, ex, ey);
+			waitObj(objFamilier, 1);
+		}
+		if (!CanShotBullet(objFamilier)) { return; }
+		let to_angle = GetAngleToPlayer(objFamilier);
+		if (iniValue) { CallSound(sndPower3); }
+		TShot2(to_angle);
+		Enemy_SetPatternA2(objFamilier, 0, -4, to_angle, 4/30, 0, 0);
+		Enemy_SetPatternA2(objFamilier, 30, NO_CHANGE, NO_CHANGE, 8/30, 0, 8);
+		Enemy_SetPatternA2(objFamilier, 60, NO_CHANGE, NO_CHANGE, -8/10, 0, 0);
+		waitObj(objFamilier, 70);
+		EraseEnemy(objFamilier);
+	}
+	
+	task TShot()
+	{
+		let shot_speed = [1.5, 2, 2, 2][Difficult];
+		let graphic = [BGW_WATER_RED, BGW_WATER_RED, BGW_CHRYSTAL_S_RED, BGW_CHRYSTAL_M_RED][Difficult];
+		let way = [1, 1, 3, 1][Difficult];
+		let way_angle = [1, 1, 2, 1][Difficult];
+		let timer = 240;
+		
+		let wt = [8, 5, 5, 5][Difficult];
+		
+		let st = 0;
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			if (t > 30 && t < timer-15 && t%wt == 0)
+			{
+				let tmp = GetCurve_ad((t+1)/timer);
+				let ea = iniAngle + 720*tmp*iniMuki;
+				
+				if (way <= 1)
+				{
+					let sa = ea + tmp*15 - 90*iniMuki;
+					let ss = shot_speed;
+					let obj = My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+						ss*2, sa, -ss/10, ss/4, graphic, 15);
+					ObjMove_AddPatternA2(obj, 240, NO_CHANGE, NO_CHANGE, ss/120, 0, ss);
+					CallSound(sndShot2);
+				}
+				else
+				{
+					ascent(i in 0 .. way)
+					{
+						let t1 = (i-(way-1)/2);
+						let t2 = (way-1)/2 - absolute(t1);
+						let sa = ea + tmp*15 - 90*iniMuki + t1*way_angle;
+						let ss = shot_speed * (1-t2*0.05);
+						let obj = My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+							ss*2, sa, -ss/10, ss/4, graphic, 15);
+						ObjMove_AddPatternA2(obj, 240, NO_CHANGE, NO_CHANGE, ss/120, 0, ss);
+						if (t2 > 0)
+						{
+							let ss = shot_speed * (1+t2*0.05);
+							let obj = My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+								ss*2, sa, -ss/10, ss/4, graphic, 15);
+							ObjMove_AddPatternA2(obj, 240, NO_CHANGE, NO_CHANGE, ss/120, 0, ss);
+						}
+					}
+					CallSound(sndShot2);
+				}
+				st++;
+			}
+			waitObj(objFamilier, 1);
+		}
+	}
+	
+	task TShot2(base_angle)
+	{
+		waitObj(objFamilier, 30);
+		
+		let timer = 30;
+		let wt = 2;
+		
+		let speed = [3, 3, 5, 5][Difficult];
+		let way = [3, 5, 5, 5][Difficult];
+		let way_angle = [3, 3, 10, 10][Difficult];
+		let graphic = [ADD_BGW_CHRYSTAL_S_RED, ADD_BGW_CHRYSTAL_S_RED, ADD_BGW_CHRYSTAL_S_BLUE, ADD_BGW_CHRYSTAL_S_RED][Difficult];
+		
+		CallSound(sndShot4);
+		let objEff = LaserEffect02(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), base_angle, 600, 15, EFF_RED, 30);
+		
+		let st = 0;
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			ObjMove_SetPosition(objEff, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier));
+			if (t%wt == 0)
+			{
+				let tmp = t/timer;
+
+				let sx = ObjMove_GetX(objFamilier);
+				let sy = ObjMove_GetY(objFamilier);
+				let ss = speed * (1-tmp/2);
+
+				ascent(i in 0 .. way)
+				{
+					let sa = base_angle + (i-(way-1)/2)*way_angle;
+					let sa2 = base_angle - (i-(way-1)/2)*way_angle;
+					let obj = My_CreateShotA2(sx, sy, -ss, sa, ss/45, ss, graphic, 30);
+					ObjMove_AddPatternA2(obj, 45, NO_CHANGE, sa2, ss/45, 0, ss);
+				}
+				st++;
+			}
+			waitObj(objFamilier, 1);
+		}
+	}
+}

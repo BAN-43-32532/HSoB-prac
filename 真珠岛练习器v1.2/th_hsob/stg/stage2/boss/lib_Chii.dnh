@@ -1,0 +1,178 @@
+
+// ちぃソード原型
+function CreateChiiSword(x, y, angle, l_len, color, delay)
+{
+	let graphic = BGW_STICK_RED + SHOT_COLOR[color];
+	let col = GetEffectColor(color);
+	let obj = My_CreateSimpleLaserA1(x, y, angle, 0, 12, 999999, graphic, 0);
+	ChiiSword_draw(obj, graphic, col);
+	return(obj);
+	
+	task ChiiSword_draw(obj, graphic, col)
+	{
+		ObjLaser_SetLength(obj, l_len);
+
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			if (Obj_GetValueD(obj, "DEL", false)) { break; }
+			if (t < delay)
+			{
+				let tmp = (t+1)/delay;
+				let tmp_len = l_len * ((t+1)/delay)^2;
+				ObjLaser_SetLength(obj, tmp_len);
+
+				ChiiSword_effect(obj, 0, l_len*(1.2+(1-tmp)*8), 18*tmp, graphic, col, 48);
+			}
+			else
+			{
+				ChiiSword_effect(obj, 0, l_len*1.2, 18, graphic, col, 96);
+				ObjShot_SetIntersectionEnable(obj, true);
+			}
+			t++;
+			wait(1);
+		}
+		if (!Obj_IsDeleted(obj) && Obj_GetValueD(obj, "DEL", false))
+		{
+		}
+	}
+
+	task ChiiSword_effect(objBase, angle, l_len, l_wid, graphic, col, alpha)
+	{
+		let objDummy = CreateStraightLaserA1(ObjMove_GetX(objBase), ObjMove_GetY(objBase), ObjStLaser_GetAngle(objBase)+angle, l_len, l_wid, 99999, graphic, 0);
+		ObjStLaser_SetSource(objDummy, false);
+		ObjShot_SetItemChange(objDummy, false);
+		ObjShot_SetIntersectionEnable(objDummy, false);
+		ObjRender_SetColor(objDummy, col[0], col[1], col[2]);
+		
+		descent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ObjRender_SetAlpha(objDummy, tmp*alpha);
+			ObjLaser_SetLength(objDummy, l_len*(2-tmp));
+			ObjLaser_SetRenderWidth(objDummy, l_wid*tmp);
+			/*
+			if (!Obj_IsDeleted(objBase))
+			{
+				ObjStLaser_SetAngle(objDummy, ObjStLaser_GetAngle(objBase)+angle);
+				ObjMove_SetPosition(objDummy, ObjMove_GetX(objBase), ObjMove_GetY(objBase));
+			}
+			*/
+			wait(1);
+		}
+		Obj_Delete(objDummy);
+	}
+}
+
+// つまようじショット
+task TumaShot(x, y, speed, angle, graphic, delay, to_speed, to_angle, to_graphic, timer)
+{
+	let obj = My_CreateShotA2(x, y, speed, angle, -speed/timer, 0, graphic, delay);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		let move_angle = (to_angle-angle)%360;
+		if (move_angle > 180) { move_angle -= 360; }
+		
+		let to_obj = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, angle, to_graphic, 0);
+		ObjMove_AddPatternA2(to_obj, 60, NO_CHANGE, NO_CHANGE, to_speed/120, 0, to_speed);
+		ObjShot_FadeDelete(obj);
+		
+		CallSound(sndShot2);
+
+		ascent(t in 0 .. 30)
+		{
+			if (Obj_IsDeleted(to_obj)) { break; }
+			let tmp = GetCurve_ad((t+1)/30);
+			ObjRender_SetAlpha(to_obj, tmp*512);
+			ObjMove_SetAngle(to_obj, angle+move_angle*tmp);
+			ObjMove_SetAngle(obj, angle+move_angle*tmp);
+			wait(1);
+		}
+	}
+}
+task TumaShot_ToPlayer(x, y, speed, angle, graphic, delay, to_speed, to_offset_angle, to_graphic, timer)
+{
+	let obj = My_CreateShotA2(x, y, speed, angle, -speed/timer, 0, graphic, delay);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		let to_angle = GetAngleToPlayer(obj) + to_offset_angle;
+		let move_angle = (to_angle-angle)%360;
+		if (move_angle > 180) { move_angle -= 360; }
+		
+		let to_obj = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, angle, to_graphic, 0);
+		ObjMove_AddPatternA2(to_obj, 60, NO_CHANGE, NO_CHANGE, to_speed/120, 0, to_speed);
+		ObjShot_FadeDelete(obj);
+		
+		CallSound(sndShot2);
+
+		ascent(t in 0 .. 45)
+		{
+			if (Obj_IsDeleted(to_obj)) { break; }
+			let tmp = GetCurve_ad((t+1)/45);
+			ObjRender_SetAlpha(to_obj, tmp*512);
+			ObjMove_SetAngle(to_obj, angle+move_angle*tmp);
+			ObjMove_SetAngle(obj, angle+move_angle*tmp);
+			wait(1);
+		}
+	}
+}
+
+// 分裂つまようじ
+task BlinkTumaShot(x, y, speed, angle, graphic, delay, way, way_angle, timer)
+{
+	let obj = My_CreateShotA2(x, y, 5, angle, -5/15, 0, graphic, delay);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		ascent(i in 0 .. way)
+		{
+			let add_a = (i-(way-1)/2)/120 * way_angle;
+			let obj_sub = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, angle, graphic, 0);
+			ObjMove_AddPatternA2(obj_sub, 0, NO_CHANGE, NO_CHANGE, speed/120, add_a, speed);
+			ObjMove_AddPatternA2(obj_sub, 120, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+			ObjRender_SetBlendType(obj_sub, BLEND_ADD_ARGB);
+		}
+		CallSound(sndShot2);
+
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+		ObjShot_FadeDelete(obj);
+	}
+}
+
+task BlinkTumaShot_ToPlayer(x, y, speed, angle, graphic, delay, to_speed, to_offset_angle, timer, way, way_angle, timer2)
+{
+	let obj = My_CreateShotA2(x, y, speed, angle, -speed/timer, 0, graphic, delay);
+	wait(timer);
+
+	if (Obj_IsDeleted(obj)) { return; }
+	let to_angle = GetAngleToPlayer(obj) + to_offset_angle;
+	let move_angle = (to_angle-angle)%360;
+	if (move_angle > 180) { move_angle -= 360; }
+	
+	CallSound(sndShot2);
+
+	ascent(t in 0 .. 45)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = GetCurve_ad((t+1)/45);
+		ObjMove_SetAngle(obj, angle+move_angle*tmp);
+		wait(1);
+	}
+
+	wait(timer2);
+	if (Obj_IsDeleted(obj)) { return; }
+
+	ascent(i in 0 .. way)
+	{
+		let add_a = (i-(way-1)/2)/120 * way_angle;
+		let obj_sub = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, ObjMove_GetAngle(obj), graphic, 0);
+		ObjMove_AddPatternA2(obj_sub, 0, NO_CHANGE, NO_CHANGE, to_speed/120, add_a, to_speed);
+		ObjMove_AddPatternA2(obj_sub, 120, NO_CHANGE, NO_CHANGE, to_speed/120, 0, to_speed);
+		ObjRender_SetBlendType(obj_sub, BLEND_ADD_ARGB);
+	}
+	CallSound(sndShot2);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, to_speed/120, 0, to_speed);
+	ObjShot_FadeDelete(obj);
+}

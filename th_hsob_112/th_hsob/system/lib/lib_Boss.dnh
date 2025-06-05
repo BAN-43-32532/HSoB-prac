@@ -1,0 +1,295 @@
+//=======================================================================
+//　ボス関連のシステムエフェクト
+//=======================================================================
+
+let priorityBossSystem = 79;
+
+//----------------------------------------------------
+//ボスシーン監視
+//----------------------------------------------------
+let isLastSpell = false;
+
+task CheckScene()
+{
+	let isBossScene = false;
+	let tmp = false;
+	
+	objScene = ID_INVALID;
+	loop
+	{
+		objScene = GetEnemyBossSceneObjectID();
+		isBossScene = (objScene != ID_INVALID);
+		
+		if (!tmp && isBossScene)
+		{
+			//ボスシーンの処理を呼び出し
+			CallSceneEffects();
+		}
+		if (isBossScene) {
+			isLastSpell = ObjEnemyBossScene_GetInfo(objScene, INFO_IS_LAST_SPELL);
+		} else {
+			isLastSpell = false;
+		}
+		tmp = isBossScene;
+		yield;
+	}
+}
+
+//シーン毎に呼び出す
+sub CallSceneEffects
+{
+	BossEffect_Timer(0);	//タイマー
+	BossEffect_Infomation();	//その他の情報
+}
+
+//----------------------------------------------------
+//  タイマー表示
+//  delay : 表示＆カウントダウン開始までの遅延時間
+//----------------------------------------------------
+task BossEffect_Timer(delay)
+{
+	let baseTimer = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF);
+	
+	//ディレイ中は時間停止
+	loop(delay)
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, baseTimer);
+		yield;
+	}
+	
+	//座標（固定）
+	let base_x = CenX;
+	let base_y = MinY+32;
+	
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, 6*6);
+	Obj_SetRenderPriorityI(obj, priorityBossSystem);
+	ObjRender_SetPosition(obj, base_x, base_y, 0);
+	local
+	{
+		//数字配置
+		let iy = -32;
+		let ix = -32-14;
+		ascent(iObj in 0 .. 3)
+		{
+			BossSpell_SetNumBase(obj, iObj, ix, iy, 20, 40);
+			ix += 14;
+		}
+		BossSpell_SetNumBase(obj, 5, ix, iy, 20, 40);
+		BossSpell_SetNumber(obj, 5, 10);
+		ix += 8;
+		ascent(iObj in 3 .. 5)
+		{
+			BossSpell_SetNumBase(obj, iObj, ix, iy+7, 15, 30);
+			ix += 10;
+		}
+	}
+
+	let before_timer = 0;
+	let timerY = 0;
+	while(GetEnemyBossSceneObjectID() != ID_INVALID)
+	{
+		//スペカ中はタイマー移動
+		let tY = 0;
+		if (ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL)) { tY = GetAreaCommonData(CAREA_SPELL, "CUTIN_Y", 8)+6; }
+		if (tY > timerY) { timerY += 1; }
+		else if (tY < timerY) { timerY -= 1; }
+		ObjRender_SetY(obj, base_y+timerY);
+		if (GetPlayerY < (base_y+timerY+64)) { ObjRender_SetAlpha(obj, 80); }
+		else { ObjRender_SetAlpha(obj, 255); }
+		
+		let timer = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) * 5/3;
+		timer = trunc(min(timer, 99999));
+		if (timer >= 0)
+		{
+			let listNum = DigitToArray2(timer, 5);
+			if (timer < 300) { ObjRender_SetColor(obj, 255, 0, 0); }
+			else if (timer < 600) { ObjRender_SetColor(obj, 255, 128, 128); }
+			else { ObjRender_SetColor(obj, 255, 255, 255); }
+			
+			if (timer > 9999)
+			{
+				ascent(i in 0 .. 5)
+					{ BossSpell_SetNumber(obj, i, listNum[i]); }
+			}
+			else
+			{
+				BossSpell_SetNumber(obj, 0, -1);
+				ascent(i in 1 .. 5)
+					{ BossSpell_SetNumber(obj, i, listNum[i]); }
+			}
+			//効果音
+			if (timer > 0 && timer < 600 && trunc(before_timer/100) != trunc(timer/100))
+			{
+				if (timer < 300)
+				{
+					BossEffect_Timer_Scale(obj, 0.05);
+					CallSound(sndTimer2);
+				}
+				else
+				{
+					BossEffect_Timer_Scale(obj, 0.025);
+					CallSound(sndTimer1);
+				}
+			}
+			Obj_SetVisible(obj, true);
+		}
+		else
+		{
+			Obj_SetVisible(obj, false);
+		}
+		before_timer = timer;
+		yield;
+	}
+	Obj_Delete(obj);
+	
+	task BossEffect_Timer_Scale(obj, add_scale)
+	{
+		descent(i in 0 .. 10)
+		{
+			let tmp_s = 1 + i * add_scale;
+			ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, 1);
+			yield;
+		}
+	}
+}
+
+//----------------------------------------------------
+//  ボスの情報表示（★数とボスの名前）
+//----------------------------------------------------
+task BossEffect_Infomation()
+{
+	let bossNameID = Boss_GetBossNameID(objScene);
+	let posName = [4, 2];
+	let posStar = [0, 0];
+	let alpha = 255;
+	//星
+	let objStar = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objStar, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objStar, imgSystemLife);
+	Obj_SetRenderPriorityI(objStar, 75);
+	//名前
+	let objName = ObjPrim_Create(OBJ_SPRITE_2D);
+	if (bossNameID >= 0)
+	{
+		let ix = 0;
+		let iy = bossNameID * 16;
+		ObjPrim_SetTexture(objName, imgSystemBossName);
+		Obj_SetRenderPriorityI(objName, 75);
+		ObjRender_SetPosition(objName, MinX+posName[0], MinY+posName[1], 0);
+		ObjSprite2D_SetSourceRect(objName, ix, iy, ix+128, iy+16);
+		ObjSprite2D_SetDestRect(objName, 0, 0, 128, 16);
+		//名前表示時は星を下にずらす
+		posStar = [2, 12];
+		ObjRender_SetPosition(objStar, MinX+posStar[0], MinY+posStar[1], 0);
+	}
+
+	let t = 0;
+	let countRemStep = ObjEnemyBossScene_GetInfo(objScene, INFO_REMAIN_STEP_COUNT) + 1;
+	while(GetEnemyBossSceneObjectID() != ID_INVALID)
+	{
+		//半透明
+		let by = MinY+128;
+		if (GetPlayerY < by) {
+			if (alpha > 64) { alpha -= 16; }
+			else { alpha = max(0, alpha-1); }
+		} else {
+			alpha = min(255, alpha+16);
+		}
+		if (countRemStep != ObjEnemyBossScene_GetInfo(objScene, INFO_REMAIN_STEP_COUNT))
+		{
+			countRemStep = ObjEnemyBossScene_GetInfo(objScene, INFO_REMAIN_STEP_COUNT);
+			
+			//残りステップ表示
+			ObjPrim_SetVertexCount(objStar, 6*countRemStep);
+			ascent(iStep in 0 .. countRemStep)
+			{
+				let ix = (iStep%6)*12;
+				let iy = trunc(iStep/6)*12;
+				AddImg_Triangle01(objStar, 6*iStep,
+						0, 32, 32, 64,		//切り取り範囲
+						ix, iy, ix+18, iy+18);	//貼り付け範囲
+			}
+		}
+		// ボスネームの変更を定期的にチェック
+		if (t%15 == 0 && bossNameID != Boss_GetBossNameID(objScene))
+		{
+			bossNameID = Boss_GetBossNameID(objScene);
+			if (bossNameID >= 0)
+			{
+				let ix = 0;
+				let iy = bossNameID * 16;
+				ObjPrim_SetTexture(objName, imgSystemBossName);
+				Obj_SetRenderPriorityI(objName, 75);
+				ObjSprite2D_SetSourceRect(objName, ix, iy, ix+128, iy+16);
+				ObjSprite2D_SetDestRect(objName, 0, 0, 128, 16);
+			}
+		}
+		// ボスネーム表示状態変更
+		Obj_SetVisible(objName, Obj_GetValueD(objScene, "BOSS_NAME_VISIBLE", true));
+		Obj_SetVisible(objStar, Obj_GetValueD(objScene, "BOSS_NAME_VISIBLE", true));
+		ObjRender_SetPosition(objName, MinX+posName[0], MinY+posName[1], 0);
+		ObjRender_SetPosition(objStar, MinX+posStar[0], MinY+posStar[1], 0);
+		ObjRender_SetAlpha(objName, alpha);
+		ObjRender_SetAlpha(objStar, alpha);
+		t++;
+		yield;
+	}
+	Obj_Delete(objName);
+	Obj_Delete(objStar);
+}
+// ボスネームのID取得
+function Boss_GetBossNameID(obj)
+{
+	alternative(Obj_GetValueD(obj, "BOSS_ID", ""))
+	case(BOSS_ID_RANRAN) { return(0); }
+	case(BOSS_ID_CHII) { return(1); }
+	case(BOSS_ID_HIKARIKO) { return(2); }
+	case(BOSS_ID_SIRAN) { return(3); }
+	case(BOSS_ID_MYSTIA) { return(4); }
+	case(BOSS_ID_NEBET) { return(5); }
+	case(BOSS_ID_SET) { return(6); }
+	case(BOSS_ID_HOROU) { return(7); }
+	case(BOSS_ID_MUMEI) { return(8); }
+	
+	case(BOSS_ID_REIMU) { return(9); }
+	case(BOSS_ID_MARISA) { return(10); }
+	case(BOSS_ID_SAKUYA) { return(11); }
+	case(BOSS_ID_KAGUYA) { return(12); }
+	others { return(-1); }
+}
+
+
+//----------------------------------------------------
+//  数字配置
+//----------------------------------------------------
+function BossSpell_SetNumber(obj, keta, num)
+{
+	if (num < 0) {
+		ascent(i in 0 .. 6)
+		{
+			ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+		}
+	} else {
+		let ix = num*32;
+		let iy = 0;
+		ObjPrim_SetVertexUVT(obj, keta*6  , ix, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+1, ix+32, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+2, ix, iy+64);
+		ObjPrim_SetVertexUVT(obj, keta*6+3, ix+32, iy);
+		ObjPrim_SetVertexUVT(obj, keta*6+4, ix, iy+64);
+		ObjPrim_SetVertexUVT(obj, keta*6+5, ix+32, iy+64);
+	}
+}
+
+function BossSpell_SetNumBase(obj, keta, x, y, w, h)
+{
+	ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+1, x+w, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+h, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+3, x+w, y, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+h, 0);
+	ObjPrim_SetVertexPosition(obj, keta*6+5, x+w, y+h, 0);
+}

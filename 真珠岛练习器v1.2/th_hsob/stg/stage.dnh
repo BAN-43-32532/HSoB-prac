@@ -1,0 +1,250 @@
+//東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["StageBase"]
+#Text["StageBase"]
+#System["./../system/system.dnh"]
+
+#include "../lib/lib_Common.dnh"
+#include "../lib/lib_File.dnh"
+#include "../lib/lib_Zako.dnh"
+#include "../lib/lib_Stage.dnh"
+#include "../lib/wor_function.dnh"
+#include "../lib/SpellData.dnh"
+
+
+let PATH_STAGE = [stageDir ~ "stage1/Road01.dnh",
+		stageDir ~ "stage2/Road02.dnh",
+		stageDir ~ "stage3/Road03.dnh",
+		stageDir ~ "stage4/Road04.dnh",
+		stageDir ~ "stage5/Road05.dnh",
+		stageDir ~ "stage6/Road06.dnh",
+		stageDir ~ "stage7/Road07.dnh",		// Extra
+		stageDir ~ "stage6/RoadX.dnh",		// エンディング（デバッグ用）
+		];
+
+
+@Initialize
+{
+	LoadSystemCommonData();
+	StageInitialize();
+	TMain();
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+// 初期化です
+// 主に残機やら
+task StageInitialize()
+{
+	if( GetPlayMode() == GAME_MAIN )
+	{
+		//　本編の時
+		if (IsFirstStage())
+		{
+			SetPlayerLife(2);
+			SetPlayerSpell(3);
+			/*
+			if (DEBUG_FILMING_MODE)
+			{
+				AddScore(722160100);
+				AddMaxScore(36100);
+				SetPlayerLife(6);
+				SetPlayerSpell(5);
+			}
+			*/
+			// コンティニュー回数
+			if (DEBUG_MODE) { SetContinueRest(99); }
+			else if (Difficult() == D_EXTRA) { SetContinueRest(0); }
+			else { SetContinueRest(99); }
+		}
+	}
+	else if( GetPlayMode() == GAME_PRACTICE )
+	{
+		//　ステージプラクティスの時
+		if (Difficult == D_EXTRA)
+		{
+			SetPlayerLife(GetAreaCommonData(CAREA_STAGE, "Prac_PlayerEx", 0));
+			SetPlayerSpell(GetAreaCommonData(CAREA_STAGE, "Prac_SpellEx", 0));
+		}
+		else
+		{
+			SetPlayerLife(GetAreaCommonData(CAREA_STAGE, "Prac_Player", 0));
+			SetPlayerSpell(GetAreaCommonData(CAREA_STAGE, "Prac_Spell", 0));
+		}
+		// Zボム初期値は　task ExZSpell()で
+	}
+	else if( GetPlayMode() == GAME_SPELL )
+	{
+		//　スペルプラクティスの時
+		SetPlayerLife(0);
+		SetPlayerSpell(0);
+	}
+	// 最大得点セット
+	if (IsFirstStage())
+	{
+		alternative(Difficult())
+		case(D_EASY) { AddMaxScore(0); }
+		case(D_NORM) { AddMaxScore(5000); }
+		case(D_HARD) { AddMaxScore(10000); }
+		case(D_LUNA) { AddMaxScore(15000); }
+		case(D_EXTRA)
+		{
+			alternative(DifficultEx())
+			case(D_EX_NORM) { AddMaxScore(177770-10000); }
+			case(D_EX_EASY) { AddMaxScore( 77770-10000); }
+			case(D_EX_HARD) { AddMaxScore(777770-10000); }
+		}
+	}
+	
+	//　終了待機
+	STEND();
+	
+	//　描画優先度クリア　しないと歪みエフェクトの影響で色々狂う
+	ClearInvalidRenderPriority();
+}
+
+//　メインです
+task TMain()
+{
+	// こんてぬー
+	if (IsFirstStage()) { AddScore(GetContinueCount()); }
+	
+	if( GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE )
+	{
+		// 画像のロード
+//		LoadStageAllTexture(GetStageIndex());
+		// BGM停止
+		PlayMusic(-1, 0, 0);
+		// 暗転解除
+		if (!IsFirstStage()) { BlackOutEx( world_layer+2, 30, 120, true, [0,0,0] ); }
+		
+		if (IsFirstStage()) { SetPlayerEnabled(120); }
+		else { SetPlayerEnabled(0); }
+		waitEx(30);
+
+		if (GetStageIndex() == STAGE_EXTRA)
+		{
+			/*
+			if (DEBUG_MODE) { StartStgScript(PATH_STAGE[7]); }
+			else { StartStgScript(PATH_STAGE[6]); }
+			*/
+			StartStgScript(PATH_STAGE[6]);
+		}
+		else
+		{
+			alternative(GetStageIndex())
+			case(1) { StartStgScript(PATH_STAGE[0]); }
+			case(2) { StartStgScript(PATH_STAGE[1]); }
+			case(3) { StartStgScript(PATH_STAGE[2]); }
+			case(4) { StartStgScript(PATH_STAGE[3]); }
+			case(5) { StartStgScript(PATH_STAGE[4]); }
+			case(6) { StartStgScript(PATH_STAGE[5]); }
+		}
+		// 画像のアンロード
+//		UnoadStageAllTexture(GetStageIndex());
+	}
+	else if( GetPlayMode() == GAME_SPELL ){
+		//　スペルプラクティスの時
+		if (GetAreaCommonData(CAREA_SYSTEM, "QuickRestart", false))
+		{
+			SetPlayerEnabled(30);
+		}
+		else
+		{
+			SetPlayerEnabled(90);
+			wait(90);
+		}
+		SpellPractice( GetStageIndex() );
+	}
+	else if ( GetPlayMode() == GAME_DEBUG ) {
+		// エンディング確認用
+		wait(60);
+		StartStgScript(PATH_STAGE[7]);
+	}
+
+	// コモンデータ保存後終了
+	My_CloseStageScene();
+}
+
+
+
+
+//----------------------------------------------------------------------------------------------------------------
+//　ユーティリティ
+//----------------------------------------------------------------------------------------------------------------
+
+//  ステージスクリプト開始・待機処理
+function StartStgScript(pathScript)
+{
+	let idScript = LoadScriptInThread(pathScript);
+	wait(30);
+	StartScript(idScript);
+	
+	// 終了まで待機
+	while(!IsCloseScript(idScript)) { yield; }
+}
+
+//　終了待機
+task STEND()
+{
+	//　ｹﾞｰﾑｵｰﾊﾞｰまで待機
+	while( GetPlayerState() != STATE_END ){ yield; }
+	
+	//　1.5秒待機
+	wait(90);
+	
+	// リプレイ用コモンデータ保存
+	FinalizeSystemCommonData();
+			
+	//　ステージスクリプト終了
+	CloseStgScene();
+}
+
+
+
+
+
+// -------------------------------------
+// スペプラ
+// -------------------------------------
+function SpellPractice(idSpell)
+{
+	let path = GetSpellCardPath(idSpell, Difficult());
+	let bg = GetSpellCardBackGround(idSpell, Difficult());
+	let music = GetSpellCardMusic(idSpell, Difficult());
+
+	if (length(path) <= 0) { return; }
+
+	//  背景配置
+	if (bg) { SetStageBackGround(bg); }
+	//  BGM
+	if (music >= 0) { PlayMusic( music, 120, 30 ); }
+
+	// ボスシーンを作成します。
+	let objBossScene = ObjEnemyBossScene_Create();
+	ObjEnemyBossScene_Add(objBossScene, 0, path);
+	ObjEnemyBossScene_LoadInThread(objBossScene);
+	wait(60);
+	
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+	wait(120);
+}
+
+task SetPlayerEnabled(timer)
+{
+	waitEx(timer);
+	SetAreaCommonData(CAREA_SYSTEM, "PlayerDisabled", false);
+}

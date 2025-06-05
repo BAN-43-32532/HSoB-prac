@@ -1,0 +1,86 @@
+#include "./lib/lib_Common.dnh"
+#include "./lib/lib_Util.dnh"
+#include "./../lib/lib_String.dnh"
+#include "./../lib/fx_function.dnh"
+#include "./../lib/lib_ZBombEffect.dnh"
+#include "./lib/lib_FanMadeLogo.dnh"
+#include "./lib/lib_Extra.dnh"
+
+// 各種シーンinclude
+#include "./scene/SceneMain.dnh"
+#include "./scene/SceneManual.dnh"
+#include "./scene/SceneMusicRoom.dnh"
+#include "./scene/SceneModeSelect.dnh"
+#include "./scene/SceneOption.dnh"
+#include "./scene/ScenePlayerData.dnh"
+#include "./scene/ScenePlayerSelect.dnh"
+#include "./scene/SceneRankSelect.dnh"
+#include "./scene/SceneReplay.dnh"
+#include "./scene/SceneStageSelect.dnh"
+#include "./scene/SceneSpellSelect.dnh"
+
+let baseMenuFlag = 0;
+
+@Initialize
+{
+	initTitle();
+	
+	TTitleScene();
+}
+
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+
+//----------------------------------------------------
+// タイトルシーン
+//----------------------------------------------------
+task TTitleScene()
+{
+	// 保険
+	ClearInvalidRenderPriority();
+
+	//タイトル画像
+	let objTitleImage = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objTitleImage, 20);
+	ObjPrim_SetTexture(objTitleImage, imgTtBaseBG);
+	ObjSprite2D_SetSourceRect(objTitleImage, 0, 0, 640, 480);
+	ObjSprite2D_SetDestRect(objTitleImage, 0, 0, 640, 480);
+	
+	let obj		= CreatePrimitive2D( imgTtBaseBG_scl, 20, BLEND_SUBTRACT );
+	let scroll	= 0;
+	ObjPrim_SetDestCenter( obj, [0,0,640,480] );
+	ObjRender_SetPosition( obj,  320, 240, 0 );
+	ObjPrim_SetVertexColor( obj, 0, 64, 96, 64 );
+	ObjPrim_SetVertexColor( obj, 1, 64, 96, 64 );
+	ObjPrim_SetVertexColor( obj, 2, 64, 96, 64 );
+	ObjPrim_SetVertexColor( obj, 3, 64, 96, 64 );
+	
+	let obj2	= CreatePrimitive2D( imgTtBaseBG2, 20, BLEND_ALPHA );
+	ObjPrim_SetDestCenter( obj2, [0,0,640,480] );
+	ObjRender_SetPosition( obj2, 320, 240, 0 );
+	ObjRender_SetAlpha( obj2, 192 );
+	
+	PlayMusic(0, 60, 30);
+	//メニュー呼び出し
+	MainMenu(true, T_INDEX_START);
+
+	SetAreaCommonData(CAREA_TITLE, "title_end", false );
+	//　二次ロゴ
+	SetFanMadeLogoMain();
+	
+	while( !GetAreaCommonData(CAREA_TITLE, "title_end", false ) ){
+		ObjPrim_ReSetUVT( obj, [ 0-scroll, 0+scroll, 640-scroll, 480+scroll ] );
+		scroll += 0.2;
+		yield;
+	}
+
+	CloseScript(GetOwnScriptID());
+}

@@ -1,0 +1,147 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　スペカ前口上"]
+#Text["3面　スペカ前口上"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Hikariko.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HIKARIKO);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(45);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_HIKARIKO, true);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinBoss1, true);
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "…サエズッターは…[r]我ら鳥の妖怪の[ruby rb=\"叡智の集積場\" rt=\"　セファー・ラジエル\"]");
+			waitEx(180);
+			talk_type = 2;
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "互いに遠く離れていても、面識が無くとも、[r][ruby rb=\"古の記憶\" rt=\"　アーカイヴ\"]より再現した[ruby rb=\"この技\" rt=\"　スペル\"]を見よ！");
+			SetCharge();
+			waitEx(240);
+			talk_type = 2;
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+task SetCharge()
+{
+	waitObj(objEnemy, 120);
+	// 開幕
+	BossCharge(objEnemy);
+	SetAction(objEnemy, ACT_SHOT1, 60*120);
+	MoveTo(objEnemy, CenX, CenY, 120);
+
+	let ba = rand(0, 360);
+	descent(i in 0 .. 9)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 1000, ba+i*4*360/9, 0, 90+i*10);
+		waitObj(objEnemy, 10);
+	}
+}
+
+// 人魂
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.1);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, iniAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		SetMovePositionHermite(objFamilier, CenX, CenY, iniSpeed, iniAngle, iniSpeed, iniAngle+90*rand_dir(), iniValue);
+		waitObj(objFamilier, iniValue);
+		EraseEnemy(objFamilier);
+	}
+}

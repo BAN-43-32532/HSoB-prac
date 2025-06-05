@@ -1,0 +1,142 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["魔理沙エンディング-Bad"]
+#Text["魔理沙エンディング-Bad"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdBad[1][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 255, 108];
+	let COL2 = [108, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]吃下珠乌最后的攻击，魔理沙在七色的光芒中渐渐消失。 ", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]当她再次睁开眼睛的时候，却又是雪白的世界与没有塌掉的禁咒塔了。 ", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「唔，我没死吗？[r]这么说来……是时间卷回了？」 ", COL1);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「哎呀，明明是个古风的人类，生命力却这么顽强呢。」 ", COL2);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "[r]失去意识前所看到的梦幻般的景象，以及在醒来前所做的梦，她慢慢地，清晰地回忆起来了。 ", COL0);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "[r]坍塌的禁咒塔，将自己引向出口的谜之幻听。过去那个教会自己魔法的人。 ", COL0);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "[r]魔理沙感觉到，似乎是某种强大的力量保护了自己。 ", COL0);
+		}
+		case(7)
+		{
+			TEndingImage(imgEdBad[1][1], 30);
+			SetTalkEx(cutinDescri, "魔理沙[r]「这种程度的异变，就让你独立解决看看吧……是这个意思吗？」 ", COL1);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]作为星之魔法使，魔理沙醉心于研究通过占星预知未来。 ", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]或许一切都是她像预言家一样，做了一个与不久的将来相仿佛的梦吧。 ", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]若非如此……救了她的那个谜样的存在，再多露一面又何妨呢。 ", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]总之，敌人的弹幕见过一次了！[r]去吧魔理沙！[r]积极放雷，才能长命！ ", COL0);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.06　　喂——有人知道她去哪儿了吗？ ", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

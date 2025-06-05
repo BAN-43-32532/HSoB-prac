@@ -1,0 +1,727 @@
+//ステージ道中関連の処理
+#include "./lib_Chapter.dnh"
+#include "./lib_StageTitle.dnh"
+#include "./loadlib/file_LoadStgImg.dnh"
+#include "./lib_ChapterSkip.dnh"
+
+// 背景画像
+let STAGE_ID = -1;
+let NEXT_STAGE_ID = -1;
+let StageTimer = 0;
+
+let middleBossKilled = false;	// 中ボス撃破フラグ（早回し用）
+let flgStagePlural = 0;		// 連続再生終了フラグ
+let flgStopSetZako = false;	// 雑魚配置停止中
+
+// ---------------------------
+//  メイン処理
+// ---------------------------
+// 単体ステージ開始時に起動
+sub StageInit()
+{
+	init();
+	
+	if (GetScriptArgumentCount() > 0) { STAGE_ID = GetScriptArgument(0); }
+	//コモンデータ初期化（テストプレイ用）
+	if (!IsCommonDataAreaExists(CAREA_STAGE)) { CreateCommonDataArea(CAREA_STAGE); }
+	if (!IsCommonDataAreaExists(CAREA_CHAPTER)) { CreateCommonDataArea(CAREA_CHAPTER); }
+	//ステージID
+	SetAreaCommonData(CAREA_STAGE, "StageIndex", STAGE_ID );
+	//次のステージ
+	SetAreaCommonData(CAREA_STAGE, "NextStageIndex", NEXT_STAGE_ID);
+	//プラクティスフラグON
+	if (!IsReplay()) { CDM_SetPracticeStageFlag(GetPlayerTypeEx(), GetStageIndex()-1, Difficult()); }
+	// ItemBorderLine
+	DisplayBorderLine(79,0);
+	//弾消去範囲をリセット
+	InitDeleteClip();
+	//ショットデータ読み込み
+	LoadAllShotData();
+	//コモンデータリセット
+	SetAreaCommonData(CAREA_STAGE, "StageWishItem", 0);
+	SetAreaCommonData(CAREA_STAGE, "StageScene", 0);
+
+	//道中カウンター
+	TStageTimer();
+	//ラスワ用
+	ChapterInit();
+	SetLastWordBorder(STAGE_ID);
+	//デバッグ用
+//	TItemCountView();
+}
+
+//終了
+function StageEND()
+{
+	if (GetStageIndex() >= 0)
+	{
+		//アイテム全取得
+		CollectAllItems();
+		wait(30);
+		//クリアボーナス表示
+		StageBonus();
+		//Ex用（残機をスコアに変換）
+		if (Difficult == D_EXTRA) { StageBonusEx(); }
+		wait(180);
+		//  背景削除
+		NotifyEvent(GetStageBG_ID(), ev_CloseScript, 1);
+		wait(60);
+	}
+	// 不要な画像のアンロード
+//	UnoadStageAllTexture(STAGE_ID);
+
+	// プラクティスクリアフラグON
+	if (GetPlayMode() == GAME_PRACTICE || STAGE_ID == STAGE_EXTRA)
+	{
+		SetAreaCommonData(CAREA_SYSTEM, "ClearStage", true);
+	}
+	
+	// スコアを記録
+	AddStageScore(GetStageIndex(), GetScore());
+	
+	// 色々記録
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Score", GetScore());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Graze", GetGraze());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Death", GetAllDeathCount());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Difficult", Difficult());
+	
+	// ステージ終了処理
+	if ((GetPlayMode() != GAME_MAIN && GetPlayMode() != GAME_DEBUG) || !IsFinalStage())
+	{
+		wait(60);
+		
+		SetAreaCommonData(CAREA_SYSTEM, "PlayerPosition", [GetPlayerX, GetPlayerY]);	// 自機座標記録
+		CloseMine(0);	//終了
+	} else {
+		// 最終ステージ
+//		CloseMine(0);	//終了
+	}
+}
+
+// ステージ終了時のスコアを記録
+function AddStageScore(index, score)
+{
+	let tmpString = GetAreaCommonData(CAREA_STAGE, "StageScore", "");
+	
+	if (length(tmpString) > 0) { tmpString = tmpString ~ "|"; }
+	tmpString = tmpString ~
+		IntToString(index) ~ ":" ~ vtos("12.0f", score);
+	
+	SetAreaCommonData(CAREA_STAGE, "StageScore", tmpString);
+}
+
+// イベント
+sub StageEvent
+{
+	alternative(GetEventType())
+	case(ev_PluralClosed) { flgStagePlural++; }
+}
+
+
+//クリアボーナス
+task StageBonus()
+{
+	// ボーナス
+	let bonusScore = trunc( (Difficult()+1) * (GetStageIndex()^2) * 5000 ) * 1000;
+	
+	if (Difficult == D_EXTRA) {
+		// Exボーナス
+		if (GetPlayerWeapon() == WEAPON_BLACK) { bonusScore = GetMaxScore() * 7777; }
+		else if (IsRainbow()) { bonusScore = GetMaxScore() * 7777 / 2; }
+		else { bonusScore = GetMaxScore() * 7777 / 4; }
+		bonusScore = trunc(bonusScore/1000) * 1000;
+	} else if (IsFinalStage()) {
+		// 全クリ時
+		bonusScore *= 2;
+		if (GetPlayerWeapon() == WEAPON_BLACK) { bonusScore *= 5; }
+	}
+
+	TGainSpell_Bonus(CenX, 110, 195,
+		[0, 0, 256, 64]);
+	wait(15);
+	TGainSpell_Bonus(CenX, 160, 180,
+		[0, 64, 256, 128]);
+	wait(30);
+	local
+	{
+		let count = 10;
+		let keta_count = 0;
+		let wt = 150;
+		let score = bonusScore;
+			
+		let setY = 208;
+		let setX = CenX + trunc(trunc(log10(score))*17/2);
+		
+		score = min(score, 9999999990);
+		let listNum = DigitToArray(score, count);
+
+		descent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			if (num == -1) { break; }
+			if (keta_count > 2 && keta_count % 3 == 0 && iObj != 0)
+			{
+				setX += 8;
+				TGainSpell_Sub(setX, setY, 11, wt);
+				setX -= 14;
+				wt -= 3;
+				wait(3);
+			}
+			TGainSpell_Sub(setX, setY, num, wt);
+			setX -= 16;
+			wt -= 2;
+			wait(2);
+			keta_count++;
+		}
+	}
+	loop(100)
+	{
+		//スコア加算
+		AddScore(bonusScore/100);
+		wait(1);
+	}
+
+	// GetSpellCardBonus
+	task TGainSpell_Bonus(x, y, timer, imgPos)
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgSystemStgClear);
+		Obj_SetRenderPriorityI(obj, 71);
+		ObjSprite2D_SetSourceRect(obj, imgPos[0], imgPos[1], imgPos[2], imgPos[3]);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetPosition(obj, x, y, 0);
+
+		ascent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		loop(timer-15) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	// 得点部分（文字１つ）
+	task TGainSpell_Sub(x, y, num, timer)
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj, 6);
+		ObjPrim_SetTexture(obj, imgSystemNumber);
+		Obj_SetRenderPriorityI(obj, 71);
+		SetPrimNumber_Base(obj, 0, 0, -18, 18, 36);
+		SetPrimNumber(obj, 0, num);
+		ObjRender_SetX(obj, x);
+
+		ascent(i in 0 .. 25)
+		{
+			let tmp = (i+1)/25;
+			ObjRender_SetY(obj, y-sin(tmp*180)*24);
+			ObjRender_SetColor(obj, 255*tmp, 255*tmp, 255*tmp);
+			ObjRender_SetAlpha(obj, 255*tmp);
+			yield;
+		}
+		loop(timer-30) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+//クリアボーナス
+function StageBonusEx()
+{
+	loop(240) { yield; }
+
+	let bonusScore = 0;
+	let bonusScoreSp = 0;
+
+	alternative(DifficultEx())
+	case(D_EX_NORM)
+	{
+		if (IsRainbow() || GetPlayerWeapon() == WEAPON_BLACK) { bonusScore = 377777770; }
+		else { bonusScore = 77777770; }
+
+		if (IsRainbow() || GetPlayerWeapon() == WEAPON_BLACK) { bonusScoreSp = 77777770; }
+		else { bonusScoreSp = 17777770; }
+	}
+	case(D_EX_EASY)
+	{
+		if (IsRainbow() || GetPlayerWeapon() == WEAPON_BLACK) { bonusScore = 77777770; }
+		else { bonusScore = 17777770; }
+
+		if (IsRainbow() || GetPlayerWeapon() == WEAPON_BLACK) { bonusScoreSp = 17777770; }
+		else { bonusScoreSp = 3777770; }
+	}
+	case(D_EX_HARD)
+	{
+		if (IsRainbow() || GetPlayerWeapon() == WEAPON_BLACK) { bonusScore = 1777777770; }
+		else { bonusScore = 377777770; }
+
+		if (IsRainbow() || GetPlayerWeapon() == WEAPON_BLACK) { bonusScoreSp = 777777770; }
+		else { bonusScoreSp = 77777770; }
+	}
+
+	let bonucCountSc = GetPlayerLife();
+	let bonucCountSp = GetPlayerSpell();
+	
+	ascent(i in 0 .. bonucCountSc)
+	{
+		if (GetPlayerLife() > 0)
+		{
+			//スコア加算
+			AddScore(bonusScore);
+			SetPlayerLife(GetPlayerLife()-1);
+			CallSound(snd1UP);
+			loop(45) { yield; }
+		}
+	}
+	ascent(i in 0 .. bonucCountSp)
+	{
+		if (GetPlayerSpell() > 0)
+		{
+			//スコア加算
+			AddScore(bonusScoreSp);
+			SetPlayerSpell(GetPlayerSpell()-1);
+			CallSound(snd1UP);
+			loop(45) { yield; }
+		}
+	}
+}
+
+//ステージ終了処理
+sub My_CloseStageScene()
+{
+	FinalizeSystemCommonData();
+	CloseStgScene();
+}
+
+// ---------------------------
+//  フラグ管理
+// ---------------------------
+//カウンター
+task TStageTimer()
+{
+	let speedMod = GetAreaCommonData(CAREA_STAGE, "StageModification", 0 );
+	let addTimer = 1 + speedMod;
+	loop
+	{
+		StageTimer += addTimer;
+		wait(1);
+	}
+}
+
+//背景等の処理待ちフラグ
+function NextStageScene()
+{
+	SetAreaCommonData(CAREA_STAGE, "StageScene",
+		GetAreaCommonData(CAREA_STAGE, "StageScene", 0)+1);
+}
+
+//背景スクリプト起動
+function SetStageBackGround(filename)
+{
+	let idBG = LoadScript(filename);
+	StartScript(idBG);
+	SetAreaCommonData(CAREA_STAGE, "ScriptBackground", idBG);	//ID記録
+}
+
+//最後のステージ？
+function IsFinalStage()
+{
+	return(GetAreaCommonData(CAREA_STAGE, "NextStageIndex", -1) < 0);
+}
+
+// ---------------------------
+//  ボス関連
+// ---------------------------
+// ロード済みのボス出現
+function CallBoss()
+{
+	NotifyEventAll(ev_ResistBoss, 1);
+}
+function CallBoss2()
+{
+	NotifyEventAll(ev_ResistBoss2, 1);
+}
+function CallBoss3()
+{
+	NotifyEventAll(ev_ResistBoss3, 1);
+}
+// LoadScriptInThread → StartScript
+function StartScriptInThread(path)
+{
+	let idScript = LoadScriptInThread(path);
+	StartScriptDelay(idScript, 120);
+	return(idScript);
+}
+// ボスがいなくなってからロード開始
+task StartScriptInThreadWaitBoss(path)
+{
+	WaitForBossKilled();
+	let idScript = LoadScriptInThread(path);
+	StartScriptDelay(idScript, 120);
+//	return(idScript);
+}
+task StartScriptDelay(idScript, delay)
+{
+	wait(delay);
+	StartScript( idScript );
+}
+
+// ボス撃破待ち
+task CheckBossKilled()
+{
+	middleBossKilled = false;
+	
+	let tmpFlag = flgStagePlural;
+	while (flgStagePlural == tmpFlag) { wait(1); }
+	middleBossKilled = true;
+}
+
+
+// ---------------------------
+//  コモンデータ
+// ---------------------------
+//コモンデータ更新
+sub LoadSystemCommonData()
+{
+	if (IsReplay()) {
+		LoadCommonDataAreaFromReplayFile(CAREA_STAGE);
+		LoadCommonDataAreaFromReplayFile(CAREA_SYSTEM);
+		LoadCommonDataAreaFromReplayFile(CAREA_REPLAY);
+	} else {
+		SaveCommonDataAreaToReplayFile(CAREA_STAGE);
+		SaveCommonDataAreaToReplayFile(CAREA_SYSTEM);
+	}
+	// 初期値を設定
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", []);
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTextWait", 0);
+}
+//コモンデータ保存
+sub FinalizeSystemCommonData()
+{
+	if (IsReplay()) {
+	} else {
+		SaveCommonDataAreaToReplayFile(CAREA_REPLAY);
+	}
+}
+
+// ---------------------------
+//  その他ステージ関連
+// ---------------------------
+// ステージ用乱数
+let STAGE_SEED = 0;
+function randStage(min, max)
+{
+	STAGE_SEED++;
+	let tmp = ((STAGE_SEED^2*9491+19681)%65536)/65536;
+	return(min+(max-min)*tmp);
+}
+// ステージ用待機処理（sec秒間待機）
+function WaitRoad(frame)
+{
+	let wait_frame = StageTimer + frame;
+	while(StageTimer < wait_frame)
+	{
+		wait(1);
+	}
+}
+// 実時間で待機（短い時間だとイマイチ上手いこと動かない）
+// 10sec=586fくらい
+function WaitRoad_Time(wait_sec, save_id)
+{
+	if (IsReplay())
+	{
+		let wait_frame = GetAreaCommonData(CAREA_REPLAY, save_id, 60000);
+		wait(wait_frame);
+	}
+	else
+	{
+		let to_time2 = GetStageTime() + wait_sec*1000;
+		let to_time = GetStageTime() + wait_sec*1000;
+		let before_time = GetStageTime();
+		let limit_frame = wait_sec*75;
+		
+		let t = 0;
+		while(t < limit_frame)
+		{
+			// がっつり固まった場合(1sec以上)は適当に補正する（一時停止やらもこっち）
+			if (before_time+1000 < GetStageTime())
+			{
+				to_time += (GetStageTime()-before_time);
+				to_time -= trunc(1000/60);	// 1フレームぶんだけ戻す
+			}
+			if (GetStageTime() >= to_time)
+			{
+				break;
+			}
+			before_time = GetStageTime();
+			t++;
+			yield;
+		}
+		SetAreaCommonData(CAREA_REPLAY, save_id, t);	//リプレイ用に記録
+	}
+}
+function WaitRoad_Enemy(frame)
+{
+	let wait_frame = StageTimer + frame;
+	while(StageTimer <= wait_frame && length(GetAllEnemyID()) > 0)
+	{
+		wait(1);
+	}
+}
+function WaitForBossKilled()
+{
+	let tmpFlag = flgStagePlural;
+	while (flgStagePlural == tmpFlag) { wait(1); }
+}
+function WaitForMiddleBossKilled()
+{
+	while (!middleBossKilled) { wait(1); }
+}
+
+
+//　ItemBorderLine
+task DisplayBorderLine(layer,delay)
+{
+	if (GetPlayMode() == GAME_PRACTICE ||
+		(GetPlayMode() == GAME_MAIN && STAGE_ID == 1))
+	{
+		// アニメ
+	}
+}
+
+//----------------------------------------------------
+//ラスワ用用
+//----------------------------------------------------
+function GetChapterAllCount(STAGE)
+{
+	if (!(GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_NONE)) { return(-1); }
+	
+	alternative(STAGE)
+	case(1)	{ return(4 + 3 + 2 + [0,0,1,1][Difficult]); }
+	case(2)	{ return(4 + 2 + 3); }
+	case(3)	{ return(3 + 5 + 4); }
+	case(4)	{ return(5 + 1 + 3 + 4); }
+	case(5)	{ return(8 + 1 + 2 + 4 + 5); }
+	case(6)	{ return(6 + 5 + 7); }
+	case(7)	{ return(5 + 5 + 2 + 8 + 10); }
+	others	{ return(-1); }
+}
+task SetLastWordBorder(STAGE)
+{
+	let CHAPTER_ALL = GetChapterAllCount(STAGE);
+	if (CHAPTER_ALL <= 0) { return; }
+	
+	SetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_ALL", CHAPTER_ALL);
+	
+	let effX = 30;
+	let effY = 5;
+	let layFront = 90;
+	let GO_SHOOT = false;
+	
+	// ステージ6はフラグONOFFチェックするだけ
+	if (!(STAGE == 6 ||
+		(STAGE == 7 && GetPlayMode() == GAME_PRACTICE)))
+//		(STAGE == 7 && (DifficultEx() == D_EX_EASY || GetPlayMode() == GAME_PRACTICE))))
+	{
+		TEXT();
+		LITE();
+	}
+	
+	task TEXT()
+	{
+		let eX = effX + CHAPTER_ALL*6 + 4;
+		let eY = effY - 2;
+
+		while(!GetLastSpellEnable()) { yield; }
+		
+		_TEXT([eX, eY], [32, 24, 96, 36], [255, 255, 128], 0);
+
+		task _TEXT(pos, ipos, col, itype)
+		{
+			let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+			ObjPrim_SetTexture(objText, imgSystemChapter);
+			Obj_SetRenderPriorityI(objText, layFront);
+			ObjSprite2D_SetSourceRect(objText, ipos[0], ipos[1], ipos[2], ipos[3]);
+			ObjSprite2D_SetDestRect(objText, 0, 0, ipos[2]-ipos[0], ipos[3]-ipos[1]);
+			ObjRender_SetPosition(objText, pos[0], pos[1], 0);
+			ObjRender_SetBlendType(objText, BLEND_ALPHA);
+			
+			if (itype == 0)
+			{
+				let t = 0;
+				while(!GetAreaCommonData(CAREA_STAGE, "STAGE_LASTWORD", 0))
+				{
+					if (t < 60)
+					{
+						let tmp = GetCurve_d((t+1)/60);
+						ObjRender_SetAlpha(objText, tmp*255);
+					}
+					let add_c = (sin(t*15)+1)*64;
+					ObjRender_SetColor(objText, col[0]+add_c, col[1]+add_c, col[2]+add_c);
+					t++;
+					yield;
+				}
+				Obj_Delete(objText);
+				_TEXT(pos, [32, 40, 48, 52], [128, 128, 128], 1);
+			}
+			else if (itype == 1 || itype == 2 || itype == 3)
+			{
+				ascent(t in 0 .. 45)
+				{
+					let add_c = (sin(t*30)+1)*64;
+					ObjRender_SetColor(objText, col[0]+add_c, col[1]+add_c, col[2]+add_c);
+					yield;
+				}
+				Obj_Delete(objText);
+				if (itype == 1) {
+					_TEXT(pos, [48, 40, 64, 52], [128, 128, 128], 2);
+				} else if (itype == 2) {
+					_TEXT(pos, [64, 40, 80, 52], [128, 128, 128], 3);
+				} else {
+					_TEXT(pos, [80, 40, 128, 52], [128, 128, 128], 4);
+				}
+			}
+			else
+			{
+				GO_SHOOT = true;
+				
+				let st = 0;
+				ascent(t in 0 .. 120)
+				{
+					ObjRender_SetColorHSV(objText, st*10, 255, 255);
+					st++;
+					yield;
+				}
+				descent(t in 0 .. 30)
+				{
+					let tmp = GetCurve_d((t+1)/30);
+					ObjRender_SetAlpha(objText, tmp*255);
+					ObjRender_SetColorHSV(objText, st*10, 255, 160);
+					st++;
+					yield;
+				}
+				Obj_Delete(objText);
+			}
+
+		}
+	}
+
+	task LITE()
+	{
+		ascent(i in 0 .. CHAPTER_ALL)
+		{
+			LITE_single(i, i*2);
+		}
+		
+		task LITE_single(INDEX, delay)
+		{
+			waitEx(delay);
+			
+			let eX = effX + INDEX*6 + 4;
+			let eY = effY + 4;
+			
+			let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+			ascent(i in 0 .. 2)
+			{
+				ObjPrim_SetTexture(obj[i], imgSystemChapter);
+				Obj_SetRenderPriorityI(obj[i], layFront+i);
+				ObjRender_SetPosition(obj[i], eX, eY, 0);
+			}
+			ObjSprite2D_SetSourceRect(obj[0], 16, 32, 25, 41);
+			ObjSprite2D_SetDestRect(obj[0], 0-4, 0-4, 9-4, 9-4);
+			ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+			ObjSprite2D_SetSourceRect(obj[1], 0, 32, 9, 41);
+			ObjSprite2D_SetDestRect(obj[1], 0-4, 0-4, 9-4, 9-4);
+			ObjRender_SetBlendType(obj[1], BLEND_ADD_ARGB);
+			Obj_SetVisible(obj[1], false);
+			
+			let col = [255, 0, 0];
+			if (INDEX/CHAPTER_ALL >= 0.8) { col = [0, 255, 0]; }
+			else if (INDEX/CHAPTER_ALL >= 0.5) { let tmp = (INDEX/CHAPTER_ALL-0.5)/0.3; col = [255-tmp*255, 255, 0]; }
+			else { let tmp = INDEX/CHAPTER_ALL/0.5; col = [255, tmp*255, 0]; }
+			
+			let t = 0;
+			let now_score = 0;
+			while(GetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_SAFE", 0) <= INDEX
+				&& !GO_SHOOT)
+			{
+				if (t < 60)
+				{
+					let tmp = GetCurve_d((t+1)/60);
+					ascent(i in 0 .. 2)
+					{
+						ObjRender_SetAlpha(obj[i], tmp*255);
+						ObjRender_SetX(obj[i], eX+(1-tmp)*256);
+					}
+				}
+				t++;
+				yield;
+			}
+			if (GetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_SAFE", 0) > INDEX) { RaiseAnime(obj[1]); }
+			while(!GO_SHOOT)
+			{
+				if (t < 60)
+				{
+					let tmp = GetCurve_d((t+1)/60);
+					ascent(i in 0 .. 2)
+					{
+						ObjRender_SetAlpha(obj[i], tmp*255);
+						ObjRender_SetX(obj[i], eX+(1-tmp)*256);
+					}
+				}
+				if (GetLastSpellEnable())
+				{
+					let alpha = 32 + 320*max(0, sin(-t*5+INDEX*15)-0.5);
+					ObjRender_SetColor(obj[1], col[0]+alpha, col[1]+alpha, col[2]+alpha);
+				}
+				else
+				{
+					ObjRender_SetColor(obj[1], col[0], col[1], col[2]);
+				}
+				t++;
+				yield;
+			}
+			waitEx(delay*2);
+			EraseAnime(obj);
+			
+			task RaiseAnime(obj)
+			{
+				Obj_SetVisible(obj, true);
+				ascent(t in 0 .. 30)
+				{
+					let tmp = GetCurve_d((t+1)/30);
+					let sc = 6-tmp*5;
+					ObjRender_SetScaleXYZ(obj, sc, sc, 1);
+					ObjRender_SetAlpha(obj, tmp*255);
+					yield;
+				}
+			}
+			task EraseAnime(objs)
+			{
+				ascent(t in 0 .. 45)
+				{
+					let tmp = GetCurve_d((t+1)/45);
+					let sc = 1+tmp*5;
+					ascent(i in 0 .. length(objs))
+					{
+						ObjRender_SetScaleXYZ(objs[i], sc, sc, 1);
+						ObjRender_SetAlpha(objs[i], (1-tmp)*255);
+					}
+					yield;
+				}
+				ascent(i in 0 .. length(objs)) { Obj_Delete(objs[i]); }
+			}
+		}
+	}
+}

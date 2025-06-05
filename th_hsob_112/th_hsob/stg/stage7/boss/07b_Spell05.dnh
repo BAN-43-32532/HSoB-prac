@@ -1,0 +1,536 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["スペカ5"]
+#Text["スペカ5"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+let EXPLODE_OBJ = -1;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 95;
+	let SPELL_NAME = 4;
+	
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 400; }
+	else			{ bossDropItem = 150; }
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	//防御率再計算
+	SetMumeiDefence();
+
+	//初期設定
+	Boss_Init();
+	
+	InitMumei();
+
+	objEnemy = CreateBoss(BOSS_ID_MUMEI);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"07b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+	
+	// バーリアーｗｗｗｗｗ
+	TBombBarrierEx(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (MumeiEffect_GetContinue())
+	{
+		standBy(objEnemy, CenX, CenY-32, 240);
+		SetMumeiEffect(objEnemy, true);
+		waitObj(objEnemy, 60);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, CenY-32, 240+90);
+		waitObj(objEnemy, 60);
+		SetMumeiEffect(objEnemy, true);
+		SetAction(objEnemy, ACT_SHOT2, 120);
+		waitObj(objEnemy, 90);
+	}
+
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 30);
+	
+	BossChargeFire(objEnemy);
+	SetAction(objEnemy, ACT_SHOT1, 120);
+	TPine();
+	
+	let t = 0;
+	while(eAlive)
+	{
+		let to_x = [MinX+32, MaxX-32][t%2];
+		let to_y = CenX-64;
+		let to_x2 = [MinX+48, MaxX-48][t%2];
+		let to_y2 = CenX-32;
+		if (t == 0)
+		{
+			waitObj(objEnemy, 90);
+			if (!eAlive) { return; }
+			SetAction(objEnemy, ACT_SHOT3, 120);
+			CallSound(sndPower1);
+			waitObj(objEnemy, 120);
+			if (!eAlive) { return; }
+			MoveTo(objEnemy, to_x, to_y, 90);
+			SetAction(objEnemy, ACT_MOVE, 90);
+			waitObj(objEnemy, 90);
+		} else {
+			let wt = [300,300,300,150][t%4];
+			ThrowMove(to_x2, to_y2, 0);
+			CallSound(sndPower3);
+			waitObj(objEnemy, 120);
+			if (!eAlive) { return; }
+			/*
+			// ライフ50%で発狂
+			if (GetBossLifeRate(objEnemy) < 0.5 || GetBossTimer() <= 30)
+			{
+				MoveTo(objEnemy, to_x, to_y, 30);
+				SetAction(objEnemy, ACT_MOVE, 30);
+				waitObj(objEnemy, 30);
+				t++;
+				break;
+			}
+			*/
+			waitObj(objEnemy, wt-150);
+			if (!eAlive) { return; }
+			if (t%4 == 2) { BossChargeFire(objEnemy); }
+			MoveTo(objEnemy, to_x, to_y, 30);
+			SetAction(objEnemy, ACT_MOVE, 30);
+			waitObj(objEnemy, 30);
+		}
+		t++;
+	}
+	
+	/*
+	if (!eAlive) { return; }
+	BossChargeFire(objEnemy);
+	SetAction(objEnemy, ACT_SHOT3, 150);
+	CallSound(sndPower1);
+	waitObj(objEnemy, 60);
+	if (!eAlive) { return; }
+	CallSound(sndPower1);
+	waitObj(objEnemy, 60);
+
+	while(eAlive)
+	{
+		let to_x = [MinX+32, MaxX-32][t%2];
+		let to_y = CenX-64;
+		let to_x2 = [MinX+48, MaxX-48][t%2];
+		let to_y2 = CenX-32;
+		if (t == 0)
+		{
+			waitObj(objEnemy, 90);
+			if (!eAlive) { return; }
+			SetAction(objEnemy, ACT_SHOT3, 120);
+			CallSound(sndPower3);
+			CallSound(sndPower2);
+			waitObj(objEnemy, 120);
+			if (!eAlive) { return; }
+			MoveTo(objEnemy, to_x, to_y, 90);
+			SetAction(objEnemy, ACT_MOVE, 90);
+			waitObj(objEnemy, 90);
+		} else {
+			let wt = 150;
+			ThrowMove(to_x2, to_y2, 1);
+			CallSound(sndPower3);
+			waitObj(objEnemy, wt-30);
+			if (!eAlive) { return; }
+			MoveTo(objEnemy, to_x, to_y, 30);
+			SetAction(objEnemy, ACT_MOVE, 30);
+			waitObj(objEnemy, 30);
+		}
+		t++;
+	}
+	*/
+}
+
+task ThrowMove(to_x, to_y, shot_type)
+{
+	let timer = 45;
+	let bx = ObjMove_GetX(objEnemy);
+	let by = ObjMove_GetY(objEnemy);
+	let ba = atan2(to_y-by, to_x-bx);
+	let way = 24;
+	
+	SetAction(objEnemy, ACT_SHOT4, 120);
+	// ターゲットえへくと
+	ascent(i in 0 .. 5)
+	{
+		let tmp = (i+1)/5;
+		let ex = bx*(1-tmp) + to_x*tmp;
+		let ey = by*(1-tmp) + to_y*tmp;
+		TargetEffectDelay(ex, ey, 45, 30, 0.5+tmp*0.5, i*5);
+	}
+	waitObj(objEnemy, 60);
+	
+	if (!eAlive) { return; }
+	let objSpear = SetSpear(to_x, to_y, timer);
+	EXPLODE_OBJ = objSpear;
+	CallSound(sndShot4);
+	waitObj(objEnemy, 30);
+
+	if (!eAlive) { return; }
+	MoveToSlowdown(objEnemy, to_x, to_y, timer);
+	SetAction(objEnemy, ACT_SHOT5, timer+30);
+	SlashShot(bx-32*cos(ba), by-32*sin(ba), to_x+48*cos(ba), to_y+48*sin(ba), way, shot_type);
+//	SetAction(objEnemy, ACT_MOVE, timer);
+	waitObj(objEnemy, timer);
+	
+	if (!eAlive) { return; }
+//	SetAction(objEnemy, ACT_SHOT5, 30);
+	EraseEnemy(objSpear);
+}
+
+task SlashShot(bx, by, to_x, to_y, way, graphic_type)
+{
+	if (DifficultEx() == D_EX_EASY)
+	{
+		CallSound(sndShot1);
+		return;
+	}
+	
+	let px = GetPlayerX;
+	let py = GetPlayerY;
+	
+	let speed = 2;
+	let graphic = [BGW_KNIFE_RED, BGW_KNIFE_RED][graphic_type%2];
+	let delay = 60;
+	
+	let pr = ((px-(bx+to_x)/2)^2 + (py-(by+to_y)/2)^2)^0.5;
+	let vs = pr / speed;
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let tmp = i/(way-1);
+		let sx = bx*(1-tmp) + to_x*tmp;
+		let sy = by*(1-tmp) + to_y*tmp;
+		let vx = px - sx;
+		let vy = py - sy;
+		let muki = 1;
+		loop(2)
+		{
+			ascent(i in 0 .. 3)
+			{
+				let pos = Rotate2D_XY(vx, vy, (i-1)*15);
+				RefrectShot(sx+pos[0]/32*muki, sy+pos[1]/32*muki, pos[0]/vs*muki, pos[1]/vs*muki, graphic, 30, delay);
+			}
+//			RefrectShot(sx+vx/32*muki, sy+vy/32*muki, vx/vs*muki, vy/vs*muki, graphic, 30, delay);
+			muki = -muki;
+		}
+		CallSound(sndShot1);
+		delay--;
+		yield;
+//		if (i%2 == 1) { delay--; yield; }
+	}
+	
+	task RefrectShot(x, y, vx, vy, graphic, delay, timer)
+	{
+		let objS = My_CreateShotB1(x, y, vx/60, vy/60, graphic, delay);
+		ObjMove_AddPatternB2(objS, timer, NO_CHANGE, NO_CHANGE, vx/60, vy/60, vx, vy);
+		// 反射はやめとこ
+		return;
+		wait(timer);
+		
+		let t = 0;
+		while(!Obj_IsDeleted(objS))
+		{
+			if (ObjMove_GetY(objS) < MinY)
+			{
+				let tmp = min(1, (t+1)/60);
+				vy = -vy;
+				My_CreateShotB2(ObjMove_GetX(objS), MinY*2-ObjMove_GetY(objS), vx*tmp, vy*tmp, vx/60, vy/60, vx, vy, graphic, 0);
+				CallSound(sndBulletBreak);
+				Obj_Delete(objS);
+				return;
+			}
+			t++;
+			yield;
+		}
+	}
+}
+// YARI
+function SetSpear(toX, toY, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_WHITE;
+	let iniAngle = atan2(toY-ObjMove_GetY(objEnemy), toX-ObjMove_GetX(objEnemy));
+	
+	let objFamilier = MakeEnemyFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 999999, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 1);	// ボスと体力連動
+	DrawMumeiSpear(objFamilier, iniAngle, 24);
+	TAct();
+	return(objFamilier);
+	
+	task TAct()
+	{
+		TMove();
+		WaitForKilledFamilier(objFamilier, 8, 0);
+		ZakoFinalize(objFamilier, eColor);
+	}
+	
+	task TMove()
+	{
+		MoveToSlowdown(objFamilier, toX, toY, iniTimer);
+		waitObj(objFamilier, iniTimer);
+		EXPLODE_OBJ = -1;
+	}
+}
+
+task TPine()
+{
+	let speed = 0.75;
+	let angle = 90;
+	let way = 4;
+	let st = 0;
+	
+	while(st <= 3)
+	{
+		let tmp_offset = st%2;
+		let offset_y = max(0,3-st);
+		let timer = 120 + 15*offset_y;
+		ascent(i in 0 .. way-tmp_offset)
+		{
+			let tmp = (i+tmp_offset/2)/(way-1);
+			let ex = MinX + GetClipWidth*(0.05 + tmp*0.9);
+			let ey = MinY-48 + offset_y * 96;
+			if ((ex-ObjMove_GetX(objEnemy))^2 + (ey-ObjMove_GetY(objEnemy))^2 > 6000)
+			{
+				PineApplePen(ex, ey, speed, angle, timer);
+			}
+		}
+		waitObj(objEnemy, 15);
+		st++;
+	}
+	waitObj(objEnemy, 150-15);
+	while(eAlive)
+	{
+		let tmp_offset = st%2;
+		let offset_y = 0;
+		let timer = 120 + 15*offset_y;
+		ascent(i in 0 .. way-tmp_offset)
+		{
+			let tmp = (i+tmp_offset/2)/(way-1);
+			let ex = MinX + GetClipWidth*(0.05 + tmp*0.9);
+			let ey = MinY-48 + offset_y * 75;
+			if ((ex-ObjMove_GetX(objEnemy))^2 + (ey-ObjMove_GetY(objEnemy))^2 > 6000)
+			{
+				PineApplePen(ex, ey, speed, angle, timer);
+			}
+		}
+		
+		waitObj(objEnemy, 150);
+		st++;
+	}
+}
+
+task PineApplePen(x, y, speed, angle, timer)
+{
+	let uchi_r = [96, 9999, 96][DifficultEx()];
+	let eLife = 1000000;
+	let objS = PorcelainEnemy(x, y, PORCELAIN_POT, 18, 60, eLife, 1);
+	ObjMove_SetAngle(objS, angle+180);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	let objE = Obj_GetValueD(objS, "E_OBJ", -1);
+	ObjEnemy_SetDamageRate(objE, 0, 0);
+//	ascent(i in 0 .. length(objImgAll)) { Obj_SetRenderPriorityI(objImgAll[i], GetShotRenderPriorityI()+1); }
+	TMove(objS, speed*cos(angle), speed*sin(angle), timer);
+	
+	
+	task TMove(objS, vx, vy, timer)
+	{
+		let t = 0;
+		while(!Obj_IsDeleted(objS))
+		{
+			if (!IsTimeStopObj(objEnemy))	// 敵本体と同期する
+			{
+				let tmp = min(1, max(0, (t-timer)/120));
+				ObjMove_SetPosition(objS, ObjMove_GetX(objS)+vx*tmp, ObjMove_GetY(objS)+vy*tmp);
+				t++;
+			}
+			
+			// ばくはつするー
+			if (!Obj_IsDeleted(EXPLODE_OBJ))
+			{
+				if ((ObjMove_GetX(objS)-ObjMove_GetX(EXPLODE_OBJ))^2+((ObjMove_GetY(objS)-ObjMove_GetY(EXPLODE_OBJ))*2)^2 < 128^2)
+				{
+					EXPLODE(objS, vx, vy);
+					break;
+				}
+			}
+			if (!Obj_IsDeleted(objE))
+			{
+				if (ObjEnemy_GetInfo(objE, INFO_LIFE) <= eLife-175)
+				{
+					CallSound(sndFreeze);
+					Obj_SetRenderPriorityI(objImgAll[0], GetShotRenderPriorityI+2);
+					EraseEnemy(objE);
+					if (!CheckInPlayer(ObjMove_GetX(objE), ObjMove_GetY(objE), uchi_r))
+						{ EXPLODE_CHRYSTAL(ObjMove_GetX(objE), ObjMove_GetY(objE)); }
+				//	EXPLODE(objS, vx, vy);
+					break;
+				}
+			}
+			// 徐々にダメージが通るかんじ
+			let rate = min(1, max(0, ObjMove_GetY(objE)/GetClipHeight*2))*100;
+			ObjEnemy_SetDamageRate(objE, rate, rate);
+			waitObj(objS, 1);
+		}
+	}
+	task EXPLODE(objS, vx, vy)
+	{
+		let timer = 150;
+		let allert_timer = 45;
+		
+		let st = 0;
+		ascent(t in 0 .. timer)
+		{
+			if (Obj_IsDeleted(objS)) { break; }
+			if (st <= 0 && t < timer-15)
+			{
+				CallSound(sndShot2);
+				ascent(i in 0 .. 4) { LaserEffectSet(objS, 24, i*90, 20); }
+				st = max(5, ceil(allert_timer));
+				allert_timer *= 0.65;
+			}
+			let tmp = 1 - t/timer;
+			let tmp_c = 64 - (trunc(t/2)%3)*64 +tmp*192;
+			ObjMove_SetPosition(objS, ObjMove_GetX(objS)+vx*tmp, ObjMove_GetY(objS)+vy*tmp);
+			ascent(i in 0 .. length(objImgAll)) { ObjRender_SetColor(objImgAll[i], 255, tmp_c, tmp_c); }
+			st--;
+			waitObj(objS, 1);
+		}
+		if (!Obj_IsDeleted(objS) && eAlive)
+		{
+			ascent(i in 0 .. 4) { EXPLODE_LASER(ObjMove_GetX(objS), ObjMove_GetY(objS), i*90); }
+			CallSound(sndShot1);
+		}
+		if (!Obj_IsDeleted(objS))
+		{
+			let objE = Obj_GetValueD(objS, "E_OBJ", -1);
+			Obj_SetRenderPriorityI(objImgAll[0], GetShotRenderPriorityI+2);
+			CallSound(sndFreeze);
+			EraseEnemy(objE);
+		}
+	//	Obj_Delete(objS);
+	}
+	
+	task EXPLODE_LASER(x, y, angle)
+	{
+		ascent(t in 0 .. 15)
+		{
+			if (!eAlive) { return; }
+			
+			let tmp = t/14;
+			let sx = x;
+			let sy = y;
+			let ss = 32-tmp*16;
+			let sa = angle;
+			let graphic = BGW_FIRE_BLUE;
+			let lw = 16+tmp*96;
+			
+			let objL = My_CreateLooseLaserA1(sx, sy, ss, sa, 480, lw, graphic, 0);
+			ObjLaser_SetIntersectionWidth(objL, lw*0.4);
+			ObjLaser_SetInvalidLength(objL, 120, 180);
+			
+			let objEffect = CreateLooseLaserA1(sx, sy, ss, sa, 480, lw*4, graphic, 0);
+			ObjShot_SetIntersectionEnable(objEffect, false);
+			ObjRender_SetColor(objEffect, 0, 0, 32);
+			ObjShot_SetItemChange(objEffect, false);
+			
+			yield;
+		}
+		EXPLODE_CHRYSTAL(x, y);
+	}
+	task EXPLODE_CHRYSTAL(x, y)
+	{
+		if (eAlive)
+		{
+			let speed = [3, 2.5, 3][DifficultEx()];
+			let sway = [7, 6, 7][DifficultEx()];
+			// ショットも発射
+			ascent(i in 0 .. 4)
+			{
+				let pos1 = [speed*cos(i*90), speed*sin(i*90)];
+				let pos2 = [speed*cos((i+1)*90), speed*sin((i+1)*90)];
+				ascent(j in 0 .. sway)
+				{
+					let tmp = j/(sway-1);
+					let vx = pos1[0]*(1-tmp) + pos2[0]*tmp;
+					let vy = pos1[1]*(1-tmp) + pos2[1]*tmp;
+					let objS = My_CreateShotB2(x, y, vx, vy, -vx/30, -vy/30, vx/8, vy/8, BGW_CHRYSTAL_M_WHITE, 15);
+					ObjMove_AddPatternB2(objS, 45, NO_CHANGE, NO_CHANGE, vx/360, vy/360, vx, vy);
+				//	Obj_SetRenderPriorityI(objS, GetShotRenderPriorityI-1);
+				}
+			}
+		}
+	}
+	
+	// 予告線
+	task LaserEffectSet(objS, r, a, timer)
+	{
+		ascent(t in 0 .. timer)
+		{
+			if (!eAlive || Obj_IsDeleted(objS)) { break; }
+			let tmp = GetCurve_d(t/(timer-1));
+			PineLaserEffect(objS, r*tmp, a+90, -90, 15);
+			PineLaserEffect(objS, r*tmp, a-90,  90, 15);
+			yield;
+		}
+	}
+	task PineLaserEffect(objS, r, a, offset_a, timer)
+	{
+		let objE = PineLaserEffectBase(ObjMove_GetX(objS), ObjMove_GetY(objS), a+offset_a, 600, EFF_BLUE, timer);
+		ObjRender_SetColor(objE, 0, 32, 96);
+		Obj_SetRenderPriorityI(objE, GetShotRenderPriorityI-1);
+		
+		let t = 0;
+		while(!Obj_IsDeleted(objE) && !Obj_IsDeleted(objS) && t < timer)
+		{
+			ObjRender_SetAlpha(objE, 255*(timer-t)/timer);
+			ObjMove_SetPosition(objE, ObjMove_GetX(objS)+r*cos(a), ObjMove_GetY(objS)+r*sin(a));
+			t++;
+			yield;
+		}
+		Obj_Delete(objE);
+	}
+	function PineLaserEffectBase(x, y, angle, l_length, color, timer)
+	{
+		let objDummy = CreateStraightLaserA1(x, y, angle, l_length, 6, timer, BGW_BEAM_E_RED+SHOT_COLOR[color], 0);
+		ObjStLaser_SetSource(objDummy, false);
+		ObjShot_SetAutoDelete(objDummy, false);
+		ObjShot_SetItemChange(objDummy, false);
+		ObjShot_SetIntersectionEnable(objDummy, false);
+		return(objDummy);
+	}
+}

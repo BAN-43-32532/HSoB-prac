@@ -1,0 +1,260 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　禁呪返し
+//　「偽りの月インパクト」
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+
+//　ｲﾝﾊﾟｸﾖ
+task Player04ZBomb(){
+	let spell		= ObjSpell_Create();
+	let se			= ObjSound_Create();
+	let allEnm		= GetAllEnemyID();
+	let frame		= 0;
+	let bombTm		= 60 * 3.5;	// 480F
+	let lpmax		= [ length(allEnm), 3 ];
+	let waitTime	= 2;
+	let callTime	= waitTime * ( lpmax[0] * lpmax[1] );	// 320F
+	let pang = GetPlayerAngle();
+
+	//　無敵
+	ResetPlayerInvincibility( bombTm + 240 );
+	// Zボム開始通知
+	SetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", true );
+	// カットイン
+	if (!IsRainbow())
+	{
+		SetAreaCommonData(CAREA_SYSTEM, "PACKAGE_CUTIN", true );
+		SetAreaCommonData(CAREA_SYSTEM, "PACKAGE_CUTIN_ID", 3 );
+	}
+	// 効果音
+	ObjSound_Play( PlayerEnviron_SE[8] );
+	
+	// 1f待機
+	yield;
+	
+	ZBombArea( bombTm+60 );
+	
+	ObjSound_Play( PlayerEnviron_SE[4] );
+	ObjSound_Play( PlayerEnviron_SE[9] );
+	
+	//　ダメージはここね
+	ObjSpell_SetDamage( spell, 4 );
+	ObjSpell_Regist( spell );
+	
+	Zbomb04_Effect01( bombTm-30 );
+	
+	while( IsPermitPlayerSpell() && frame < bombTm ){
+
+		// 霊撃位置を記録
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_POS", [CenX, CenY]);
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_SIZE", 384);
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_LV", GetZSpellLevel());
+		
+		// アイテム化
+		DeleteShotAll_ToZItem(CenX, CenY, 384);
+
+		if (frame < 130) {
+			//　ダメージ
+			ObjSpell_SetDamage( spell, GetZSpellDamage()*1.66 );
+			// 攻撃範囲
+			let angle = -90+pang;
+			let wid = sin((frame+1)/110*90) * 80;
+			ObjSpell_SetIntersectionLine( spell, GetPlayerX-64*cos(angle), GetPlayerY-64*sin(angle),
+				GetPlayerX+384*cos(angle), GetPlayerY+384*sin(angle), wid);
+		} else {
+			//　ダメージ
+			ObjSpell_SetDamage( spell, GetZSpellDamage()*2 );
+			// 攻撃範囲
+			ObjSpell_SetIntersectionCircle( spell, CenX, CenY, 384 );
+			// 画面揺れ
+			let r = (1-(frame-130)/(bombTm-130)) * 24;
+			Set2DCameraFocusX( GetStgFrameWidth()/2 + randEffect(-r,r) );
+			Set2DCameraFocusY( GetStgFrameHeight()/2 + randEffect(-r,r) );
+		}
+
+		if (frame == 130)
+		{
+			// 効果音
+			ObjSound_Play( PlayerEnviron_SE[7] );
+		}
+
+		frame++;
+		yield;
+	}
+	// 初期化
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_SIZE", 0);
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_LV", 0);
+
+	Set2DCameraFocusX( GetStgFrameWidth()/2 );
+	Set2DCameraFocusY( GetStgFrameHeight()/2 );
+	DeleteShotInCircle( TYPE_SHOT, TYPE_ITEM, GetPlayerX(), GetPlayerY(), 512 );
+	ObjSound_Play( PlayerEnviron_SE[3] );
+	Obj_Delete( spell );
+	Obj_Delete( se );
+
+	// Zボム終了通知
+	SetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false );
+}
+
+
+//　月
+task Zbomb04_Effect01( v_time ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let path	= imgPlZbomb4a;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let scale	= [ 1, 1 ];
+	
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 31 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 512, 512 );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	Zbomb04_Effect03( imgPlZbombBg2, obj, 32, [512,512], [0,0], BLEND_ADD_ARGB, [255,64,255,32], v_time );
+	
+	while( frame < v_time ){
+		move1 = 1 * sin( moveA );
+		let spos = [
+			CenX + move1*256 * cos( 270 ),
+			MaxY + move1*256 * sin( 270 ),
+		];
+		let sca = [
+			scale[0]/2 + move1*(scale[0]/2),
+			scale[1]/2 + move1*(scale[1]/2),
+		];
+		
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, sca[0], sca[1], 0 );
+		ObjRender_SetAlpha( obj, move1*255 );
+		
+		if( frame%2 == 0 ){
+			Zbomb04_Effect02( obj, BLEND_ALPHA, 90, 256-move1*256, sca, 64 );
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.5; }
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		let spos = [
+			ObjRender_GetX(obj) + move1 * cos( 270 ),
+			ObjRender_GetY(obj) + move1 * sin( 270 ),
+		];
+		let sca = [
+			move1 * (scale[0]*8),
+			move1 * (scale[1]*8),
+		];
+		
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*255 );
+		
+		if( frame%2 == 0 ){
+			Zbomb04_Effect02( obj, BLEND_ADD_ARGB, 90, 0, sca, 32 );
+		}
+		
+		frame++;
+		moveA += 1;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+task Zbomb04_Effect02( v_obj, v_blend, v_angle, v_spd, v_scale, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let path	= imgPlZbomb4b;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, ObjRender_GetX(v_obj), ObjRender_GetY(v_obj), 0 );
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 31 );
+	ObjRender_SetBlendType( obj, v_blend );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 512, 512 );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		let spos = [
+			ObjRender_GetX(obj) + move1*v_spd * cos( v_angle ),
+			ObjRender_GetY(obj) + move1*v_spd * sin( v_angle ),
+		];
+		
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, v_scale[0], v_scale[1], 0 );
+		ObjRender_SetAlpha( obj, v_alpha - move1*v_alpha );
+		
+		moveA += 2;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　頂点数を奇数するときもくなるよ
+task Zbomb04_Effect03( v_path, v_obj, v_vertex, v_dist, v_angleZArray, v_blend, v_rgba, v_frame ){
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1		= 0;
+	let moveA		= 0;
+	let ang			= 0;
+	let pc			= 0;
+	let i			= 0;
+	let frame		= 0;
+	
+	//　スクロール
+	let scr			= 0;
+	let scrCr		= 0;
+	
+	//　Ｎ角形 + 中心点 + 円になる時の余分な点
+	let ten			=  v_vertex + 1 + 1 ;
+	//　回転の早さ
+	let ang_plus	= v_angleZArray[1];
+	
+	ObjPrim_SetTexture(obj, v_path);
+	Obj_SetRenderPriorityI(obj, 31);
+	ObjRender_SetBlendType(obj, v_blend);
+	ObjRender_SetAngleXYZ(obj, 0, 0, v_angleZArray[0]);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLEFAN);
+	ObjPrim_SetVertexCount(obj, ten);
+	ObjRender_SetAlpha(obj, v_rgba[3]);
+	
+	XFramedDelete( obj, [1,1,0], v_rgba[3], v_frame );
+	
+	while( frame < v_frame ){
+		move1 = 1 * sin( moveA );
+		
+		let pos = [ ObjRender_GetX(v_obj), ObjRender_GetY(v_obj) ];
+		ObjRender_SetPosition(obj, pos[0], pos[1], 0 );
+		
+		//　中心となる点　ここから順番に頂点が結ばれていく
+		ObjPrim_SetVertexPosition(obj, 0, 0, 0, 0);
+		ObjPrim_SetVertexUVT(obj, 0, 0, 0-scr);
+		ObjPrim_SetVertexColor(obj, 0, v_rgba[0], v_rgba[1], v_rgba[2]);
+		
+		//　0番目を除いた、残りの頂点設定
+		loop( v_vertex+1 ){
+			ObjPrim_SetVertexPosition(obj, 1+i, move1*v_dist[0] * cos(pc+ang), move1*v_dist[1] * sin(pc+ang), 0);
+			ObjPrim_SetVertexUVT(obj, 1+i, 0+2048, 0+2048*sin(pc)-scr);
+			ObjPrim_SetVertexColor(obj, 1+i, v_rgba[0], v_rgba[1], v_rgba[2]);
+			
+			pc		+= 360/v_vertex;
+			i++;
+		}
+		pc			= 0;
+		i			= 0;
+		
+		ang += ang_plus;
+		if( move1 < 1 ){ moveA += 2; }
+		if( scrCr%2 == 0 ){ scr -= 32; }
+		scrCr++;
+		frame++;
+		
+		yield;
+	}
+	Obj_Delete(obj);
+}

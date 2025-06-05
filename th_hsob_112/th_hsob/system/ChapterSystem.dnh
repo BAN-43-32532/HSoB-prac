@@ -1,0 +1,609 @@
+// ---------------------------
+//  チャプター関連
+// ---------------------------
+#include "./lib/lib_Common.dnh"
+#include "../lib/lib_Common.dnh"
+#include "../lib/lib_Item.dnh"
+#include "../lib/loadlib/file_character.dnh"
+
+let CHAPTER_ROAD = 0;
+let CHAPTER_BOSS = 1;
+let CHAPTER_SPELL = 2;
+let CHAPTER_INTERVAL = 3;
+
+let SPELL_FLAG = 0;
+
+@Initialize
+{
+	ChapterReset();
+}
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_ShootdownPlayer)
+	{
+		if (!ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID(), INFO_IS_LAST_SPELL))
+		{
+			// 被弾
+			AddAreaCommonData(CAREA_SYSTEM, "AllDeathCount", 1);
+			// チャプター用
+			AddAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 1);
+		}
+	}
+	case(ev_ChapterStart)
+	{
+		// チャプター開始
+		if (GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_DEBUG)
+			{ ChapterStart(); }
+	}
+	case(ev_ChapterReset)
+	{
+		if (GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_DEBUG)
+			{ ChapterReset(); }
+	}
+	case(ev_StartSpell)
+	{
+		SPELL_FLAG++;
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// ---------------------------
+//  チャプター開始
+// ---------------------------
+task ChapterStart()
+{
+	let priortyChapter = 70;
+	let priortyChapterFront = 91;
+	
+	ChapterSave();	// 前回の履歴保存
+	
+	let chapterID = GetAreaCommonData(CAREA_STAGE, "tmpChapterID", "");
+	let chapterType = GetAreaCommonData(CAREA_STAGE, "tmpChapterType", 0);
+	let chapterEnmID = GetAreaCommonData(CAREA_STAGE, "tmpChapterEnmID", "");
+	let chapterEnmTexture = GetAreaCommonData(CAREA_STAGE, "tmpChapterEnmTexture", 0);
+
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterID", "");
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterType", 0);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmID", "");
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmTexture", 0);
+
+	SetAreaCommonData(CAREA_STAGE, "ChapterID", chapterID);
+	SetAreaCommonData(CAREA_STAGE, "ChapterType", chapterType);
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownCount", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownMax", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterSpellCount", 0);
+	
+	// 今回の履歴ロード
+	ChapterLoad(GetAreaCommonData(CAREA_STAGE, "ChapterID", ""), Difficult(), GetPlayerType());
+	
+	let flgChapter = true;
+	let base_delay = 180;
+	
+	let setX = MaxX;
+	let setY = MinY;
+	let to_setX = 530;
+	let to_setY = 255;
+	
+	let danger_rate = 0;
+	if (GetAreaCommonData(CAREA_STAGE, "ALL_ChapterCount", 0) > 0)
+	{
+		danger_rate = GetAreaCommonData(CAREA_STAGE, "ALL_ChapterDeath", 0) / GetAreaCommonData(CAREA_STAGE, "ALL_ChapterCount", 0);
+	}
+
+	// 危険度レベル
+	let caution_level = 0;
+	if (danger_rate >= 0.2) { caution_level++; base_delay = 240; }
+	if (danger_rate >= 0.5) { caution_level++; base_delay = 240; }
+	// 文字
+	ChapterText(chapterEnmID, chapterEnmTexture, chapterType, 0);
+	ChapterText2(chapterEnmID, 10);
+	ChapterGauge(danger_rate, 10);
+	
+	while(GetAreaCommonData(CAREA_STAGE, "ChapterID", "") == chapterID)
+	{
+		yield;
+	}
+	flgChapter = false;
+	
+	// 文字のやつ
+	task ChapterText(enmID, texID, chapterType, delay)
+	{
+		let offsetX = 0;
+		let offsetY = -4;
+		
+		// 横表示の位置
+		let setX2 = 28;
+		let setY2 = 260;
+
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, GetChapterTexture(enmID));
+		Obj_SetRenderPriorityI(obj, priortyChapter);
+		ObjSprite2D_SetSourceRect(obj, 0, 0+24*(texID+1), 256, 24+24*(texID+1));
+		ObjSprite2D_SetDestRect(obj, -256, 0, 0, 24);
+		ObjRender_SetPosition(obj, setX+offsetX, setY+offsetY, 0);
+
+		if (chapterType == CHAPTER_SPELL)
+		{
+			let t = 0;
+			let tmp_flg = SPELL_FLAG;
+			Obj_SetVisible(obj, false);
+			while(t < delay || (tmp_flg == SPELL_FLAG && flgChapter))
+			{
+				t++;
+				yield;
+			}
+			Obj_SetVisible(obj, true);
+		}
+		else
+		{
+			Obj_SetVisible(obj, false);
+			waitEx(delay);
+			Obj_SetVisible(obj, true);
+			descent(t in 0 .. 30)
+			{
+				if (!flgChapter) { break; }
+				let tmp = sin(t/30*90);
+				ObjRender_SetX(obj, setX+offsetX+256*tmp);
+				yield;
+			}
+			loop(base_delay-delay)
+			{
+				if (!flgChapter) { break; }
+				yield;
+			}
+			ascent(t in 0 .. 15)
+			{
+				if (!flgChapter) { break; }
+				let tmp = sin(t/15*90);
+				ObjRender_SetY(obj, setY+offsetY-96*tmp);
+				yield;
+			}
+		}
+		ObjRender_SetAngleZ(obj, 90);
+		ObjRender_SetX(obj, setX2);
+		Obj_SetRenderPriorityI(obj, priortyChapterFront);
+		descent(t in 0 .. 45)
+		{
+			let tmp = sin(t/45*90);
+			ObjRender_SetY(obj, setY2+offsetX-384*tmp);
+			yield;
+		}
+		while(flgChapter) { yield; }
+		descent(t in 0 .. 30)
+		{
+			ObjRender_SetAlpha(obj, (t+1)/30*255);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	// 「危険度」
+	task ChapterText2(enmID, delay)
+	{
+		let offsetX = -90;
+		let offsetY = 16;
+		
+		// 横表示の位置
+		let setX2 = 28;
+		let setY2 = 260+160;
+
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, GetChapterTexture(enmID));
+		Obj_SetRenderPriorityI(obj, priortyChapter);
+		ObjSprite2D_SetSourceRect(obj, 192, 0, 256, 24);
+		ObjSprite2D_SetDestRect(obj, -64-8, 0, -8, 24);
+		ObjRender_SetPosition(obj, setX+offsetX, setY+offsetY, 0);
+
+		if (chapterType == CHAPTER_SPELL)
+		{
+			let t = 0;
+			let tmp_flg = SPELL_FLAG;
+			Obj_SetVisible(obj, false);
+			while(t < delay || (tmp_flg == SPELL_FLAG && flgChapter))
+			{
+				t++;
+				yield;
+			}
+			Obj_SetVisible(obj, true);
+		}
+		else
+		{
+			Obj_SetVisible(obj, false);
+			waitEx(delay);
+			Obj_SetVisible(obj, true);
+			descent(t in 0 .. 30)
+			{
+				if (!flgChapter) { break; }
+				let tmp = sin(t/30*90);
+				ObjRender_SetX(obj, setX+offsetX+256*tmp);
+				yield;
+			}
+			loop(base_delay-delay)
+			{
+				if (!flgChapter) { break; }
+				yield;
+			}
+			ascent(t in 0 .. 15)
+			{
+				let tmp = sin(t/15*90);
+				ObjRender_SetY(obj, setY+offsetY-96*tmp);
+				yield;
+			}
+		}
+		ObjRender_SetAngleZ(obj, 90);
+		ObjRender_SetX(obj, setX2);
+		Obj_SetRenderPriorityI(obj, priortyChapterFront);
+		descent(t in 0 .. 45)
+		{
+			if (!flgChapter) { break; }
+			let tmp = sin(t/45*90);
+			ObjRender_SetY(obj, setY2+offsetX-384*tmp);
+			yield;
+		}
+		while(flgChapter) { yield; }
+		descent(t in 0 .. 30)
+		{
+			ObjRender_SetAlpha(obj, (t+1)/30*255);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	// 危険度ゲージ
+	task ChapterGauge(danger_rate, delay)
+	{
+		let offsetX = -82;
+		let offsetY = 16;
+		let gaugeX = 9;
+		
+		// 横表示の位置
+		let setX2 = 28;
+		let setY2 = 260+78;
+
+		let obj = [];
+		ascent(i in 0 .. 10)
+		{
+			// ゲージ中
+			let tmp_obj = ObjPrim_Create(OBJ_SPRITE_2D);
+			ObjPrim_SetTexture(tmp_obj, imgSystemChapter);
+			Obj_SetRenderPriorityI(tmp_obj, priortyChapter);
+			ObjSprite2D_SetSourceRect(tmp_obj, 80, 0, 96, 24);
+			ObjSprite2D_SetDestRect(tmp_obj, -16, 0, 0, 24);
+			ObjRender_SetPosition(tmp_obj, setX+offsetX+gaugeX*i, setY+offsetY, 0);
+			Obj_SetVisible(tmp_obj, false);
+			obj = obj ~ [tmp_obj];
+		}
+		ascent(i in 0 .. 10)
+		{
+			// ゲージ枠
+			let tmp_obj = ObjPrim_Create(OBJ_SPRITE_2D);
+			ObjPrim_SetTexture(tmp_obj, imgSystemChapter);
+			Obj_SetRenderPriorityI(tmp_obj, priortyChapter);
+			ObjSprite2D_SetSourceRect(tmp_obj, 64, 0, 80, 24);
+			ObjSprite2D_SetDestRect(tmp_obj, -16, 0, 0, 24);
+			ObjRender_SetPosition(tmp_obj, setX+offsetX+gaugeX*i, setY+offsetY, 0);
+			obj = obj ~ [tmp_obj];
+		}
+
+		if (chapterType == CHAPTER_SPELL)
+		{
+			let t = 0;
+			let tmp_flg = SPELL_FLAG;
+			ascent(i in 0 .. 20) { Obj_SetVisible(obj[i], false); }
+			while(t < delay || (tmp_flg == SPELL_FLAG && flgChapter))
+			{
+				t++;
+				yield;
+			}
+			ascent(i in 10 .. 20) { Obj_SetVisible(obj[i], true); }	// 枠のみ表示
+		}
+		else
+		{
+			ascent(i in 0 .. length(obj)) { Obj_SetVisible(obj[i], false); }
+			waitEx(delay);
+			ascent(i in 10 .. 20) { Obj_SetVisible(obj[i], true); }	// 枠のみ表示
+
+			descent(t in 0 .. 30)
+			{
+				if (!flgChapter) { break; }
+				let tmp = sin(t/30*90);
+				let ix = setX+offsetX+256*tmp;
+				ascent(i in 0 .. 10) { ObjRender_SetX(obj[i], ix+gaugeX*i); ObjRender_SetX(obj[i+10], ix+gaugeX*i); }
+				yield;
+			}
+			CheckDangerLine();	// 危険度ゲージ増加
+			loop(base_delay-delay)
+			{
+				if (!flgChapter) { break; }
+				yield;
+			}
+			ascent(t in 0 .. 15)
+			{
+				if (!flgChapter) { break; }
+				let tmp = sin(t/15*90);
+				let iy = setY+offsetY-96*tmp;
+				ascent(i in 0 .. 10) { ObjRender_SetY(obj[i], iy); ObjRender_SetY(obj[i+10], iy); }
+				yield;
+			}
+		}
+		ascent(i in 0 .. length(obj))
+		{
+			ObjRender_SetAngleZ(obj[i], 90);
+			ObjRender_SetX(obj[i], setX2);
+			Obj_SetRenderPriorityI(obj[i], priortyChapterFront);
+		}
+		ascent(i in 0 .. 10)
+		{
+			ObjRender_SetBlendType(obj[i], BLEND_ADD_ARGB);
+		}
+		descent(t in 0 .. 45)
+		{
+			if (!flgChapter) { break; }
+			let tmp = sin(t/45*90);
+			let iy = setY2-384*tmp;
+			ascent(i in 0 .. 10) { ObjRender_SetY(obj[i], iy+gaugeX*i); ObjRender_SetY(obj[i+10], iy+gaugeX*i); }
+			yield;
+		}
+		if (chapterType == CHAPTER_SPELL) { CheckDangerLine(); }	// スペカの場合はこっちで
+		while(flgChapter) { yield; }
+		descent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ascent(i in 0 .. 10) { ObjRender_SetAlpha(obj[i], tmp^2*255); ObjRender_SetAlpha(obj[i+10], tmp^0.5*255); }
+			yield;
+		}
+		ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+		
+		task CheckDangerLine()
+		{
+			let ct = ceil(danger_rate*10);
+			if (flgChapter && IsChapterAlert())
+			{
+				// キケンダヨ！
+				if (caution_level > 1)
+				{
+					ChapterAlertEffect(caution_level, 15, 1, 15);
+					ChapterAlertEffect(caution_level, -30, -1, 30);
+					waitEx(30);
+					CallSound(sndChapterDanger);
+				}
+				else if (caution_level > 0)
+				{
+					ChapterAlertEffect(caution_level, 15, 1, 15);
+					waitEx(30);
+					CallSound(sndChapterCaution);
+				}
+			}
+			ascent(t in 0 .. 10)
+			{
+				if (t <= ct)
+				{
+					let c = [120, 105, 90, 80, 60, 40, 20, 0, 0, 0][t];
+					ascent(i in 0 .. 10) { ObjRender_SetColorHSV(obj[i], c, 224, 210); }
+					ascent(i in 0 .. t+1) { Obj_SetVisible(obj[i], true); }
+				}
+				waitEx(4);
+			}
+		}
+	}
+	// あぶないよ！
+	task ChapterAlertEffect(caution_level, angle, muki, delay)
+	{
+		waitEx(delay);
+		let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		Obj_SetRenderPriorityI(obj[0], 31);
+		Obj_SetRenderPriorityI(obj[1], 31-1);
+		Obj_SetRenderPriorityI(obj[2], priortyChapterFront);
+		Obj_SetVisible(obj[2], false);	// 外枠のみ表示はめんどい仕様になったので一旦非表示
+		ascent(i in 0 .. 3)
+		{
+			ObjPrim_SetTexture(obj[i], imgSystemChapter);
+			ObjSprite2D_SetSourceRect(obj[i], 512, 192, -512, 224);
+			ObjSprite2D_SetDestRect(obj[i], 512, -16, -512, 16);
+			ObjRender_SetAngleZ(obj[i], angle);
+		}
+		ObjRender_SetPosition(obj[0], CenX, CenY, 0);
+		ObjRender_SetPosition(obj[1], CenX+cos(angle+90)*2, CenY+sin(angle+90)*2, 0);
+		ObjRender_SetPosition(obj[2], CenX+GetStgFrameLeft, CenY+GetStgFrameTop, 0);
+		ObjRender_SetBlendType(obj[0], BLEND_ADD_ARGB);
+		ObjRender_SetBlendType(obj[1], BLEND_SUBTRACT);
+		ObjRender_SetBlendType(obj[2], BLEND_SUBTRACT);
+		if (caution_level > 1)
+		{
+			// danger
+			ObjRender_SetColor(obj[0], 255, 32, 32);
+			ObjRender_SetColor(obj[1], 128, 64, 64);
+			ObjRender_SetColor(obj[2], 255, 128, 128);
+		}
+		else
+		{
+			// caution
+			ObjRender_SetColor(obj[0], 255, 255, 32);
+			ObjRender_SetColor(obj[1], 128, 128, 64);
+			ObjRender_SetColor(obj[2], 255, 255, 128);
+		}
+
+		let frame = 0;
+		ascent(t in 0 .. 60)
+		{
+			let tmp = sin((t+1)/60*90);
+			ascent(i in 0 .. 3)
+			{
+				ObjSprite2D_SetSourceRect(obj[i], 512+frame*muki, 192, -512+frame*muki, 224);
+				ObjRender_SetAlpha(obj[i], tmp*255);
+			}
+			frame+=(1+(1-tmp)*6);
+			yield;
+		}
+		loop(base_delay-delay-60)
+		{
+			ascent(i in 0 .. 3)
+			{
+				ObjSprite2D_SetSourceRect(obj[i], 512+frame*muki, 192, -512+frame*muki, 224);
+			}
+			frame++;
+			yield;
+		}
+		descent(t in 0 .. 60)
+		{
+			let tmp = sin((t+1)/60*90);
+			ascent(i in 0 .. 3)
+			{
+				ObjSprite2D_SetSourceRect(obj[i], 512+frame*muki, 192, -512+frame*muki, 224);
+				ObjRender_SetAlpha(obj[i], tmp*255);
+			}
+			frame++;
+			yield;
+		}
+		ascent(i in 0 .. 3) { Obj_Delete(obj[i]); }
+	}
+}
+
+// ---------------------------
+//  チャプターリセット
+// ---------------------------
+function ChapterReset()
+{
+	ChapterSave();	// 前回の履歴保存
+	
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterID", "");
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterType", 0);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmID", "");
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterEnmTexture", 0);
+
+	SetAreaCommonData(CAREA_STAGE, "ChapterID", "");
+	SetAreaCommonData(CAREA_STAGE, "ChapterType", "");
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownCount", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownMax", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterSpellCount", 0);
+}
+
+// ---------------------------
+//  チャプター履歴保存
+// ---------------------------
+function ChapterSave()
+{
+// ラスワ条件用、こっちは履歴に保存しない
+	if (length(GetAreaCommonData(CAREA_STAGE, "ChapterID", "")) > 0)
+	{
+//		AddAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_ALL", 1);
+		if (GetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0) <= 0)
+		{
+			AddAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_SAFE", 1);
+		}
+	}
+	/*
+	WriteLog(GetAreaCommonData(CAREA_STAGE, "ChapterID", ""));
+	WriteLog(GetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_ALL", 0));
+	WriteLog(GetAreaCommonData(CAREA_STAGE, "STAGE_CHAPTER_SAFE", 0));
+	WriteLog(GetStageChapter_SafeRate());
+	*/
+
+// セーブデータ更新
+	if (IsReplay()) { return; }
+	
+	let chapterID = GetChapterIDName(GetAreaCommonData(CAREA_STAGE, "ChapterID", ""),
+		Difficult(), GetPlayerType());
+	if (length(chapterID) <= 0) { return; }
+	
+	// コモンデータロード
+	LoadCommonDataAreaA2(CAREA_CHAPTER, saveCommonCHAPTER);
+	
+	// [周回数,死亡数,取得数]
+	let chapter_data = GetAreaCommonData(CAREA_CHAPTER, chapterID, []);
+	while(length(chapter_data) < 4) { chapter_data = chapter_data ~ [0]; }
+	
+	// プレイ回数
+	chapter_data[0] = chapter_data[0] + 1;
+	// 被弾したか？
+	if (GetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0) > 0)
+	{
+		chapter_data[1] = chapter_data[1] + 1;
+	}
+	else
+	{
+		// 時空霊撃未使用
+		if (GetAreaCommonData(CAREA_STAGE, "ChapterSPModeCount", 0) <= 0) { chapter_data[2] = chapter_data[2] + 1; }
+		// スペカ使ってなければ取得扱い
+		if (GetAreaCommonData(CAREA_STAGE, "ChapterSpellCount", 0) <= 0) { chapter_data[3] = chapter_data[3] + 1; }
+	}
+	
+	// 保存
+	SetAreaCommonData(CAREA_CHAPTER, chapterID, chapter_data);
+	SaveCommonDataAreaA2(CAREA_CHAPTER, saveCommonCHAPTER);
+}
+
+function ChapterLoad(tmpID, tmpDifficult, tmpPlayer)
+{
+	let chapterID = GetChapterIDName(tmpID, tmpDifficult, tmpPlayer);
+	if (length(chapterID) <= 0) { return; }
+	
+	// コモンデータロード
+	LoadCommonDataAreaA2(CAREA_CHAPTER, saveCommonCHAPTER);
+	
+	// [周回数,死亡数,取得数]
+	let chapter_data = GetAreaCommonData(CAREA_CHAPTER, chapterID, []);
+	while(length(chapter_data) < 4) { chapter_data = chapter_data ~ [0]; }
+	
+	SetAreaCommonData(CAREA_STAGE, "ALL_ChapterCount", chapter_data[0]);
+	SetAreaCommonData(CAREA_STAGE, "ALL_ChapterDeath", chapter_data[1]);
+	SetAreaCommonData(CAREA_STAGE, "ALL_ChapterNoSPMode", chapter_data[2]);
+	SetAreaCommonData(CAREA_STAGE, "ALL_ChapterNoSpell", chapter_data[2]);
+}
+
+function GetChapterIDName(tmpID, tmpDifficult, tmpPlayer)
+{
+	// 今の所はキャラ共通で（サンプル数が充分に揃えられそうならキャラ別に）
+	if (length(tmpID) <= 0) { return(""); }
+	else { return(tmpID~"_"~IntToString(tmpDifficult)); }
+}
+
+// ---------------------------
+//  デバッグ用（チャプター履歴強制代入）
+// ---------------------------
+function DEBUG_ChapterSave(ID, values)
+{
+	let chapterID = GetChapterIDName(ID,
+		Difficult(), GetPlayerType());
+	if (length(chapterID) <= 0) { return; }
+	
+	// コモンデータロード
+	LoadCommonDataAreaA2(CAREA_CHAPTER, saveCommonCHAPTER);
+	
+	// 保存
+	SetAreaCommonData(CAREA_CHAPTER, chapterID, values);
+	SaveCommonDataAreaA2(CAREA_CHAPTER, saveCommonCHAPTER);
+}
+
+// ---------------------------
+//  チャプター用の画像取得
+// ---------------------------
+function GetChapterTexture(enmID)
+{
+	alternative(enmID)
+	/* ステージ */
+	case("1") { return(imgDir ~ "system/ChapterStg1.png"); }
+	case("2") { return(imgDir ~ "system/ChapterStg2.png"); }
+	case("3") { return(imgDir ~ "system/ChapterStg3.png"); }
+	case("4") { return(imgDir ~ "system/ChapterStg4.png"); }
+	case("5") { return(imgDir ~ "system/ChapterStg5.png"); }
+	case("6") { return(imgDir ~ "system/ChapterStg6.png"); }
+	case("7") { return(imgDir ~ "system/ChapterStg7.png"); }
+	/* ボス */
+	case(BOSS_ID_RANRAN) { return(imgCharaRanran[3]); }
+	case(BOSS_ID_CHII) { return(imgCharaChii[3]); }
+	case(BOSS_ID_HIKARIKO) { return(imgCharaHikariko[3]); }
+	case(BOSS_ID_SIRAN) { return(imgCharaSiran[3]); }
+	case(BOSS_ID_MYSTIA) { return(imgCharaMystia[3]); }
+	case(BOSS_ID_NEBET) { return(imgCharaNebet[3]); }
+	case(BOSS_ID_SET) { return(imgCharaSet[3]); }
+	case(BOSS_ID_HOROU) { return(imgCharaHorou[3]); }
+	case(BOSS_ID_MUMEI) { return(imgCharaMumei[3]); }
+	others { return(""); }
+}

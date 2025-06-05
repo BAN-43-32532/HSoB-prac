@@ -1,0 +1,76 @@
+#UserItemData
+
+item_image = "./../../img/system/item.png"
+
+//　点符
+ItemData{	id = 1		rect = (0,0,16,16)	out = (0,16,16,28)	alpha = 160	render = ALPHA	}
+
+//　弾消し点
+ItemData{	id = 2		rect = (80,0,96,16)	alpha = 68	render = ADD_ARGB	}
+
+//　残機かけら
+ItemData{	id = 3		rect = (0,32,32,64)	out = (0,64,32,96)	render = ALPHA	}
+
+//　ボムかけら
+ItemData{	id = 4		rect = (32,32,64,64)	out = (32,64,64,96)	render = ALPHA	}
+
+//　残機
+ItemData{
+	id = 5
+	AnimationData{
+		animation_data=(4,  192, 0, 256, 64)
+		animation_data=(4,  256, 0, 320, 64)
+		animation_data=(4,  320, 0, 384, 64)
+		animation_data=(4,  384, 0, 448, 64)
+		animation_data=(4,  448, 0, 512, 64)
+	}
+	alpha = 255
+}
+
+//　ボム
+ItemData{
+	id = 6
+	AnimationData{
+		animation_data=(4,  192, 64, 256, 128)
+		animation_data=(4,  256, 64, 320, 128)
+		animation_data=(4,  320, 64, 384, 128)
+		animation_data=(4,  384, 64, 448, 128)
+		animation_data=(4,  448, 64, 512, 128)
+	}
+	alpha = 255
+}
+
+//　時間結晶（小）
+ItemData{
+	id = 10
+	rect = (0, 384, 64, 448)
+	alpha = 96
+	render = ADD_ARGB
+}
+
+//　時間結晶
+ItemData{
+	id = 11
+	AnimationData{
+		animation_data=(4,  0, 128, 64, 192)
+		animation_data=(4,  64, 128, 128, 192)
+		animation_data=(4,  128, 128, 192, 192)
+		animation_data=(4,  192, 128, 256, 192)
+		animation_data=(4,  256, 128, 320, 192)
+	}
+	alpha = 160
+}
+
+//　色付き時間結晶（描画なし）
+ItemData{
+	id = 12
+	rect = (0, 0, 0, 0)
+	alpha = 0
+}
+
+//　色付き時間結晶ゲージ回収なし（描画なし）
+ItemData{
+	id = 13
+	rect = (0, 0, 0, 0)
+	alpha = 0
+}

@@ -1,0 +1,565 @@
+#include "./lib/lib_SystemScene.dnh"
+#include "../lib/lib_String.dnh"
+
+
+//リプレイ保存スクリプト
+	
+let MENU_INDEX_SELECT	= 1;
+let MENU_NAME_ENTRY	= 2;
+let menuMode = MENU_INDEX_SELECT;
+let ctr = 0;
+let MENU_CLEAR = false;
+
+@Initialize{
+	//　オブジェクトの自動削除
+	SetAutoDeleteObject( true );
+	LoadReplayList();
+	
+	if (GetScriptArgumentCount() > 0 && GetScriptArgument(0)) { MENU_CLEAR = true; }
+	
+	if (!MENU_CLEAR) { TBackground(); }
+	TReplayIndexSelection();
+}
+
+@MainLoop{
+	yield;
+}
+
+@Finalize{
+	//　デバッグ処理
+	//ClosePackage();
+}
+
+
+
+//　リプレイ保存
+task ReplaySave( replayIndex, userName )
+{
+	//　情報をchar型に変換、配列に保存する
+	//　情報の間に / を挿入し、読み込み時切り分けに使用する
+	let text = [
+		IntToString( GetPlayMode() ),
+		"/",
+		IntToString( Difficult() ),
+		"/",
+		IntToString( GetAreaCommonData(CAREA_SYSTEM, "PlayerType_Base", 0 ) ),
+		"/",
+		IntToString( GetAreaCommonData(CAREA_STAGE, "FirstStage", 0 ) ),
+		"/",
+		GetAreaCommonData(CAREA_STAGE, "StageScore", "0:0"),
+		"/",
+		GetClearStageName(),
+		"/",
+		GetSubWeaponName(),
+	];
+	
+	//　空の文字列を作成
+	let SaveText = "";
+	ascent( let i in 0..( length(text) ) ){
+		//　文字列を結合
+		SaveText = concatenate( SaveText, text[i] );
+	}
+	
+	SetReplayInfo( REPLAY_COMMENT, SaveText );
+	SaveReplay( replayIndex, userName );
+	CloseScript( GetOwnScriptID() );
+	return;
+}
+
+// ステージランクからクリア済みステージを取得
+function GetClearStageName()
+{
+	alternative(GetPlayMode())
+	case(GAME_MAIN, GAME_DEBUG)
+	{
+		if (Difficult() >= D_EXTRA)
+		{
+			if (IsGameClear()) { return(["ExClear", "ExEClr", "ExZClr"][DifficultEx]); }
+			else { return(["Extra", "ExEasy", "ExZLbl"][DifficultEx]); }
+		}
+		else
+		{
+			if (IsGameClear()) { return("Clear"); }
+			else { return("Stage" ~ IntToString(GetStageIndex())); }
+		}
+	}
+	case(GAME_PRACTICE)
+	{
+		return("Prac-" ~ IntToString(GetStageIndex()));
+	}
+	case(GAME_SPELL)
+	{
+		return("Spell" ~ rtos("000", GetStageIndex()));
+	}
+	others
+	{
+		return("NONE");
+	}
+}
+
+// サブ装備リストを取得
+function GetSubWeaponName()
+{
+	let subwp = GetAllPlayerSubWeapon();
+//	let subwp = GetAreaCommonData(CAREA_SYSTEM, "PLAYER_SUBCOL", []);
+	let tmp = "";
+	
+	ascent(i in 0 .. length(subwp))
+	{
+		if (length(tmp) > 0) { tmp = tmp ~ "|"; }
+		tmp = tmp ~ IntToString(subwp[i]);
+	}
+	
+	return(tmp);
+}
+
+//　リプレイインデックス選択
+task TReplayIndexSelection()
+{
+	let cursorY = 0;
+	let page = 0;
+	let keyboardX = [32, 200][MENU_CLEAR];
+	let countMaxItem = REPLAY_INDEX_DIGIT_MAX - REPLAY_INDEX_DIGIT_MIN + 1;
+	let countItemPerPage = 15;
+	let pageMax = trunc((countMaxItem - 1) / countItemPerPage);
+	pageMax = max(pageMax, 1);
+	let lastPageMaxCursorY = trunc(countMaxItem / countItemPerPage);
+	if (IsGameClear())
+	{	//クリアフラグONなら
+		keyboardX = 200;
+	}
+	
+	//------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------
+	task TMenuItem(let itemY)
+	{
+		let objText = -1;
+		let baseY = 48;
+		let addY = 23;
+		
+		let move1 = 0;
+		let moveA = 90;
+		let move2 = 0;
+		let moveB = 0;
+		
+		let oldPage = -1;
+		let t = 0;
+		while( !IsCloseScript( GetOwnScriptID() ) )
+		{
+			if(page != oldPage)
+			{
+				// 古い奴を削除
+				Obj_Delete(objText);
+				
+				let index = page * countItemPerPage + itemY + 1;
+				let text = rtos("00", index) ~ " ";
+				if( IsValidReplayIndex(index) )
+				{
+					text = text ~ vtos("-8s", GetReplayInfo(index, REPLAY_USER_NAME)) ~ " ";
+					text = text ~ GetReplayInfo(index, REPLAY_DATE_TIME) ~ " ";
+					text = text ~ rtos("000000000000", GetReplayInfo(index, REPLAY_TOTAL_SCORE)) ~ " ";
+				}
+				else
+				{
+					text = text ~ "No Data";
+				}
+				objText = CreateAsciiText(text);
+				ObjRender_SetPosition(objText, 64, baseY + addY * itemY, 0);
+				ObjRender_SetScaleXYZ(objText, 0.6, 0.6, 1);
+				oldPage = page;
+			}
+			
+			if( menuMode == MENU_INDEX_SELECT ){
+				ObjRender_SetAlpha( objText, move1*255 );
+				ObjRender_SetY( objText, (baseY + addY * itemY) + (addY - itemY*addY) - move1*(addY - itemY*addY) );
+				
+				move2 = 0;
+				moveB = 0;
+				
+				move1 = 1 * sin( moveA );
+				if( move1 < 1 ){ moveA += 5; }
+			}
+			else{
+				if (itemY == cursorY) { ObjRender_SetAlpha( objText, 255 ); }
+				else { ObjRender_SetAlpha( objText, 255 - move2*255 ); }
+				ObjRender_SetY( objText, (baseY + addY*itemY) + move2*(addY - itemY*addY) );
+				
+				move1 = 0;
+				moveA = 0;
+				
+				move2 = 1 * sin( moveB );
+				if( move2 < 1 ){ moveB += 5; }
+			}
+
+			if (page == pageMax && itemY >= lastPageMaxCursorY)
+			{
+				Obj_SetVisible(objText, false);
+			}
+			else
+			{
+				Obj_SetVisible(objText, true);
+				if (itemY == cursorY && menuMode == MENU_INDEX_SELECT)
+				{
+					let tmp_c = 255+sin(t*8)*128;
+					ObjRender_SetColor(objText, tmp_c, tmp_c, tmp_c);
+				}
+				else
+				{
+					ObjRender_SetColor(objText, 128, 128, 128);
+				}
+			}
+			t++;
+			yield;
+		}
+	}
+	//------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------
+	
+	//　メニュー作成
+	ascent(let iItem in 0 .. countItemPerPage){
+		TMenuItem( iItem );
+	}
+	
+	//　30フレーム待機
+	loop( 8 ){ yield; }
+	
+	//キー状態がリセットされるまで待機
+	while( GetVirtualKeyState(VK_OK) != KEY_FREE ){ yield; }
+	
+	//キー処理
+	let frameKeyHold = 0;//キー押しっぱなしフレーム数
+	while( !IsCloseScript( GetOwnScriptID() ) ){
+		
+		//　ネームエントリー中だけ操作可能
+		if( menuMode == MENU_INDEX_SELECT ){
+			
+			//　決定キーでネームエントリー起動
+			if( GetVirtualKeyState(VK_OK) == KEY_PUSH && ctr > 8 ){
+				menuMode = MENU_NAME_ENTRY;
+				let index = page * countItemPerPage + cursorY + 1;
+				TNameEntry(index, keyboardX);
+				CallSoundPackage(sndTtDecide);
+				ctr = 0;
+			}
+			
+			//　保存キャンセル
+			if( GetVirtualKeyState(VK_CANCEL) == KEY_PUSH && ctr > 8 ){
+				CallSoundPackage(sndTtCancel);
+				SetScriptResult( RESULT_END );
+				CloseScript( GetOwnScriptID() );
+			}
+			
+			//カーソル移動
+			if(GetVirtualKeyState(VK_UP) == KEY_PUSH || GetVirtualKeyState(VK_UP) == KEY_HOLD)
+			{
+				frameKeyHold++;
+				if(GetVirtualKeyState(VK_UP) == KEY_PUSH ||
+					frameKeyHold == 30 ||
+					 (frameKeyHold > 30 && (frameKeyHold % 4 == 0)))
+				{
+					cursorY--;
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			else if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH || GetVirtualKeyState(VK_DOWN) == KEY_HOLD)
+			{
+				frameKeyHold++;
+				if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH ||
+					frameKeyHold == 30 ||
+					 (frameKeyHold > 30 && (frameKeyHold % 4 == 0)))
+				{
+					cursorY++;
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			else if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH || GetVirtualKeyState(VK_LEFT) == KEY_HOLD)
+			{
+				frameKeyHold++;
+				if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH ||
+					frameKeyHold == 30 ||
+					 (frameKeyHold > 30 && (frameKeyHold % 4 == 0)))
+				{
+					page--;
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			else if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH || GetVirtualKeyState(VK_RIGHT) == KEY_HOLD)
+			{
+				frameKeyHold++;
+				if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH ||
+					frameKeyHold == 30 ||
+					 (frameKeyHold > 30 && (frameKeyHold % 4 == 0)))
+				{
+					page++;
+					CallSoundPackage(sndTtSelect);
+				}
+			}
+			else
+			{
+				frameKeyHold = 0;
+			}
+			
+			if(page < 0)
+			{
+				page = pageMax;
+			}
+			else if(page > pageMax)
+			{
+				page = 0;
+			}
+			
+			if(page != pageMax)
+			{
+				if(cursorY < 0)
+				{
+					cursorY = countItemPerPage - 1;
+				}
+				else if(cursorY >= countItemPerPage)
+				{
+					cursorY = 0;
+				}
+			}
+			else
+			{
+				if(cursorY < 0)
+				{
+					cursorY = lastPageMaxCursorY - 1;
+				}
+				else if(cursorY >= lastPageMaxCursorY)
+				{
+					cursorY = 0;
+				}
+			}
+			
+			ctr++;
+		}
+		yield;
+	}
+}
+
+//　リプレイ名決定
+task TNameEntry( let replayIndex, let keyboardOffsetX )
+{
+	let strText =
+		["A","B","C","D","E","F","G","H","I","J","K","L","M",
+		 "N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
+		 "a","b","c","d","e","f","g","h","i","j","k","l","m",
+		 "n","o","p","q","r","s","t","u","v","w","x","y","z",
+		 "0","1","2","3","4","5","6","7","8","9","!","?","*",
+		 "+","-","=","~","(",")","<",">","&",".",","," ","`"];
+	
+	let selectMax = length(strText);
+	let selectWidth = 13;
+	let maxLength = 8;
+	
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", 0);
+	Obj_SetValue(objParent, "NAME", "");
+	
+	//メニュー配置
+	local
+	{
+		let mx = GetScreenWidth/2;
+		let my = 240;
+		ascent(i in 0 .. selectMax)
+		{
+			let pos = GetCharPos(i);
+			TMenuItemText(objParent, i, pos[0], pos[1], strText[i]);
+		}
+		TMenuItemCursor(objParent);
+		TMenuItemName(objParent, (keyboardOffsetX-32)/2+160, 128);
+	}
+
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+		
+		alternative (downKey)
+		case (VK_UP)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", -selectWidth, selectMax);
+		}
+		case (VK_DOWN)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", selectWidth, selectMax);
+		}
+		case (VK_LEFT)
+		{
+			CallSoundPackage(sndTtSelect);
+			if (Obj_GetValueD(objParent, "VALUE", 0)%selectWidth == 0)
+			{
+				Menu_AddValue(objParent, "VALUE", selectWidth, selectMax);
+			}
+			Menu_AddValue(objParent, "VALUE", -1, selectMax);
+		}
+		case (VK_RIGHT)
+		{
+			CallSoundPackage(sndTtSelect);
+			if (Obj_GetValueD(objParent, "VALUE", 0)%selectWidth == selectWidth-1)
+			{
+				Menu_AddValue(objParent, "VALUE", -selectWidth, selectMax);
+			}
+			Menu_AddValue(objParent, "VALUE", 1, selectMax);
+		}
+		case (VK_OK)
+		{
+			let tmpName = Obj_GetValueD(objParent, "NAME", "");
+			let tmpValue = Obj_GetValueD(objParent, "VALUE", 0);
+			if (tmpValue == selectMax-1)
+			{
+				// 終
+				if (length(tmpName) <= 0)
+				{
+					CallSoundPackage(sndTtCancel);
+				}
+				else
+				{
+					CallSoundPackage(sndTtExtend2);
+					ReplaySave( replayIndex, tmpName );
+					break;
+				}
+			}
+			else if (length(tmpName) <= maxLength)
+			{
+				// 文字追加
+				tmpName = tmpName ~ strText[tmpValue];
+				Obj_SetValue(objParent, "NAME", tmpName);
+				// 文字max
+				if (length(tmpName) >= maxLength)
+				{
+					Obj_SetValue(objParent, "VALUE", selectMax-1);
+				}
+				CallSoundPackage(sndTtDecide);
+			}
+			else
+			{
+				// 文字max
+				Obj_SetValue(objParent, "VALUE", selectMax-1);
+				CallSoundPackage(sndTtCancel);
+			}
+		}
+		case (VK_CANCEL)
+		{
+			let tmpName = Obj_GetValueD(objParent, "NAME", "");
+			if (length(tmpName) > 0)
+			{
+				tmpName = erase(tmpName, length(tmpName)-1);
+				Obj_SetValue(objParent, "NAME", tmpName);
+				CallSoundPackage(sndTtCancel);
+			}
+			else
+			{
+				// 保存キャンセル
+				menuMode = MENU_INDEX_SELECT;
+				CallSoundPackage(sndTtCancel);
+				break;
+			}
+		}
+		wait(2);	//適当に固定ディレイ
+	}
+	Obj_Delete(objParent);
+	return;
+	
+	// メニューパーツ
+	task TMenuItemText(parent, index, base_x, base_y, char_index)
+	{
+		let objText = CreateAsciiSingleText(char_index);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjRender_SetScaleXYZ(objText, 0.65, 0.65, 0);
+		
+		let t = 0;
+		let before_index = -99999;
+		while(!Obj_IsDeleted(parent))
+		{
+			let selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			if (selected_index != before_index)
+			{
+				before_index = selected_index;
+			}
+			if (index == selected_index) {
+				ObjRender_SetColor(objText, 255, 255, 96+sin(t*5)*128);
+			} else {
+				ObjRender_SetColor(objText, 128, 128, 128);
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+	// メニューパーツ
+	task TMenuItemCursor(parent)
+	{
+		let objCursor = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objCursor, 60);
+		ObjSprite2D_SetDestRect(objCursor, -4, -4, 16, 16);
+//		ObjRender_SetPosition(objCursor, base_x, base_y, 0);
+		ObjRender_SetColor(objCursor, 64, 64, 64);
+		ObjRender_SetBlendType(objCursor, BLEND_ADD_ARGB);
+		
+		let t = 0;
+		let before_index = -99999;
+		while(!Obj_IsDeleted(parent))
+		{
+			let selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			if (selected_index != before_index)
+			{
+				let pos = GetCharPos(selected_index);
+				ObjRender_SetPosition(objCursor, pos[0], pos[1], 0);
+				before_index = selected_index;
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objCursor);
+	}
+	// メニューパーツ
+	task TMenuItemName(parent, base_x, base_y)
+	{
+		let objText = -1;
+		
+		let objCursor = CreateAsciiSingleText("_");
+		ObjRender_SetPosition(objCursor, base_x+7, base_y+4, 0);
+		ObjRender_SetScaleXYZ(objCursor, 0.65, 0.65, 0);
+		
+		let t = 0;
+		let before_value = "";
+		while(!Obj_IsDeleted(parent))
+		{
+			let selected_value = Obj_GetValueD(parent, "NAME", "");
+			if (selected_value != before_value)
+			{
+				let len = length(selected_value);
+				// カーソル表示
+				if (len >= maxLength) { Obj_SetVisible(objCursor, false); }
+				else { Obj_SetVisible(objCursor, true); }
+				ObjRender_SetX(objCursor, base_x+len*asciiTextSpacing*0.65+7);
+				// 前回の文字削除
+				if (!Obj_IsDeleted(objText)) { Obj_Delete(objText); }
+				// 文字
+				objText = CreateAsciiText(selected_value);
+				ObjRender_SetPosition(objText, base_x, base_y, 0);
+				ObjRender_SetScaleXYZ(objText, 0.65, 0.65, 0);
+				
+				before_value = selected_value;
+			}
+			ObjRender_SetAlpha(objCursor, 160+96*sin(t*4));
+			t++;
+			yield;
+		}
+		Obj_Delete(objCursor);
+		if (!Obj_IsDeleted(objText)) { Obj_Delete(objText); }
+	}
+
+	function GetCharPos(i)
+	{
+		let mx = (keyboardOffsetX-32)/2 + 100 + (i%selectWidth) * 20;
+		let my = 160 + trunc(i/selectWidth)*20;
+		return([mx, my]);
+	}
+}

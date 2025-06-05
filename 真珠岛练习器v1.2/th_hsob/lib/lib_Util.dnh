@@ -1,0 +1,32 @@
+//画面外チェック
+function CheckDispIN(obj, size)
+{
+	return CheckDispINEx(ObjMove_GetX(obj), ObjMove_GetY(obj), size);
+}
+
+function CheckDispINEx(x, y, size)
+{
+	return(CheckDispX_LineINEx(x, size) && CheckDispY_LineINEx(y, size));
+}
+
+function CheckDispX_LineIN(obj, size)
+{
+	return CheckDispX_LineINEx(ObjMove_GetX(obj), size);
+}
+
+function CheckDispX_LineINEx(x, size)
+{
+	let dx = absolute(x-GetCenterX()) - (GetCenterX()-GetClipMinX());
+	return(dx <= size);
+}
+
+function CheckDispY_LineIN(obj, size)
+{
+	return CheckDispY_LineINEx(ObjMove_GetY(obj), size);
+}
+
+function CheckDispY_LineINEx(y, size)
+{
+	let dy = absolute(y-GetCenterY()) - (GetCenterY()-GetClipMinY());
+	return(dy <= size);
+}

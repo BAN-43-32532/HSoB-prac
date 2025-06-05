@@ -1,0 +1,331 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["6面　会話前半"]
+#Text["6面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HOROU);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_HOROU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
+			SetTalkEx(cutinPlayer1, "刚刚那是……梦？[r]但禁咒塔确实已经塌了。 ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "梦境与现实的境界……幻想乡与外界的境界，[r]让她们给弄得稀薄了吗？ ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx2(cutinBoss1, "一切最终都将回归根源。[r]不错，花朵零落将会回到根去，飞鸟旋还将会去往故乡。 ", -48, -280);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "所以，让我回到故乡去啊。 ");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "你便是濑户大将所说的鸟公吧。 ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "真是失礼。 ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "我叫珠乌，[r]不是珠鸟，而是朱鹮。 ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx(cutinPlayer1, "朱鹮……Toki……时间……（同音） ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
+			SetTalkEx3(cutinPlayer1, "哈！ ", 108, -96);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "我记得桃源宫那时候也发生过这种事…… ");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx2(cutinPlayer1, "难道说，你是被那个濑户大将[r]教唆了什么吗！？[r]你对幻想乡施加了什么法术！ ", 0, -16);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "他给了我一本什么书，[r]让我咏唱咒文来着！ ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA2);
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinBoss1, "我乃时之主人， ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "我乃时之主人，[r]我乃将远方之人带回者， ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "我乃时之主人，[r]我乃将远方之人带回者，[r]我乃分开两位战士者…… ");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE2);
+			SetTalkEx(cutinPlayer1, "啊啊够了够了！时间又要停止了！ ");
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			SetTalkEx(cutinPlayer1, "等一下，[r]你可以先念会儿佛好吗？ ");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "南无阿弥陀佛，南无阿弥陀佛。 ");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "南无阿弥陀佛，南无阿弥陀佛。[r]我乃计数南无阿弥陀万物者， ");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			ChangeTalkTexture(cutinBoss1, I_DOYA2);
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "南无阿弥陀佛，南无阿弥陀佛。[r]我乃计数南无阿弥陀万物者，[r]我乃书写真实（Ma'at）者…… ");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "混了混了！ ");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinBoss1, I_QUESTION);
+			SetTalkEx(cutinBoss1, "话说，这样一来，[r]幻想乡的结界就会消失了吧？或者停止掉？ ");
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "我呢，想回到外面世界去！ ");
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "你说……对了！刚刚我说过的那个……[r]飞鸟是要回故乡的对吧？ ");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL3);
+			SetTalkEx(cutinPlayer1, "不是还有说“飞鸿踏雪了无痕”的么。 ");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			SetTalkEx(cutinPlayer1, "而且不说别的，[r]弱者本来就不可能回到外面世界。 ");
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "对于你这种弱小的普通妖怪来说，[r]这里就是你最后的安居处了。 ");
+		}
+		case(25)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "最终处理场什么的我才不要！[r]我就想回佐渡的天儿底下去，谁也拦不下我！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		case(26)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "……我从猯藏那里听说过。[r]外面世界的朱鹮，已经…… ");
+		}
+		case(27)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "我要用我七色的翅膀，在佐渡的天空中划出彩虹。[r]然后伙伴们就会看到，会凑过来的！ ");
+		}
+		case(28)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "我左右两只翅膀，既可以画出虹霓，[r]又可以绘出七色的弹幕。 ");
+		}
+		case(29)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "你要是捣乱，我就在计数万物的时候，[r]把你也一块儿给祭了！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		case(30)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL3);
+			SetTalkEx(cutinPlayer1, "……守护幻想乡，[r]一定就是我人生的意义。 ");
+		}
+		case(31)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "虽然连你也不得不守护让我有些不满，[r]但我便做给你看！ ");
+		}
+		case(32)
+		{
+			// BGM
+			PlayMusicWithName( 13, 30, 30 );
+			
+			ChangeTalkTexture(cutinBoss1, I_DOYA2);
+			SetTalkEx(cutinBoss1, "我乃调停争斗者， ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "我乃调停争斗者，[r]我乃天空的先导， ");
+			WaitNext();
+			SetFukidashiRefresh(cutinBoss1);
+			SetTalkEx(cutinBoss1, "我乃调停争斗者，[r]我乃天空的先导，[r]我乃杀戮的主人。 ");
+		}
+		case(33)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "就在此刻！为了让妖怪超越人类！[r]异国的朱鹮神啊！赐予我力量吧！ ");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+		}
+		case(34)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_CUTIN2);
+			ResetTalkImagePosition(cutinPlayer1, -32, -108, 0.85);	// おまえはそこでずれていけ
+			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
+			// 吹き出しリセット
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_NORMAL);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_NORMAL);
+			// 吹き出し削除
+			DeleteAllFukidashi();
+			// 会話
+			_SetTalk(cutinPlayer1, "把我们的颜色还回来！七色的亡鸟！ ", -12, -16);
+//			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
+			_SetTalk(cutinBoss1, "把我们的天空还回来！红白的巫女！ ", 12, 48);
+//			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+			// カットインを前面に出す
+			ChangeImageFowardEx([cutinPlayer1, cutinBoss1]);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

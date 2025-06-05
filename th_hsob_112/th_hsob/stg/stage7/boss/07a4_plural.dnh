@@ -1,0 +1,84 @@
+//#東方弾幕風[Plural]
+#ScriptVersion[3]
+#Title["7面中ボス 連続再生"]
+#Text[""]
+#System["./../../../system/System.dnh"]
+
+
+#include"./../../../lib/lib_Boss.dnh"
+
+let objBossScene;
+let objTalkScene02;
+let dir = GetCurrentScriptDirectory();
+
+@Initialize
+{
+	TPlural();
+}
+
+@Event
+{
+	alternative( GetEventType() )
+	//　ボス登場イベント
+	case( ev_ResistBoss )
+	{
+		ResistSceneScript();
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TPlural
+{
+	// ボスシーンを作成します。
+	objBossScene = ObjEnemyBossScene_Create();
+	
+	// ボスシーンの初期設定
+	BossScene_SetInit(objBossScene,
+		BOSS_ID_SIRAN,	// ボスID
+		[MaxX+32, -128],		// 初期座標
+	);
+
+	// ボスの攻撃
+	ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "07a_Talk04a_dummy.dnh");
+	ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "07a_Spell04.dnh");
+	ObjEnemyBossScene_LoadInThread(objBossScene);
+}
+
+// ボスシーンの起動
+task ResistSceneScript
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+	
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+
+	// 連続再生終了通知
+	FinalizePlural();
+	
+	// エクステンドチェック（時間切れじゃなけりゃOK）
+	if (!GetAreaCommonData(CAREA_STAGE, "BeforeTimeout", false))
+	{
+		SetAreaCommonData(CAREA_STAGE, "STG7R_EXTEND", 
+			GetAreaCommonData(CAREA_STAGE, "STG7R_EXTEND", 0) + 1);
+	}
+	
+	// 全員倒せばエクステンド落とすよ！
+	if (GetAreaCommonData(CAREA_STAGE, "STG7R_EXTEND", 0) > 4)
+	{
+		SetItem(CenX, 150, MY_ITEM_LIFE);
+	}
+
+	//スクリプト終了
+	CloseScript(GetOwnScriptID());
+}

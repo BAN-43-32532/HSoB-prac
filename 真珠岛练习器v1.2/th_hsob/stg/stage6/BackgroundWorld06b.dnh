@@ -1,0 +1,171 @@
+//　Stage2
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+#include "./../../lib/lib_Effect.dnh"
+
+#include "./lib_World06_Objects01.dnh"
+#include "./lib_World06_Objects02.dnh"
+
+let flagEnd = false;
+let flgScriptValue = 0;
+
+let BGChange_StageScene = 2;
+let BG_POSITION = 0;
+
+//　ステージの背景テクスチャ
+let world06_path;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_CloseScript)
+	{
+		//背景削除
+		flagEnd = true;
+		CloseMine(300);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world06_path = LoadingImageFile_StgWorld(6);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld06a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task SetWorld06a()
+{
+	let obj		= [
+		CreateTexture01( world06_path[0] ),
+		CreateTexture01( world06_path[1] ),
+	];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	//　霧用のダミー
+	ObjRender_SetPosition( obj[0], -1500, 0, 0 );
+	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+	ObjRender_SetColor( obj[0], 0, 0, 0 );
+	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　砂漠
+	ObjRender_SetColor( obj[1], 64, 128, 255 );
+	
+	while( !GetAreaCommonData(CAREA_STAGE, "STG6B_ATK1", false) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( 0, move1*1024, move1*16, move1*32, move1*64 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 20 );
+		
+		let spd = move1 * 1.6;
+		
+		if( frame%1 == 0 ){
+			CreateFlashLight( [randEffect(0,-1024),randEffect(-256,256),randEffect(-256,256)], [randEffect(1,2)+spd,0,0], 0.1, randEffect(64,128), 60, [255,255,255] );
+		}
+		
+		ObjRender_SetPosition( obj[1], -512, 128*cos(180), 128*sin(180) );
+		ObjRender_SetAngleXYZ( obj[1], 90, 0, 0 );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - frame*spd, 0, 1024 - frame*spd, 1024 );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 1; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let spd = move1 * 1.6;
+		
+		ObjRender_SetAlpha( obj[0], move1*255 );
+		ObjRender_SetAlpha( obj[1], move1*255 );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - frame*spd, 0, 1024 - frame*spd, 1024 );
+		
+		frame++;
+		moveA += 1;
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+
+
+
+
+task BackGroundLite
+{
+	let flg = false;
+	/*
+	flg = _BackGroundLite(world06_path[0], 0);
+	if (!flg) { return; }
+	
+	yield;
+	*/
+	flg = _BackGroundLite(world06_path[1], -1);
+	
+}
+function _BackGroundLite(file_name, del_type)
+{
+	let obj = -1;
+	if (IsDrawBackground() >= 1)
+	{
+		obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, world_layer);
+		ObjRender_SetColor(obj, 255,255,255);
+		ObjPrim_SetTexture(obj, file_name);
+		ObjSprite2D_SetSourceRect(obj , 0,0,384,448);
+		ObjSprite2D_SetDestRect(obj, 0,0,384,448);
+		ObjRender_SetPosition(obj, MinX,MinY,0);
+	}
+
+	let alpha = 0;
+	while(alpha < 255)
+	{
+		alpha += 5;
+		if (IsDrawBackground() >= 1) { ObjRender_SetAlpha(obj,alpha); }
+		yield;
+	}
+	while(!flagEnd)
+	{
+		if (del_type == 0 && !(GetStageScene() < BGChange_StageScene)) { break; }
+		if (del_type == 1 && GetAreaCommonData(CAREA_STAGE, "STG6B_ATK1", false)) { break; }
+		yield;
+	}
+	DeleleMotion(obj, 180);
+	if (!flagEnd) { return(true); }
+	return(false);
+	
+	task DeleleMotion(obj, delay)
+	{
+		if (IsDrawBackground() < 1) { return; }
+
+		let alpha = 255;
+		waitEx(delay);
+		while(alpha > 0)
+		{
+			alpha -= 5;
+			ObjRender_SetAlpha(obj,alpha);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}

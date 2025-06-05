@@ -1,0 +1,779 @@
+#include "../lib/lib_Switch.dnh"
+#include "../../lib/lib_ChapterSkip.dnh"
+//メニュー
+let T_INDEX_START = 0;
+let T_INDEX_EXTRA = 1;
+let T_INDEX_PRACTICE = 2;
+let T_INDEX_SPELLPRACTICE = 3;
+let T_INDEX_REPLAY = 4;
+let T_INDEX_SCORE = 5;
+let T_INDEX_MROOM = 6;
+let T_INDEX_OPTION = 7;
+let T_INDEX_HELP = 8;
+let T_INDEX_QUIT = 9;
+
+// メインメニュー
+task MainMenu(flgAnimation, selectedDefault)
+{
+	// コモンデータ保存
+	SaveCommonDataAreaA2(CAREA_SAVE, saveCommonSAVE);
+	// リセットさん
+	ResetSelectedCommonData();
+	
+	//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ここから
+	//　メニューの拡大倍率
+	let menuITMscale = 0.7;
+	//]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]ここまで
+	
+	//　優先度
+	let priority = 39;
+	
+	//フラグリセット
+	baseMenuFlag = -1;
+	//自動選択
+	let tmpMemory = CheckAutoSelectMemory();
+	if (tmpMemory >= 0)
+	{
+		if (CheckAutoSelectRemain()) {
+			ShotKeyEvent(tmpMemory);
+			return;
+		} else {
+			selectedDefault = tmpMemory;
+		}
+	}
+	//選択記憶
+	//selectedDefault = LoadMenuMemory("Menu_Main", selectedDefault);
+	if(GetPracticed()){
+		selectedDefault=2;
+	}
+	let imgValue = [T_INDEX_START, T_INDEX_EXTRA, T_INDEX_PRACTICE, T_INDEX_SPELLPRACTICE, T_INDEX_REPLAY, T_INDEX_SCORE, T_INDEX_MROOM, T_INDEX_OPTION, T_INDEX_HELP, T_INDEX_QUIT];
+	let selectMax = length(imgValue);
+	
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", selectedDefault);
+	
+	//　ﾀｲﾄﾙ雑多な奴いろいろ作成
+	TitleAccessory( objParent );
+	
+	//メニューのフラグ
+	local
+	{
+		// Extra開放フラグ
+		if (!DEBUG_MODE && !GetAreaCommonData(CAREA_SAVE, "ExtraStandby", false ))
+				{ SetIgnoreMenuIndex(objParent, T_INDEX_EXTRA); }
+		// SpellPractice開放フラグ
+		if (!GetAreaCommonData(CAREA_SAVE, "SpellPracStandby", false))
+				{ SetIgnoreMenuIndex(objParent, T_INDEX_SPELLPRACTICE); }
+		// Practice開放フラグ
+		if (!GetAreaCommonData(CAREA_SAVE, "PracticeStandby", false))
+				{ SetIgnoreMenuIndex(objParent, T_INDEX_PRACTICE); }
+		// リプレイ保存なし
+		LoadReplayList();
+		if (length(GetValidReplayIndices()) <= 0)
+				{ SetIgnoreMenuIndex(objParent, T_INDEX_REPLAY); }
+	}
+	//メニュー配置
+	local
+	{
+		//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ここから
+		let mx = 512+96;
+		let my = 160;
+		let offset_mx = [32, 16, 8, 4, 2, 2, 4, 8, 16, 32];
+		ascent(i in 0 .. selectMax)
+		{
+			TMenuItemMain(objParent, i, mx+offset_mx[i], my, imgValue[i], i*2, flgAnimation);
+			my += 26;
+			mx += 10;
+		}
+		//]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]ここまで
+		// バージョン表示
+		TMenuItemVersion(objParent, GetScreenWidth-96, GetScreenHeight-24, flgAnimation);
+	}
+	wait(10);
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_OK, VK_CANCEL]);
+		
+		alternative (downKey)
+		case (VK_UP)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueEx(objParent, "VALUE", -1, selectMax);
+		}
+		case (VK_DOWN)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueEx(objParent, "VALUE", 1, selectMax);
+		}
+		case (VK_OK)
+		{
+			MenuEnter(objParent);
+			let tmp_res = ShotKeyEvent(Obj_GetValueD(objParent, "VALUE", -1));
+			if (tmp_res > 0) { break; }
+		}
+		case (VK_CANCEL)
+		{
+			CallSoundPackage(sndTtCancel);
+			Obj_SetValue(objParent, "VALUE", T_INDEX_QUIT);
+		}
+		wait(2);	//適当に固定ディレイ
+	}
+	Obj_Delete(objParent);
+	
+	
+	// メニュー選択時イベント
+	function ShotKeyEvent(event_num)
+	{
+		//選択記憶
+//		if (event_num != T_INDEX_QUIT) { SetMenuMemory("Menu_Main", event_num); }
+
+		alternative (event_num)
+		case(T_INDEX_START)
+		{
+			// GameStart
+			TSelectStage();
+			return(1);
+		}
+		case(T_INDEX_EXTRA)
+		{
+			// ExtraStart
+			TSelectExtra();
+			return(1);
+		}
+		case(T_INDEX_PRACTICE)
+		{
+			// Practice
+			TSelectPractice();
+			return(1);
+		}
+		case(T_INDEX_SPELLPRACTICE)
+		{
+			// SpellPractice
+			TSpellPractice();
+			return(1);
+		}
+		case(T_INDEX_REPLAY)
+		{
+			// Replay
+			TReplaySelect();
+			return(1);
+		}
+		case(T_INDEX_SCORE)
+		{
+			// PlayerData
+			TPlayerData();
+			return(1);
+		}
+		case(T_INDEX_MROOM)
+		{
+			// MusicRoom
+			TMusicRoom();
+			return(1);
+		}
+		case(T_INDEX_OPTION)
+		{
+			// Option
+			TSelectOption();
+			return(1);
+		}
+		case(T_INDEX_HELP)
+		{
+			// Manual
+			TManual();
+			return(1);
+		}
+		case(T_INDEX_QUIT)
+		{
+			// Quit
+			// コモンデータ保存
+			SaveCommonDataAreaA2(CAREA_SAVE, saveCommonSAVE);
+			wait(30);
+			ClosePackage();
+			return(1);
+		}
+	}
+	// メニュー選択時モーション
+	function MenuEnter(parent)
+	{
+		CallSoundPackage(sndTtDecide);
+		Obj_SetValue(parent, "FLASH", 1);
+		wait(18);
+		Obj_SetValue(parent, "FLASH", 0);
+	}
+	// メニューパーツ
+	task TMenuItemMain(parent, index, base_x, base_y, img_index, delay, flgAnimation)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, priority);
+		ObjPrim_SetTexture(objText, imgTtSelectTitle);
+		ObjSprite2D_SetSourceRect(objText, 0, img_index*64, 256, 64+img_index*64);
+		ObjSprite2D_SetDestRect(objText, -256, 0, 0, 64);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjRender_SetScaleXYZ( objText, menuITMscale, menuITMscale, 0 );
+
+		let baseColor = 255;
+		if (GetIgnoreMenuIndex(parent, index))
+		{
+			baseColor = 96;
+			ObjRender_SetColor(objText, baseColor, baseColor, baseColor);
+		}
+		if (!flgAnimation) { delay = 0; }
+		
+		let move1 = 0;
+		let moveA = 0;
+		let t = 0;
+		let before_index = -99999;
+		let selected_index = -1;
+		let tmpColor = baseColor;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			let now_index = index-selected_index;
+			if (before_index != now_index)
+			{
+				before_index = now_index;
+				// 振動
+				if (before_index != -99999 && index == selected_index)
+					{ ShakeImage(objText, [-256,0,0,64], 4, 6); }
+				tmpColor = baseColor*max(0.4, (1-absolute(now_index)*0.6));
+				ObjRender_SetPosition(objText, base_x, base_y, 0);
+
+				/*
+				let timer = 5;
+				if (before_index == -99999) { before_index = now_index; timer = 1; }
+				// 振動
+				if (timer > 1 && index == selected_index) { ShakeImage(objText, [-256,0,0,64], 4, 6); }
+				ascent(t in 0 .. timer)
+				{
+					let tmp_index = (timer-t-1)/timer*before_index + (t+1)/timer*now_index;
+					tmpColor = baseColor*max(0.4, (1-absolute(tmp_index)*0.6));
+					ObjRender_SetPosition(objText, base_x, base_y, 0);
+					yield;
+				}
+				ObjRender_SetPosition(objText, base_x, base_y, 0);
+				before_index = now_index;
+				*/
+			}
+			if (selected_index == index && Obj_GetValueD(parent, "FLASH", 0)) {
+				let tmp_c = tmpColor - (trunc(t/3)%2)*160;
+				ObjRender_SetAlpha(objText, 255);
+				ObjRender_SetColor(objText, tmp_c, tmp_c, tmp_c);
+			} else if (selected_index == index) {
+				ObjRender_SetAlpha(objText, 255+sin(t*10)*64);
+				ObjRender_SetColor(objText, tmpColor, tmpColor, tmpColor);
+			} else {
+				ObjRender_SetAlpha(objText, 255);
+				ObjRender_SetColor(objText, tmpColor, tmpColor, tmpColor);
+			}
+			// 開幕アニメ
+			if ( flgAnimation && move1 < 1 )
+			{
+				//ObjRender_SetScaleX(objText, max(0, t+1-delay)/10);
+				move1 = 1 * sin( moveA );
+				
+				ObjRender_SetScaleXYZ( objText, menuITMscale, move1*menuITMscale, 0 );
+				
+				moveA += 2;
+			}
+			t++;
+			yield;
+		}
+		let base_alpha = 255;
+		ObjRender_SetColor(objText, tmpColor, tmpColor, tmpColor);
+		descent(t in 0 .. 10)
+		{
+			let alpha = base_alpha*((t+1)/10);
+			ObjRender_SetAlpha(objText, alpha);
+			if (selected_index != index) { ObjRender_SetX(objText, ObjRender_GetX(objText)+3); }
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+	// バージョン表示
+	task TMenuItemVersion(parent, base_x, base_y, flgAnimation)
+	{
+		let objText = SetSystemText(base_x, base_y, "Version "~GAME_VERSION);
+		Obj_SetRenderPriorityI(objText, priority);
+		ObjText_SetFontSize(objText, 20);
+		while(!Obj_IsDeleted(parent))
+		{
+			yield;
+		}
+		Obj_Delete(objText);
+	}
+}
+
+// ステージ選択へ
+task TSelectStage()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	//初期値
+	baseMenuFlag = 0;
+	let SelectedRank = 0;
+	let SelectedPlayer = 0;
+	//値をセット
+	SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_MAIN );
+	SetAreaCommonData(CAREA_TITLE, "PlayerSubWeapon", [] );
+	
+	let tmp_select = 0;
+	loop
+	{
+		// 難易度セレクト
+		tmp_select = SceneRankSelect(SelectedRank);
+		if (tmp_select < 0) { break; }
+		SelectedRank = tmp_select;
+		loop
+		{
+			// プレイヤーセレクト
+			tmp_select = ScenePlayerSelect(SelectedPlayer);
+			if (tmp_select < 0) { break; }
+			SelectedPlayer = tmp_select;
+
+			baseMenuFlag = -1;	//フラグリセット
+			
+			//  下準備
+			SetAreaCommonData(CAREA_TITLE, "PlayerType", SelectedPlayer );
+			SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_MAIN );
+			SetAreaCommonData(CAREA_TITLE, "GameRank", SelectedRank );
+			SetAreaCommonData(CAREA_TITLE, "StageIndex", 1 );
+			SetAreaCommonData(CAREA_TITLE, "ReplayPath", "" );
+			SetAreaCommonData(CAREA_TITLE, "ExtraMode", 0 );
+			SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 );
+			//  ステージ開始
+			let pathScript = GetCurrentScriptDirectory() ~ "SceneStage.dnh";
+			let idScript = LoadScript( pathScript );
+			StartScript( idScript );
+			return;
+		}
+	}
+
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_START);
+}
+
+// ステージ選択へ
+task TSelectExtra()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	//初期値
+	baseMenuFlag = 0;
+	let SelectedRank = D_EXTRA;
+	let SelectedPlayer = 0;
+	//値をセット
+	SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_MAIN );
+	SetAreaCommonData(CAREA_TITLE, "PlayerSubWeapon", [] );
+	
+	let tmp_select = 0;
+	loop
+	{
+		// 難易度セレクト
+		tmp_select = SceneRankSelect(D_EXTRA);
+		if (tmp_select < 0) { break; }
+		SelectedRank = tmp_select;
+		loop
+		{
+			// プレイヤーセレクト
+			tmp_select = ScenePlayerSelect(SelectedPlayer);
+			if (tmp_select < 0) { break; }
+			SelectedPlayer = tmp_select;
+
+			baseMenuFlag = -1;	//フラグリセット
+			
+			// Exプラクティス
+			if (GetAreaCommonData(CAREA_CONFIG, "Prac_ChapterEx", 0 ) > 0)
+			{
+				//  下準備
+				SetAreaCommonData(CAREA_TITLE, "PlayerType", SelectedPlayer );
+				SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_PRACTICE );
+				SetAreaCommonData(CAREA_TITLE, "GameRank", D_EXTRA );
+				//SetAreaCommonData(CAREA_TITLE, "GameRankEx", SelectedRank );
+				SetAreaCommonData(CAREA_TITLE, "StageIndex", STAGE_EXTRA );
+				SetAreaCommonData(CAREA_TITLE, "ChapterIndex", GetAreaCommonData(CAREA_CONFIG, "Prac_ChapterEx", 0 ) );
+				SetAreaCommonData(CAREA_TITLE, "ReplayPath", "" );
+				SetAreaCommonData(CAREA_TITLE, "ExtraMode", 1 );
+				SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 );
+			}
+			else
+			{
+				//  下準備
+				SetAreaCommonData(CAREA_TITLE, "PlayerType", SelectedPlayer );
+				SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_MAIN );
+				SetAreaCommonData(CAREA_TITLE, "GameRank", D_EXTRA );
+				//SetAreaCommonData(CAREA_TITLE, "GameRankEx", SelectedRank );
+				SetAreaCommonData(CAREA_TITLE, "StageIndex", STAGE_EXTRA );
+				SetAreaCommonData(CAREA_TITLE, "ReplayPath", "" );
+				SetAreaCommonData(CAREA_TITLE, "ExtraMode", 1 );
+				SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 );
+			}
+			//  ステージ開始
+			let pathScript = GetCurrentScriptDirectory() ~ "SceneStage.dnh";
+			let idScript = LoadScript( pathScript );
+			StartScript( idScript );
+			return;
+		}
+	}
+
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_START);
+}
+
+
+// プラクティス
+task TSelectPractice()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	//初期値
+	baseMenuFlag = 0;
+	let SelectedStage = 0;
+	let SelectedRank = 0;
+	let SelectedPlayer = 0;
+	//値をセット
+	SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_PRACTICE );
+	SetAreaCommonData(CAREA_TITLE, "PlayerSubWeapon", [] );
+	
+	let tmp_select = 0;
+	loop
+	{
+		// 難易度セレクト
+		tmp_select = SceneRankSelect(SelectedRank);
+		if (tmp_select < 0) { break; }
+		SelectedRank = tmp_select;
+		loop
+		{
+			//ステージセレクト
+			tmp_select = SceneStageSelect(SelectedStage);
+			if (tmp_select < 0) { break; }
+			SelectedStage = tmp_select;
+			loop
+			{
+				//relative logic is in this function,instead of below
+				tmp_select = ChangeChapter(SelectedStage);
+				if (tmp_select < 0) { break; }
+				loop
+				{
+					// プレイヤーセレクト
+					tmp_select = ScenePlayerSelect(SelectedPlayer);
+					if (tmp_select < 0) { break; }
+					SelectedPlayer = tmp_select;
+
+					baseMenuFlag = -1;	//フラグリセット
+					
+					//  下準備
+					SetAreaCommonData(CAREA_TITLE, "PlayerType", SelectedPlayer );
+					SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_PRACTICE );
+					SetAreaCommonData(CAREA_TITLE, "GameRank", SelectedRank );
+					SetAreaCommonData(CAREA_TITLE, "StageIndex", SelectedStage+1 );
+					SetAreaCommonData(CAREA_TITLE, "ReplayPath", "" );
+					SetAreaCommonData(CAREA_TITLE, "ExtraMode", 0 );
+					SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 );
+					//  ステージ開始
+					let pathScript = GetCurrentScriptDirectory() ~ "SceneStage.dnh";
+					let idScript = LoadScript( pathScript );
+					StartScript( idScript );
+
+
+					return;
+				}
+			}
+		}
+	}
+
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_PRACTICE);
+}
+
+// スペプラ
+task TSpellPractice()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	//初期値
+	baseMenuFlag = 0;
+	let SelectedPlayer = 0;
+	let SelectedSpell = 0;
+	//値をセット
+	SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_SPELL );
+	SetAreaCommonData(CAREA_TITLE, "PlayerSubWeapon", [] );
+	
+	let tmp_spell = [];
+	let tmp_select = 0;
+	loop
+	{
+		// プレイヤーセレクト
+		tmp_select = ScenePlayerSelect(SelectedPlayer);
+		if (tmp_select < 0) { break; }
+		SelectedPlayer = tmp_select;
+
+		loop
+		{
+			// 難易度セレクト
+			tmp_spell = SceneSpellSelect(0);
+			if (tmp_spell[0] < 0) { break; }
+
+			baseMenuFlag = -1;	//フラグリセット
+			
+			// 自動選択用フラグセット
+			SetAutoSelectMemory( [T_INDEX_SPELLPRACTICE, SelectedPlayer, tmp_spell[2], tmp_spell[3], tmp_spell[4]] );
+
+			//  下準備
+			SetAreaCommonData(CAREA_TITLE, "PlayerType", SelectedPlayer );
+			SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_SPELL );
+			SetAreaCommonData(CAREA_TITLE, "GameRank", tmp_spell[1] );
+			SetAreaCommonData(CAREA_TITLE, "GameRankEx", tmp_spell[5] );
+			SetAreaCommonData(CAREA_TITLE, "StageIndex", tmp_spell[0] );
+			SetAreaCommonData(CAREA_TITLE, "ReplayPath", "" );
+			SetAreaCommonData(CAREA_TITLE, "ExtraMode", 0 );
+			SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 );
+			//  ステージ開始
+			let pathScript = GetCurrentScriptDirectory() ~ "SceneStage.dnh";
+			let idScript = LoadScript( pathScript );
+			StartScript( idScript );
+			return;
+		}
+	}
+
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_SPELLPRACTICE);
+}
+
+// オプション
+task TSelectOption()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	SceneOption();
+	
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_OPTION);
+}
+
+
+// ミュージックルーム
+task TMusicRoom()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	SceneMusicRoom();
+
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_MROOM);
+}
+
+
+// リプレイ
+task TReplaySelect()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 );
+	let tmp_select = SceneReplaySelect(0);
+	
+	if (tmp_select != "")
+	{
+		//  リプレイファイル
+		SetAreaCommonData(CAREA_TITLE, "ReplayPath", tmp_select );
+		//  下準備（後で上書きされるのでてきとーでいい）
+		SetAreaCommonData(CAREA_TITLE, "PlayerType", 0 );
+		SetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_NONE );
+		SetAreaCommonData(CAREA_TITLE, "GameRank", 0 );
+		SetAreaCommonData(CAREA_TITLE, "StageIndex", GetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 1 ) );
+		SetAreaCommonData(CAREA_TITLE, "ExtraMode", 0 );
+		//  ステージ開始
+		let pathScript = GetCurrentScriptDirectory() ~ "SceneStage.dnh";
+		let idScript = LoadScript( pathScript );
+		StartScript( idScript );
+		
+		// 自動選択用
+		SetAutoSelectMemory([T_INDEX_REPLAY, 0]);
+		return;
+	}
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_REPLAY);
+}
+
+// マニュアル
+task TManual()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	SceneManual(0);
+	
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_HELP);
+}
+
+// プレイヤーデータ
+task TPlayerData()
+{
+	// 暗転
+	let objBlackBack = EffectBlackOut(15, 120);
+
+	ScenePlayerData();
+	
+	Obj_SetValue(objBlackBack, "ERASE", true);	// ブラックアウト解除
+	MainMenu(false, T_INDEX_SCORE);
+}
+
+function ResetSelectedCommonData()
+{
+	SetAreaCommonData(CAREA_TITLE, "PlayerType", 0 );
+	SetAreaCommonData(CAREA_TITLE, "PlayMode", 0 );
+	SetAreaCommonData(CAREA_TITLE, "GameRank", 0 );
+	SetAreaCommonData(CAREA_TITLE, "GameRankEx", 0 );
+	SetAreaCommonData(CAREA_TITLE, "StageIndex", 0 );
+	SetAreaCommonData(CAREA_TITLE, "ReplayPath", "" );
+	SetAreaCommonData(CAREA_TITLE, "ExtraMode", 0 );
+	SetAreaCommonData(CAREA_TITLE, "ReplayStageIndex", 0 );
+	SetAreaCommonData(CAREA_TITLE, "ChapterIndex", 0 );
+}
+
+
+
+
+//[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ここから
+//　ロゴとかいろいろ
+task TitleAccessory( parent ){
+	let obj		= [
+		CreatePrimitive2D( imgTtTitle, 33, BLEND_ALPHA ),		//　ﾀｲﾄﾙﾛｺﾞ
+		CreatePrimitive2D( imgTtTitle3, 32, BLEND_ALPHA ),		//　キャラ絵
+	];
+	let obj2	= [
+		CreatePrimitive2D( imgTtTitle2, 31, BLEND_ALPHA ),		//　鳥居(1)
+		CreatePrimitive2D( imgTtTitle2, 31, BLEND_ALPHA ),		//　鳥居(2)
+	];
+	let i		= 0;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let pos		= [ 240, 256+24 ];
+	let scale	= [ [ 1, 1 ], [ 1.04, 1.04 ] ];
+	
+	let title1 = obj[0];
+	ObjPrim_SetDestCenter( title1, [0,0,512,256] );
+	ObjRender_SetPosition( title1, pos[0], pos[1], 0 );
+	
+	let chara = obj[1];
+	ObjPrim_SetDestCenter( chara, [0,0,1024,1024] );
+	ObjRender_SetScaleXYZ( chara, 0.5, 0.5, 0 );
+	
+	ascent( i in 0..length(obj2) ){
+		ObjPrim_SetDestCenter( obj2[i], [0,0,512,512] );
+		ObjRender_SetPosition( obj2[i], pos[0]-8, pos[1]-32, 0 );
+		ObjRender_SetScaleXYZ( obj2[i], scale[i][0], scale[i][1], 0 );
+	}
+	
+	let shader = CreateShaderObject( obj2[1], 1 );
+	ObjShader_SetTexture( shader, "g_Texture", fxMask[1] );
+	ObjShader_SetTexture( shader, "g_Texture2", fxMask[2] );
+	
+	//　IN
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ascent( i in 0..length(obj) ){
+			ObjRender_SetAlpha( obj[i], move1*255 );
+		}
+		ascent( i in 0..length(obj2) ){
+			ObjRender_SetAlpha( obj2[i], move1*255 );
+		}
+		ObjRender_SetPosition( chara, 384 + 64-move1*64 - 64-64-64+128, 260+32, 0 );
+		
+		let a = 0.4 + 0.2 * sin(frame);
+		ObjShader_SetFloat( shader, "m_frame", frame/8 );
+		ObjShader_SetVector( shader, "m_xyzw", (1/255)*255, (1/255)*128, (1/255)*0, (1/255)*255 );
+		ObjShader_SetFloat( shader, "m_param", move1 * a );
+		
+		moveA += 2;
+		frame++;
+		yield;
+	}
+	
+	//　待機
+	while( !Obj_IsDeleted(parent) ){
+		let a = 0.4 + 0.2 * sin(frame);
+		ObjShader_SetFloat( shader, "m_frame", frame/8 );
+		ObjShader_SetVector( shader, "m_xyzw", (1/255)*255, (1/255)*128, (1/255)*0, (1/255)*255 );
+		ObjShader_SetFloat( shader, "m_param", a );
+		frame++;
+		yield;
+	}
+	
+	//　OUT
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		ascent( i in 0..length(obj) ){
+			ObjRender_SetAlpha( obj[i], move1*255 );
+		}
+		ascent( i in 0..length(obj2) ){
+			ObjRender_SetAlpha( obj2[i], move1*255 );
+		}
+		let a = 0.4 + 0.2 * sin(frame);
+		ObjShader_SetFloat( shader, "m_frame", frame/8 );
+		ObjShader_SetVector( shader, "m_xyzw", (1/255)*255, (1/255)*128, (1/255)*0, (1/255)*255 );
+		ObjShader_SetFloat( shader, "m_param", move1*a );
+		moveA += 5;
+		frame++;
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+	ObjShader_ResetShader( obj2[1] );
+	ascent( i in 0..length(obj2) ){
+		Obj_Delete( obj2[i] );
+	}
+}
+//]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]ここまで
+
+//　2Dﾌﾟﾘﾐﾃｨﾌﾞ作成
+function CreatePrimitive2D( path, layer, blend )
+{
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	
+	ObjPrim_SetPrimitiveType( obj, PRIMITIVE_TRIANGLESTRIP );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjPrim_SetTexture( obj, path );
+	ObjRender_SetBlendType( obj, blend );
+	
+	//　初期設定
+	ObjPrim_SetDestCenter( obj, [0,0,256,256] );
+	
+	return obj;
+}
+
+//　中央座標設定
+task ObjPrim_SetDestCenter( obj, _rect )
+{
+	ObjPrim_SetVertexCount( obj, 4 );
+	ObjPrim_SetVertexPosition( obj, 0, _rect[2]/-2, _rect[3]/-2, 0 );
+	ObjPrim_SetVertexPosition( obj, 1, _rect[2]/-2, _rect[3]/2, 0 );
+	ObjPrim_SetVertexPosition( obj, 2, _rect[2]/2, _rect[3]/-2, 0 );
+	ObjPrim_SetVertexPosition( obj, 3, _rect[2]/2, _rect[3]/2, 0 );
+	ObjPrim_SetVertexUVT( obj, 0, _rect[0], _rect[1] );
+	ObjPrim_SetVertexUVT( obj, 1, _rect[0], _rect[3] );
+	ObjPrim_SetVertexUVT( obj, 2, _rect[2], _rect[1] );
+	ObjPrim_SetVertexUVT( obj, 3, _rect[2], _rect[3] );
+}
+
+//　ｽｸﾛｰﾙ用UVT再設定
+task ObjPrim_ReSetUVT( obj, _rect )
+{
+	ObjPrim_SetVertexUVT( obj, 0, _rect[0], _rect[1] );
+	ObjPrim_SetVertexUVT( obj, 1, _rect[0], _rect[3] );
+	ObjPrim_SetVertexUVT( obj, 2, _rect[2], _rect[1] );
+	ObjPrim_SetVertexUVT( obj, 3, _rect[2], _rect[3] );
+}

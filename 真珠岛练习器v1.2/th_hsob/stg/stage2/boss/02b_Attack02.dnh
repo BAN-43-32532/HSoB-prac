@@ -1,0 +1,147 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ちぃ通常2"]
+#Text["ちぃ通常2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Chii.dnh"
+//DEBUG_DIFFICULT = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2400);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	// アイテム数
+	bossDropItem = 50;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_CHII);	//ボスセット
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 2, CHAPTER_BOSS);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 160, 90);
+	waitObj(objEnemy, 60);
+	
+	SetAction(objEnemy, ACT_SHOT1, 120);
+	CallSound(sndPower3);
+	waitObj(objEnemy, 30);
+	TShot01();
+	
+	waitObj(objEnemy, 120);
+	while(eAlive)
+	{
+		EnemyRandomMove(objEnemy, 160, 64);
+		waitObj(objEnemy, 75);
+	}
+}
+
+task TShot01()
+{
+	let speed = [2.75, 3, 4, 6][Difficult];
+	let wt = 120;
+	let way = 6;
+	let rate = [0.5, 0.5, 0.5, 0.5][Difficult];
+	let wt_min = [52, 35, 38, 35][Difficult];
+	let old_angle = 90 + 180/way;
+	let arc = 360/way;
+	while(eAlive)
+	{
+		let a = old_angle+rand(0.5*arc, 0.5*arc);
+		S02ShotWay(way, 3.5, speed, a);
+		old_angle = a;
+		waitObj(objEnemy, wt);
+		wt = wt_min + (wt-wt_min)*rate;
+	}
+}
+
+// 自機外し
+task S02ShotWay(way, fspeed, speed, base_angle)
+{
+	if (Difficult <= D_NORM)
+	{
+		ascent(i in 0 .. way)
+		{
+			S02Shot(fspeed, speed, base_angle + i*360/way, 7, 360/way);
+		}
+	}
+	else
+	{
+		ascent(i in 0 .. way)
+		{
+			S02Shot(fspeed, speed, base_angle + i*360/way, 9, 360/way*2);
+		}
+	}
+}
+task S02Shot(fspeed, speed, angle, way, way_angle)
+{
+//	let way = 7;
+	
+	let pos = [
+		[1, 0],
+		[cos(way_angle/2), sin(way_angle/2)]
+		];
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let tmp = i/(way-0.5);
+		let ox = pos[0][0]*(1-tmp) + pos[1][0]*tmp;
+		let oy = pos[0][1]*(1-tmp) + pos[1][1]*tmp;
+		let add_a = atan2(oy,ox);
+		let os = ((ox^2+oy^2)^0.5);
+		let os2 = 1;
+		TumaShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			fspeed*os, angle+add_a, BGW_STICK_YELLOW, 30, speed*os2, angle, BGW_STICK_RED, 60);
+		if (add_a > 0)
+		{
+			TumaShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				fspeed*os, angle-add_a, BGW_STICK_YELLOW, 30, speed*os2, angle, BGW_STICK_RED, 60);
+		}
+		CallSound(sndShot3);
+		waitObj(objEnemy, 2);
+	}
+}
+
+// 自機狙い
+task Shot02(timer)
+{
+	let speed = 4;
+//	let timer = 60;
+	let wt = 3;
+	
+//	let base_angle = GetAngleToPlayer(objEnemy);
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let ss = speed;
+			let sa = -90+rand(-30,30)+((ObjMove_GetX(objEnemy)-MinX)/GetClipWidth-0.5)*120;
+			TumaShot_ToPlayer(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), rand(1, 5^2)^0.5, sa, BGW_STICK_RED, 30,
+				ss, 0, BGW_STICK_RED, 60);
+			CallSound(sndShot3);
+		}
+		waitObj(objEnemy, 1);
+	}
+}

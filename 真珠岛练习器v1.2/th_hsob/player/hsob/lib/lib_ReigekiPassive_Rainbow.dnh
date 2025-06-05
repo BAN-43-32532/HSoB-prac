@@ -1,0 +1,38 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　真珠島　霊撃・虹
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+// 初期設定
+function InitRainbow( v_obj, v_playerNo )
+{
+	// サブ霊撃
+	if (length(GetAreaCommonData(CAREA_SYSTEM, "PLAYER_SUBCOL", [])) <= 0)
+	{
+		let sub_wp = GetAllPlayerSubWeapon();
+		if (length(sub_wp) <= 0) { sub_wp = [WEAPON_RED, WEAPON_PURPLE]; }
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SUBCOL", sub_wp);
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SUBCOL_ACTIVE", 0);
+	}
+	
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_ZITEM_MULTI", 0);	// Zボムゲージ倍率
+	// アイテム周りの旧仕様化
+	SetAreaCommonData(CAREA_SYSTEM, "ITEM_LEGACY", true );
+	SetAreaCommonData(CAREA_SYSTEM, "ITEM_LEGACY_MAX", 6000 );
+}
+
+//function IsRainbow() { return(GetPlayerRealWeapon() == WEAPON_RAINBOW); }
+
+function GetRainbowColor()
+{
+	alternative(GetPlayerWeapon())
+	case(WEAPON_RED)	{ return("RED"); }
+	case(WEAPON_PURPLE)	{ return("PURPLE"); }
+	case(WEAPON_BLUE)	{ return("BLUE"); }
+	case(WEAPON_SKY)	{ return("AQUA"); }
+	case(WEAPON_GREEN)	{ return("GREEN"); }
+	case(WEAPON_YELLOW)	{ return("YELLOW"); }
+	case(WEAPON_ORANGE)	{ return("ORANGE"); }
+	others			{ return("WHITE"); }
+}

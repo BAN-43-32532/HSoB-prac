@@ -1,0 +1,281 @@
+
+#include"./SaraShot.dnh"
+#include"./lib_MumeiEffect.dnh"
+#include"./lib_MumeiEffect2.dnh"
+
+
+let imgEffectSara		= imgDir ~ "effect/sara.png";
+let imgEffectSara2		= imgDir ~ "effect/sara2.png";
+let imgEffectSara3		= imgDir ~ "effect/sara3.png";
+let imgEffectSara4		= imgDir ~ "effect/sara4.png";
+let imgEffectHanie		= imgDir ~ "effect/hanie_efc1.png";
+let imgEffectBarrier		= imgDir ~ "world/stg7img/enm07a_barrier.png";
+
+function InitMumei()
+{
+	LoadTexture(imgEffectSara);
+//	LoadTexture(imgEffectSara2);
+	LoadTexture(imgEffectSara3);
+	LoadTexture(imgEffectSara4);
+	
+	MumeiEffect_Init();
+}
+
+// ボスの硬さ調整
+function SetMumeiDefence()
+{
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { dIni_Shot /= 0.85; }
+	case(PLAYER_MARISA_A) { dIni_Shot /= 1; }
+	case(PLAYER_SAKUYA_A) { dIni_Shot /= 1; }
+	case(PLAYER_KAGUYA_A) { dIni_Shot /= 1; }
+	// 状態耐性ちょっと高め
+	if (bossResistEffect < 0.8) { bossResistEffect = 0.8; }
+}
+// 本体に打ち込めるスペカの方
+function SetMumeiDefence2()
+{
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { dIni_Shot /= 1; }
+	case(PLAYER_MARISA_A) { dIni_Shot /= 1; }
+	case(PLAYER_SAKUYA_A) { dIni_Shot /= 1; }
+	case(PLAYER_KAGUYA_A) { dIni_Shot /= 1; }
+	// 状態耐性ちょっと高め
+	if (bossResistEffect < 0.8) { bossResistEffect = 0.8; }
+}
+
+// ボスのチャージえへくと
+task BossChargeFire(objTarget)
+{
+	EffectChargeSetA(objTarget, EFF_RED, 90);
+	CallSound(sndPower2);
+}
+
+//菱形にショットを撃つ
+task RhombusShotEx(objE, quant, distH, distW, x, y, spd, ang, grap, delay){
+	RhombusShotEx2(objE, quant, distH, distW, x, y, spd, ang, grap, delay, -9999);
+}
+
+task RhombusShotEx2(objE, quant, distH, distW, x, y, spd, ang, grap, delay, soundChar){
+	let wayArray = [quant];
+	descent(i in 1 .. quant){
+		wayArray = [i] ~ wayArray ~ [i];
+	}
+	let iWHMinus = (length(wayArray)-1)/2;
+	let bx = x;
+	x = 0;
+	let by = y;
+	y = 0;
+	let count = 0;
+	ascent(i in 0 .. length(wayArray)){
+		if(soundChar != -9999){CallSound(soundChar);}
+		let way = wayArray[i];
+		x = -count*cos(ang);
+		y = -count*sin(ang);
+		count += distH;
+		if(way != 1){
+			let rx = (i-iWHMinus)*distH;
+			let ry = (way-1)*distW;
+			let a = atan2(ry, rx);
+			let r = (ry^2 + rx^2)^0.5;
+			My_CreateShotA2(bx+x+ry*cos(ang+90), by+y+ry*sin(ang+90),  0, ang, spd/80, spd, grap, delay);
+			My_CreateShotA2(bx+x+ry*cos(ang-90), by+y+ry*sin(ang-90),  0, ang, spd/80, spd, grap, delay);
+		}
+		else{
+			let r = (i-iWHMinus)*distH;
+			My_CreateShotA2(bx+x, by+y,  0, ang, spd/80, spd, grap, delay);
+		}
+		while(count >= 0){
+			if(!CanShotBullet(objE)){return;}
+			count -= spd;
+			wait(1);
+		}
+	}
+}
+
+// -------------------- 槍描画 -------------------- //
+// RotateAngle=0の場合は角度指定可能（ObjRender_SetAngleZにて）
+task DrawMumeiSpear( obj, Angle, RotateAngle )
+{
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityBoss);
+	ObjPrim_SetTexture(objImg, imgCharaMumei[12]);
+	SetVeterex2D(objImg, 324, 324, 162, 162, 1);
+	ObjRender_SetAngleZ(objImg, Angle);
+
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+	Obj_SetValue(obj, "IMAGE_ID_ALL", [objImg]);
+
+	let t = 0;
+	let scaleX = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let ex = round(ObjMove_GetX(obj));
+		let ey = round(ObjMove_GetY(obj));
+		ObjRender_SetPosition(objImg, ex, ey, 0);
+		if (RotateAngle != 0)
+		{
+			ObjRender_SetAngleZ(objImg, Angle);
+			Angle += RotateAngle;
+		}
+		if (t < 5)
+		{
+			scaleX = (t+1)/5;
+			ObjRender_SetScaleX(objImg, scaleX);
+		}
+		DrawMumeiSpearShadow( ex, ey, ObjRender_GetAngleZ(objImg), scaleX );
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+task DrawMumeiSpearShadow( x, y, angle, scaleX )
+{
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityBoss-1);
+	ObjPrim_SetTexture(objImg, imgCharaMumei[12]);
+	SetVeterex2D(objImg, 162, 324, 162, 162, 1);
+	ObjRender_SetAngleZ(objImg, angle);
+	ObjRender_SetPosition(objImg, x, y, 0);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	ObjRender_SetColor(objImg, 0, 0, 128);
+
+	ascent(t in 0 .. 45)
+	{
+		let tmp = (t+1)/45;
+		ObjRender_SetScaleX(objImg, scaleX);
+		ObjRender_SetAlpha(objImg, (1-tmp)*255);
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+
+// エフェクト単品
+task _EffectConcentrationP_offset(objTarget, offset_r, size, timer, c_index)
+{
+	if (IsDrawEffect() < 2) { return; }
+
+	let color = GetEffectColorCharge(c_index);
+	let lay = GetShotRenderPriorityI() + 1;
+
+	let ax = randEffect(-60,60);
+	let ay = randEffect(-60,60);
+	//初期設定
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, lay);
+	ObjPrim_SetTexture(obj, imgEffectPower);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 256, 256);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetAngleX(obj, ay);
+	ObjRender_SetAngleY(obj, ax);
+	ObjRender_SetColor(obj, color[0], color[1], color[2]);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	
+	let az = randEffect(0,360);
+	let add_angle = randEffect(-360,360);
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objTarget)) { break; }
+		let tmp = sin((t+1)/timer*90);
+		let tmp2 = (1-tmp)^0.33;
+		let tmp_scale = tmp2 * size;
+		let tmp_a = az + add_angle*tmp2;
+		let tmp_alpha = min(108, 192*tmp);
+		let ea = ObjMove_GetAngle(objTarget);
+		let ex = ObjMove_GetX(objTarget) + offset_r * cos(ea);
+		let ey = ObjMove_GetY(objTarget) + offset_r * sin(ea);
+
+		ObjRender_SetAngleZ(obj, tmp_a);
+		ObjRender_SetPosition(obj, ex, ey, 0);
+		ObjRender_SetScaleXYZ(obj, tmp_scale, tmp_scale, 1);
+		ObjRender_SetAlpha(obj, tmp_alpha);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task TargetEffectDelay(x, y, delay, timer, scale, t_delay)
+{
+	wait(t_delay);
+	if (!eAlive) { return; }
+	TargetEffect(x, y, delay, timer, scale)
+}
+
+
+// ヘイキダモーンｗｗｗｗｗ
+task TBombBarrierEx(objEnemy)
+{
+	if (DifficultEx() == D_EX_EASY) { return; }
+	
+	while(CanShotBullet(objEnemy))
+	{
+		if (IsPlayerSpellActive())
+		{
+			BombBarrier(objEnemy, 120);
+		}
+		yield;
+	}
+	
+	function BombBarrier(objBase, timer)
+	{
+		let lay = 70;
+		let add_ang = [0, 1, -1, 0];
+		let obj = [
+			ObjPrim_Create(OBJ_SPRITE_2D),
+			ObjPrim_Create(OBJ_SPRITE_2D),
+			ObjPrim_Create(OBJ_SPRITE_2D),
+			ObjPrim_Create(OBJ_SPRITE_2D)
+		];
+		
+		ascent(i in 0 .. length(obj))
+		{
+			Obj_SetRenderPriorityI(obj[i], lay);
+			ObjPrim_SetTexture(obj[i], imgEffectBarrier);
+			ObjSprite2D_SetSourceRect(obj[i], 0+i*256, 0, 256+i*256, 256);
+			ObjSprite2D_SetDestCenter(obj[i]);
+			ObjRender_SetBlendType(obj[i], BLEND_ADD_ARGB);
+		}
+		
+		let scale = 0;
+		let alpha = 0;
+		
+		let t = 0;
+		let rest_t = timer;
+		while(rest_t > 0)
+		{
+			let tmp = GetCurve_d(min(t,30)/30);
+			let tmp2 = GetCurve_d(min(rest_t,timer)/timer);
+			scale = min(tmp, tmp2*0.5+0.5);
+			alpha = tmp2*160;
+			ascent(i in 0 .. length(obj))
+			{
+				if (!Obj_IsDeleted(objBase)) { ObjRender_SetPosition(obj[i], ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0); }
+				ObjRender_SetScaleXYZ(obj[i], scale, scale, scale);
+				ObjRender_SetAngleZ(obj[i], add_ang[i]*t);
+				ObjRender_SetAlpha(obj[i], alpha);
+			}
+			
+			if (!CanShotBullet(objBase)) {
+				rest_t -= 2;
+			} else {
+				if (IsPlayerSpellActive()) { rest_t = min(timer, rest_t+2); }
+				else { rest_t--; }
+			}
+			if (ObjEnemy_GetInfo(objBase, INFO_SHOT_HIT_COUNT) > 0)
+			{
+				CallSound(sndBulletBreak);
+			}
+			ObjEnemy_SetDamageRate(objBase, 0, 0);
+			t++;
+			yield;
+		}
+		ObjEnemy_SetDamageRate(objBase, dIni_Shot, dIni_Shot*dIni_Spell);
+		ascent(i in 0 .. length(obj))
+		{
+			Obj_Delete(obj[i]);
+		}
+	}
+}

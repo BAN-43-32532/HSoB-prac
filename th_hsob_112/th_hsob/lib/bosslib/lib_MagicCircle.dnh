@@ -1,0 +1,186 @@
+//----------------------------------------------------
+//　タイマー魔方陣
+//----------------------------------------------------
+task SpellCardMagicTimer( v_enmID ){
+
+	if (IsDrawEffect() < 1) { return; }
+
+	let obj			= [ ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D) ];
+	let GetTimerD	= ObjEnemyBossScene_GetInfo( GetEnemyBossSceneObjectID(), INFO_TIMER );
+	let disMAX		= min( GetTimerD*3, 160 );
+	let csd			= GetCurrentScriptDirectory();
+	let dis1		= 0;	//　内円
+	let dis2		= 0;	//　外円
+	let dis3		= 0;	//　赤用　拡大
+	let dis4		= 0;	//　赤用　収縮
+	let disA		= 0;
+	let disB		= 0;
+	let disC		= 0;
+	let disD		= 0;
+	let disDAdd		= 0;
+	let alpha		= 0;
+	let alphaA		= 0;
+	let kaku		= 32;
+	let cc			= 0;
+	let ang			= 0;
+	let pc			= 0;
+	let i			= 0;
+	let i2			= 1;
+	let j			= 0;
+	
+	//　Ｎ角形＋１＊２が頂点の数になる
+	let ten			= ( kaku + 1 ) * 2;
+	//　サイズ / 頂点数
+	let _rect		= [1024/kaku,256/kaku];
+	//　円の太さ
+	let wight		= [20,14];
+	//　回転の早さ
+	let ang_plus	= 6;
+	
+	//　a値
+	let m_alpha		= 128;
+	let b_alpha		= 1;	// 追記
+	
+	ascent( i in 0..length(obj) ){
+		ObjRender_SetPosition( obj[i], ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID), 0 );
+		ObjPrim_SetTexture( obj[i], imgSystemSCircle2 );
+		Obj_SetRenderPriorityI( obj[i], 29 );
+		ObjRender_SetBlendType( obj[i], BLEND_ADD_ARGB );
+		ObjRender_SetScaleXYZ( obj[i], 1, 1, 0 );
+		ObjPrim_SetPrimitiveType( obj[i], PRIMITIVE_TRIANGLESTRIP );
+		ObjPrim_SetVertexCount( obj[i], ten );
+	}
+	
+	//　追従精度
+	let trace = 32;
+	
+	while( dis1 < disMAX || dis2 < disMAX || dis3 < disMAX*2.5 || dis4 < disMAX*1.5 ){
+		let gpos = [ ObjRender_GetX(obj[0]), ObjRender_GetY(obj[0]) ];
+		let dpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		let nextDist = GetDistance( gpos, dpos );
+		let nextAngle = GetGapAngle( gpos, dpos );
+		
+		let spos = [
+			ObjRender_GetX(obj[0]) + nextDist/trace * cos( nextAngle ),
+			ObjRender_GetY(obj[0]) + nextDist/trace * sin( nextAngle ),
+		];
+		
+		//　ゆっくり追従
+		ObjRender_SetPosition( obj[0], spos[0], spos[1], 0 );
+		ObjRender_SetPosition( obj[1], spos[0], spos[1], 0 );
+		ObjRender_SetAngleXYZ( obj[0], 0, 0, cc*8 );
+		ObjRender_SetAngleXYZ( obj[1], 0, 0, cc*-8 );
+		
+		//　蒼
+		if( dis1 < disMAX ){ disA += 1; }
+		dis1 = disMAX * sin(disA);
+		if( dis2 < disMAX ){ disB += 0.5; }
+		dis2 = disMAX * sin(disB);
+		
+		//　赤
+		if( dis3 < disMAX*2.5 ){ disC += 2; }
+		else if( dis4 < disMAX*1.5 ){
+			disD	+= 0.1;
+			dis4	+= disD;
+		}
+		dis3 = disMAX*2.5 * sin(disC);
+		
+		if( alpha < 1 ){ alphaA += 1; }
+		alpha = 1 * sin( alphaA );
+		
+		loop( ten/2 ){
+			//　Spell Card Attack
+			ObjPrim_SetVertexPosition( obj[0], i, (dis3-dis4-32) * cos(pc+ang), (dis3-dis4-32) * sin(pc+ang), 0 );
+			ObjPrim_SetVertexPosition( obj[0], i2, (dis3-dis4+wight[0]-32) * cos(pc+ang), (dis3-dis4+wight[0]-32) * sin(pc+ang), 0 );
+			ObjPrim_SetVertexUVT( obj[0], i, 0 + _rect[0], 192 );
+			ObjPrim_SetVertexUVT( obj[0], i2, 0 + _rect[0], 224 );
+			ObjPrim_SetVertexAlpha( obj[0], i, alpha*m_alpha );
+			ObjPrim_SetVertexAlpha( obj[0], i2, alpha*m_alpha );
+			//　Border Of Life
+			ObjPrim_SetVertexPosition( obj[1], i, (dis2-wight[1]) * cos(pc-ang), (dis2-wight[1]) * sin(pc-ang), 0 );
+			ObjPrim_SetVertexPosition( obj[1], i2, (dis1) * cos(pc-ang), (dis1) * sin(pc-ang), 0 );
+			ObjPrim_SetVertexUVT( obj[1], i, 0 + _rect[1], 224 );
+			ObjPrim_SetVertexUVT( obj[1], i2, 0 + _rect[1], 240 );
+			ObjPrim_SetVertexAlpha( obj[1], i, alpha*m_alpha );
+			ObjPrim_SetVertexAlpha( obj[1], i2, alpha*m_alpha );
+			pc			+= 360/kaku;
+			i			+= 2;
+			i2			+= 2;
+			_rect[0]	= _rect[0] + 16;
+			_rect[1]	= _rect[1] + 16;
+		}
+		pc			= 0;
+		i			= 0;
+		i2			= 1;
+		_rect[0]	= 0;
+		_rect[1]	= 0;
+		
+		ang	+= ang_plus;
+		cc++;
+		
+		yield;
+	}
+	
+	while( !Obj_IsDeleted(v_enmID) && GetTimerD > 0 ){
+		GetTimerD	= ObjEnemyBossScene_GetInfo( GetEnemyBossSceneObjectID(), INFO_TIMER );
+		disMAX		= min( GetTimerD*3, 160 );
+		
+		let gpos = [ ObjRender_GetX(obj[0]), ObjRender_GetY(obj[0]) ];
+		let dpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		let nextDist = GetDistance( gpos, dpos );
+		let nextAngle = GetGapAngle( gpos, dpos );
+		
+		let spos = [
+			ObjRender_GetX(obj[0]) + nextDist/trace * cos( nextAngle ),
+			ObjRender_GetY(obj[0]) + nextDist/trace * sin( nextAngle ),
+		];
+		
+		//　ゆっくり追従
+		ObjRender_SetPosition( obj[0], spos[0], spos[1], 0 );
+		ObjRender_SetPosition( obj[1], spos[0], spos[1], 0 );
+		ObjRender_SetAngleXYZ( obj[0], 0, 0, cc*8 );
+		ObjRender_SetAngleXYZ( obj[1], 0, 0, cc*-8 );
+		
+		//　--- 追記分 当たり判定がない時は隠す
+		if (Obj_GetValueD(v_enmID, "VISIBLE", 0) && Obj_GetValueD(v_enmID, "MagicCircle", true)) { b_alpha = min(1, b_alpha+0.01); }
+		else { b_alpha = max(0, b_alpha-0.02); }
+		
+		loop( ten ){
+			//　Spell Card Attack
+			ObjPrim_SetVertexPosition( obj[0], i, (dis1-32) * cos(pc+ang), (dis1-32) * sin(pc+ang), 0 );
+			ObjPrim_SetVertexPosition( obj[0], i2, (dis1+wight[0]-32) * cos(pc+ang), (dis1+wight[0]-32) * sin(pc+ang), 0 );
+			ObjPrim_SetVertexUVT( obj[0], i, 0 + _rect[0], 192 );
+			ObjPrim_SetVertexUVT( obj[0], i2, 0 + _rect[0], 224 );
+			ObjPrim_SetVertexAlpha( obj[0], i, b_alpha*m_alpha );
+			ObjPrim_SetVertexAlpha( obj[0], i2, b_alpha*m_alpha );
+			//　Border Of Life
+			ObjPrim_SetVertexPosition( obj[1], i, (dis1-wight[1]) * cos(pc-ang), (dis1-wight[1]) * sin(pc-ang), 0 );
+			ObjPrim_SetVertexPosition( obj[1], i2, (dis1) * cos(pc-ang), (dis1) * sin(pc-ang), 0 );
+			ObjPrim_SetVertexUVT( obj[1], i, 0 + _rect[1], 224 );
+			ObjPrim_SetVertexUVT( obj[1], i2, 0 + _rect[1], 240 );
+			ObjPrim_SetVertexAlpha( obj[1], i, b_alpha*m_alpha );
+			ObjPrim_SetVertexAlpha( obj[1], i2, b_alpha*m_alpha );
+			pc			+= 360/kaku;
+			i			+= 2;
+			i2			+= 2;
+			_rect[0]	= _rect[0] + 16;
+			_rect[1]	= _rect[1] + 16;
+		}
+		pc			= 0;
+		i			= 0;
+		i2			= 1;
+		_rect[0]	= 0;
+		_rect[1]	= 0;
+		
+		if( dis1 > disMAX ){ dis1 -= 0.05; }
+		ang	+= ang_plus;
+		cc++;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}

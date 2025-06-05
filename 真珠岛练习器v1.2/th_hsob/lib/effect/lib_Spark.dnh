@@ -1,0 +1,70 @@
+
+#include "./../fx_function.dnh"
+
+//　火の粉っぽい煌めきエフェクト（たぶんGPU積んでない環境はめっちゃ重い
+//　いまのところ使い道がないのでボスのオーラと一緒にだしてる
+task SparkParticle( pos, spd, angle, long, scale, rgba, layer, blend ){
+	if( !CfgIsUseShader() ){ return; }
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let _rect	= [ 2, 3 ];
+	let ac		= randEffect( 32, 64 );
+	let def		= randEffect( 0, 360 );
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+	ObjPrim_SetTexture( obj, imgEffectSpark );
+	ObjRender_SetBlendType( obj, blend );
+	Obj_SetRenderPriority( obj, layer );
+	ObjSprite2D_SetSourceRect( obj, 0 + _rect[0]*64, 0 + _rect[1]*64, 64 + _rect[0]*64, 64 + _rect[1]*64 );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	let shd = CreateShaderObject( obj, 4 );
+	ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), 0 );
+	
+	while( !Obj_IsDeleted(obj) && frame < long ){
+		let angc = ac * sin( def+frame*(spd*4) );
+		let spos = [
+			ObjRender_GetX(obj) + spd * cos( angle + angc ),
+			ObjRender_GetY(obj) + spd * sin( angle + angc ),
+		];
+		move1 = 1 * sin( moveA );
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, move1*scale[0], move1*scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		let sAlpha = rgba[3]*(1/255);
+		if( frame > 0 && frame%4 == 0 ){ sAlpha = rgba[3] * (1/255) / 2; }
+		
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetFloat( shd, "m_alpha", sAlpha );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 2; }
+		yield;
+	}
+	while( move1 > 0 ){
+		let angc = ac * sin( def+frame*(spd*4) );
+		let spos = [
+			ObjRender_GetX(obj) + spd * cos( angle + angc ),
+			ObjRender_GetY(obj) + spd * sin( angle + angc ),
+		];
+		move1 = 1 * sin( moveA );
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, move1*scale[0], move1*scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		let sAlpha = rgba[3]*(1/255);
+		if( frame > 0 && frame%4 == 0 ){ sAlpha = rgba[3] * (1/255) / 2; }
+		
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetFloat( shd, "m_alpha", sAlpha );
+		
+		frame++;
+		moveA += 5;
+		yield;
+	}
+	Obj_Delete( shd );
+	Obj_Delete( obj );
+}

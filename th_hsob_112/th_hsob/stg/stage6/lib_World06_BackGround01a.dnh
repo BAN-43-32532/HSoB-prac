@@ -1,0 +1,719 @@
+
+#include "./../../lib/wor_function.dnh"
+
+let ADD_BG_IMAGE = [
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06k.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06l.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06m.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06n.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06o.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06p.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06q.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg5img/world05a.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06r.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/world06s.png",
+];
+
+let ADD_BG_IMAGE_LITE = [
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a0_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a1_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a2_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a3_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a4_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a5_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a6_lite.png",
+	GetCurrentScriptDirectory() ~ "./../../img/world/stg6img/BG06a6b_lite.png",
+];
+
+task SetBackGroundBase( arg_obj, arg_num )
+{
+	if (IsDrawBackground() >= 2) { _SetBackGroundBase( arg_obj, arg_num ); }
+	else if (IsDrawBackground() >= 1) { _SetBackGroundBaseLite( arg_obj, arg_num ); }
+	// 外すとリプレイずれする。ナンデ！！？？？！！？
+	yield;
+}
+
+task _SetBackGroundBase( arg_obj, arg_num ){
+	let dummy	= CreateTexture01( ADD_BG_IMAGE[0] );
+	let move1	= 0;
+	let moveA	= 0;
+	
+	//　霧用のダミー
+	ObjRender_SetPosition( dummy, -1500, 0, 0 );
+	ObjRender_SetScaleXYZ( dummy, 2, 2, 0 );
+	ObjRender_SetColor( dummy, 0, 0, 0 );
+	ObjRender_SetAlpha( dummy, 0 );
+	ObjSprite3D_SetBillboard( dummy, true );
+	
+	alternative( arg_num )
+	case( 0 ){
+		while( !GetAreaCommonData(CAREA_STAGE, "STG6B_ATK1", false) ){ yield; }
+		World06Object03a( arg_obj );
+		SetPaint( arg_obj, [32+384/2,240], [2,2], [255,255,128,192], 100, BLEND_ADD_ARGB );
+	}
+	case( 1 ){
+		DissolveEffect( [512,0,0,255] );
+		World06Object03b( arg_obj );
+		SetPaint( arg_obj, [32+384/2,240], [2,2], [232,128,128,192], 100, BLEND_ADD_ARGB );
+	}
+	case( 2 ){
+		DissolveEffect( [256,0,512,255] );
+		World06Object03c( arg_obj );
+		SetPaint( arg_obj, [32+384/2,240], [2,2], [255,192,255,192], 100, BLEND_ADD_ARGB );
+	}
+	case( 3 ){
+		DissolveEffect( [0,256,512,255] );
+		World06Object03d( arg_obj );
+		SetPaint( arg_obj, [32+384/2,240], [2,2], [128,255,255,192], 100, BLEND_ADD_ARGB );
+	}
+	case( 4 ){
+		DissolveEffect( [256,256,512,255] );
+		World06Object03e( arg_obj );
+		SetPaint( arg_obj, [32+384/2,240], [2,2], [192,160,255,192], 100, BLEND_ADD_ARGB );
+	}
+	case( 5 ){
+		DissolveEffect( [256,256,256,255] );
+		World06Object03f( arg_obj );
+	}
+	case( 6 ){
+		World06Object03g( arg_obj );
+	}
+	
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetAlpha( dummy, move1*255 );
+		if( move1 < 1 ){ moveA += 1; }
+		yield;
+	}
+	wait(420);
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetAlpha( dummy, move1*255 );
+		moveA += 1;
+		yield;
+	}
+	Obj_Delete( dummy );
+}
+
+//　宇宙
+task World06Object03a( arg_obj ){
+	let obj		= [
+		CreateTexture01( ADD_BG_IMAGE[0] ),
+		CreateTexture01( ADD_BG_IMAGE[0] ),
+	];
+	let objUniv	= [
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+	];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	ascent( let i in 0..length(objUniv) ){
+		ObjSprite3D_SetBillboard( objUniv[i], true );
+		ObjSprite3D_SetSourceDestRect( objUniv[i], 0, 0, 512, 512 );
+		ObjRender_SetFogEnable( objUniv[i], false );
+		ObjRender_SetAlpha( objUniv[i], 48 );
+	}
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( 0, 1024, 16 + move1*16, 32 - move1*16, 64 - move1*56 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 20 - move1*20 );
+		
+		if( frame%4 == 0 ){
+			CreateFlashLight( [-1024,0,0], [randEffect(8,16)+move1*16,randEffect(-8,8),randEffect(-8,8)], 0.1, randEffect(128,255), 60, [255,255,128] );
+		}
+		
+		let spd = move1 * 16;
+		ascent( i in 0..length(obj) ){
+			let ang = i * (360/2);
+			ObjRender_SetPosition( obj[i], -512, 256*cos(ang), 256*sin(ang) );
+			ObjRender_SetAngleXYZ( obj[i], 90 + ang, 0, 0 );
+			ObjSprite3D_SetSourceDestRect( obj[i], 0 - frame*spd, 0, 1024 - frame*spd, 1024 );
+			ObjRender_SetAlpha( obj[i], move1*255 );
+		}
+		
+		ascent( i in 0..length(objUniv) ){
+			let spin = frame / (i+1);
+			ObjRender_SetPosition( objUniv[i], -1024, move1 * ( -384 - i*48 ), 0 );
+			ObjRender_SetScaleXYZ( objUniv[i], move1 * ( 1 + i/2 ), move1 * ( 1 + i/2 ), 0 );
+			ObjRender_SetAngleXYZ( objUniv[i], move1*80, 0, spin );
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.1; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let spd = 16;
+		ascent( i in 0..length(obj) ){
+			let ang = i * (360/2);
+			ObjRender_SetPosition( obj[i], -512, 256*cos(ang), 256*sin(ang) );
+			ObjRender_SetAngleXYZ( obj[i], 90 + ang, 0, 0 );
+			ObjSprite3D_SetSourceDestRect( obj[i], 0 - frame*spd, 0, 1024 - frame*spd, 1024 );
+			ObjRender_SetAlpha( obj[i], move1*255 );
+		}
+		
+		ascent( i in 0..length(objUniv) ){
+			let spin = frame / (i+1);
+			ObjRender_SetPosition( objUniv[i], -1024, -384 - i*48, 0 );
+			ObjRender_SetScaleXYZ( objUniv[i], 1 + i/2, 1 + i/2, 0 );
+			ObjRender_SetAngleXYZ( objUniv[i], 80, 0, spin);
+			ObjRender_SetAlpha( objUniv[i], move1*48 );
+		}
+		
+		frame++;
+		moveA += 0.5;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+	ascent( i in 0..length(objUniv) ){
+		Obj_Delete( objUniv[i] );
+	}
+}
+
+//　空
+task World06Object03b( arg_obj ){
+	let obj		= [
+		CreateTexture01( ADD_BG_IMAGE[2] ),
+		CreateTexture01( ADD_BG_IMAGE[2] ),
+		CreateTexture01( ADD_BG_IMAGE[2] ),
+		CreateTexture01( ADD_BG_IMAGE[2] ),
+	];
+	let dist = [ 256, 256, 256, 256 ];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( move1*512, 1024, 32 + move1*(128-32), 16 + move1*(64-16), 8 + move1*(32-8) );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 0 );
+		
+		if( frame%4 == 0 ){
+			CreateCloud( [-1024,0,0], [randEffect(8,16),randEffect(-8,8),randEffect(-8,8)], 1, 60, [255,128,64], move1*64 );
+		}
+		
+		let spd = move1 * 16;
+		ascent( i in 0..length(obj) ){
+			let ang = i * (360/2) + move1 * ( frame / 2 );
+			ObjRender_SetPosition( obj[i], -512, dist[i]*cos(ang), dist[i]*sin(ang) );
+			ObjRender_SetAngleXYZ( obj[i], 90 + ang, 0, 0 );
+			ObjRender_SetAlpha( obj[i], move1*128 );
+		}
+		ObjSprite3D_SetSourceDestRect( obj[0], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[3], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.05; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let spd = move1 * 16;
+		ascent( i in 0..length(obj) ){
+			let ang = i * (360/2) + move1 * ( frame / 2 );
+			ObjRender_SetPosition( obj[i], -512, dist[i]*cos(ang), dist[i]*sin(ang) );
+			ObjRender_SetAngleXYZ( obj[i], 90 + ang, 0, 0 );
+			ObjRender_SetAlpha( obj[i], move1*128 );
+		}
+		ObjSprite3D_SetSourceDestRect( obj[0], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[3], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		
+		frame++;
+		moveA += 0.5;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+//　月蝕
+task World06Object03c( arg_obj ){
+	let objUniv	= [
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+		CreateTexture01( ADD_BG_IMAGE[1] ),
+	];
+	let objBase	= [
+		CreateTexture01( ADD_BG_IMAGE[4] ),
+		CreateTexture01( ADD_BG_IMAGE[3] ),
+	];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	ascent( let i in 0..length(objUniv) ){
+		ObjSprite3D_SetBillboard( objUniv[i], true );
+		ObjSprite3D_SetSourceDestRect( objUniv[i], 0, 0, 512, 512 );
+		ObjRender_SetFogEnable( objUniv[i], false );
+		ObjRender_SetColor( objUniv[i], 128, 64, 255 );
+	}
+	
+	ascent( i in 0..length(objBase) ){
+		ObjSprite3D_SetBillboard( objBase[i], true );
+		ObjSprite3D_SetSourceDestRect( objBase[i], 0, 0, 512, 512 );
+		ObjRender_SetFogEnable( objBase[i], false );
+	}
+	ObjRender_SetScaleXYZ( objBase[0], 1.05, 1.05, 0 );
+	ObjRender_SetScaleXYZ( objBase[1], 1, 1, 0 );
+	ObjRender_SetColor( objBase[0], 255, 255, 255 );
+	ObjRender_SetColor( objBase[1], 0, 0, 0 );
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( 0, 1024, 128 - move1*64, 64 - move1*64, 32 + move1*32 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 0 );
+		
+		if( frame%4 == 0 ){
+			CreateFlashLight( [-1024,0,0], [randEffect(8,16),randEffect(-8,8),randEffect(-8,8)], 0.1, randEffect(128,255), 60, [255,255,255] );
+		}
+		
+		let pers = move1 * -1024;
+		let dist = 512 - move1*512;
+		let angl = move1 * -360;
+		
+		ascent( i in 0..length(objUniv) ){
+			let sca = 1 + i*0.8;
+			ObjRender_SetPosition( objUniv[i], pers, dist * cos( angl ), dist * sin( angl ) );
+			ObjRender_SetScaleXYZ( objUniv[i], sca, sca, 0 );
+			ObjRender_SetAngleXYZ( objUniv[i], 0, 0, angl + frame * ( (i+1) * 0.2 ) );
+			ObjRender_SetAlpha( objUniv[i], move1 * 32 );
+		}
+		
+		ascent( i in 0..length(objBase) ){
+			ObjRender_SetPosition( objBase[i], pers, dist * cos( angl ), dist * sin( angl ) );
+		}
+		ObjRender_SetAlpha( objBase[0], move1 * 192 );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.2; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let angl = move1 * -360;
+		
+		ascent( i in 0..length(objUniv) ){
+			let sca = 1 + i*0.6;
+			ObjRender_SetScaleXYZ( objUniv[i], sca, sca, 0 );
+			ObjRender_SetAngleXYZ( objUniv[i], 0, 0, angl + frame * ( (i+1) * 0.2 ) );
+			ObjRender_SetAlpha( objUniv[i], move1 * 32 );
+		}
+		
+		ObjRender_SetScaleXYZ( objBase[0], move1 * 1.05, move1 * 1.05, 0 );
+		ObjRender_SetScaleXYZ( objBase[1], move1, move1, 0 );
+		
+		frame++;
+		moveA += 0.5;
+		
+		yield;
+	}
+	ascent( i in 0..length(objUniv) ){
+		Obj_Delete( objUniv[i] );
+	}
+	ascent( i in 0..length(objBase) ){
+		Obj_Delete( objBase[i] );
+	}
+}
+
+//　星雲
+task World06Object03d( arg_obj ){
+	let objUniv	= [
+		CreateTexture01( ADD_BG_IMAGE[5] ),
+		CreateTexture01( ADD_BG_IMAGE[5] ),
+		CreateTexture01( ADD_BG_IMAGE[5] ),
+		CreateTexture01( ADD_BG_IMAGE[5] ),
+		CreateTexture01( ADD_BG_IMAGE[5] ),
+	];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	ascent( let i in 0..length(objUniv) ){
+		ObjSprite3D_SetBillboard( objUniv[i], true );
+		ObjRender_SetFogEnable( objUniv[i], false );
+		ObjRender_SetColor( objUniv[i], 255, 255, 255 );
+	}
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( 0, 1024, 64 - move1*64, 0, 64 - move1*32 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 0 );
+		
+		if( frame%2 == 0 ){
+			CreateFlashLight( [-1024,0,0], [randEffect(4,8),randEffect(-8,8),randEffect(-8,8)], 0.6, randEffect(128,255), 60, [64,255,255] );
+		}
+		
+		let pers = move1 * -1024;
+		
+		ascent( i in 0..length(objUniv) ){
+			let sca = 1 + i*0.6;
+			ObjRender_SetPosition( objUniv[i], pers, 256, 0 );
+			ObjRender_SetScaleXYZ( objUniv[i], sca, sca, 0 );
+			ObjSprite3D_SetSourceDestRect( objUniv[i], 0 + frame/2, 0 - frame/2, 2048 + frame/2, 2048 - frame/2 );
+			ObjRender_SetAngleXYZ( objUniv[i], 0, 0, frame * ( (i+1) * 0.1 ) );
+			ObjRender_SetAlpha( objUniv[i], move1 * 32 );
+		}
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.2; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let pers = move1 * -1024;
+		
+		ascent( i in 0..length(objUniv) ){
+			ObjRender_SetPosition( objUniv[i], pers, 256, 0 );
+			ObjSprite3D_SetSourceDestRect( objUniv[i], 0 + frame/2, 0 - frame/2, 2048 + frame/2, 2048 - frame/2 );
+			ObjRender_SetAngleXYZ( objUniv[i], 0, 0, frame * ( (i+1) * 0.1 ) );
+			ObjRender_SetAlpha( objUniv[i], move1 * 32 );
+		}
+		
+		frame++;
+		moveA += 0.5;
+		
+		yield;
+	}
+	ascent( i in 0..length(objUniv) ){
+		Obj_Delete( objUniv[i] );
+	}
+}
+
+//　海
+task World06Object03e( arg_obj ){
+	let obj		= [
+		CreateTexture01( ADD_BG_IMAGE[6] ),
+		CreateTexture01( ADD_BG_IMAGE[6] ),
+		CreateTexture01( ADD_BG_IMAGE[6] ),
+		CreateTexture01( ADD_BG_IMAGE[6] ),
+	];
+	let dist = [ 256, 256, 256, 256 ];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( move1*512, 1024, move1*32, move1*32, 32 + move1*32 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 0 );
+		
+		if( frame%4 == 0 ){
+			CreateCloud( [-1024,0,0], [randEffect(4,8),randEffect(-2,-4),randEffect(-4,4)], 1, 60, [128,255,255], move1*128 );
+			CreateCloud( [-1024,0,0], [randEffect(4,8),randEffect(2,4),randEffect(-4,4)], 1, 60, [192,160,255], move1*128 );
+		}
+		
+		let spd = move1 * 16;
+		ascent( i in 0..length(obj) ){
+			let ang = i * (360/2) + move1 * ( frame / -2 );
+			ObjRender_SetPosition( obj[i], -512, dist[i]*cos(ang), dist[i]*sin(ang) );
+			ObjRender_SetAngleXYZ( obj[i], 90 + ang, 0, 0 );
+			ObjRender_SetAlpha( obj[i], move1*128 );
+		}
+		ObjSprite3D_SetSourceDestRect( obj[0], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[3], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 0.05; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		let spd = move1 * 16;
+		ascent( i in 0..length(obj) ){
+			let ang = i * (360/2) + move1 * ( frame / -2 );
+			ObjRender_SetPosition( obj[i], -512, dist[i]*cos(ang), dist[i]*sin(ang) );
+			ObjRender_SetAngleXYZ( obj[i], 90 + ang, 0, 0 );
+			ObjRender_SetAlpha( obj[i], move1*128 );
+		}
+		ObjSprite3D_SetSourceDestRect( obj[0], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - frame*spd, 0 + frame*(spd/8), 1024 - frame*spd, 2048 + frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		ObjSprite3D_SetSourceDestRect( obj[3], 0 - frame*spd, 0 - frame*(spd/8), 1024 - frame*spd, 2048 - frame*(spd/8) );
+		
+		frame++;
+		moveA += 0.5;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+//　日の出
+task World06Object03f( arg_obj ){
+	let obj		= [
+		CreateTexture01( ADD_BG_IMAGE[0] ),
+		CreateTexture01( ADD_BG_IMAGE[7] ),
+		CreateTexture01( ADD_BG_IMAGE[8] ),
+	];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	let move2 = 0;
+	let moveB = 0;
+	
+	//　霧用のダミー
+	ObjRender_SetPosition( obj[0], -1500, 0, 0 );
+	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+	ObjRender_SetColor( obj[0], 0, 0, 0 );
+	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　砂漠
+	ObjRender_SetColor( obj[1], 128, 128, 192 );
+	ObjRender_SetAngleXYZ( obj[1], 90, 0, 270 );
+	
+	//　森
+	ObjRender_SetColor( obj[2], 255, 255, 255 );
+	ObjRender_SetAngleXYZ( obj[2], 90, 0, 270 );
+	ObjRender_SetAlpha( obj[2], 0 );
+	
+	//　なんかあれば条件によって変えてください
+	while( !Obj_IsDeleted(arg_obj) || true ){
+		move1 = 1 * sin( moveA );
+		move2 = 1 * sin( moveB );
+		
+		SetFogParam( 0, 1024, move1*224, move1*224, move1*255 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 16 );
+		
+		let spd = move1 * 1;
+		
+		if( frame%4 == 0 ){
+			if( move2 >= 0.5 ){ LightParticle(); }
+			CreateCloud( [randEffect(-512,-1024),-256,randEffect(-384,384)], [randEffect(2,4),randEffect(-1,-2),0], 1, 60, [128,255,255], move1*96 );
+		}
+		
+		if( frame%1 == 0 ){
+			CreateFlashLight( [randEffect(0,-1024),randEffect(-256,256),randEffect(-256,256)], [spd,randEffect(0.1,1),0], move2*0.1, randEffect(64,128), 60, [255,255,255] );
+		}
+		
+		ObjRender_SetPosition( obj[1], -256, 128*cos(180), 128*sin(180) );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0, 0 - frame*spd, 1024, 1024 - frame*spd );
+		
+		ObjRender_SetPosition( obj[2], -256, 128*cos(180), 128*sin(180) );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0, 0 - frame*spd, 1024, 1024 - frame*spd );
+		ObjRender_SetAlpha( obj[2], move2*255 );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 1; }
+		if( move2 < 1 ){ moveB += 0.1; }
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+	
+	//　日の出パーティクル
+	task LightParticle(){
+		let _obj = CreateTexture01( ADD_BG_IMAGE[9] );
+		let move1 = 0;
+		let moveA = 0;
+		let scale = randEffect(0,2);
+		let angle = randEffect(-0.6,0.6);
+		let alpha = randEffect(16,64);
+		let rgb = [ 255, 255, 255 ];
+		//　日の出
+		ObjRender_SetPosition( _obj, -1024, -192, 0 );
+		ObjRender_SetColor( _obj, rgb[0], rgb[1], rgb[2] );
+		ObjRender_SetAngleXYZ( _obj, 0, 0, randEffect(0,360) );
+		ObjSprite3D_SetBillboard( _obj, true );
+		ObjSprite3D_SetSourceDestRect( _obj, 0, 0, 512, 512 );
+		ObjRender_SetFogEnable( _obj, false );
+		while( move1 < 1 ){
+			move1 = 1 * sin( moveA );
+			ObjRender_SetScaleXYZ( _obj, 1 + move1*scale, 1 + move1*scale, 0 );
+			ObjRender_SetAngleXYZ( _obj, 0, 0, ObjRender_GetAngleZ(_obj) + angle );
+			ObjRender_SetAlpha( _obj, move1*alpha );
+			moveA += 2;
+			yield;
+		}
+			while( move1 > 0 ){
+			move1 = 1 * sin( moveA );
+			ObjRender_SetScaleXYZ( _obj, 1 + move1*scale, 1 + move1*scale, 0 );
+			ObjRender_SetAngleXYZ( _obj, 0, 0, ObjRender_GetAngleZ(_obj) + angle );
+			ObjRender_SetAlpha( _obj, move1*alpha );
+			moveA += 2;
+			yield;
+		}
+		Obj_Delete( _obj );
+	}
+}
+
+//　継ぎ目の砂漠
+task World06Object03g( arg_obj ){
+	let obj		= [
+		CreateTexture01( ADD_BG_IMAGE[0] ),
+		CreateTexture01( ADD_BG_IMAGE[7] ),
+	];
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	
+	//　霧用のダミー
+	ObjRender_SetPosition( obj[0], -1500, 0, 0 );
+	ObjRender_SetScaleXYZ( obj[0], 2, 2, 0 );
+	ObjRender_SetColor( obj[0], 0, 0, 0 );
+	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	//　砂漠
+	ObjRender_SetColor( obj[1], 64, 128, 255 );
+	ObjRender_SetAngleXYZ( obj[1], 90, 0, 270 );
+	
+	//　スペカ発動したら終了
+	while( !Obj_IsDeleted(arg_obj) && !ObjEnemyBossScene_GetInfo(arg_obj, INFO_IS_SPELL ) ){
+		move1 = 1 * sin( moveA );
+		
+		SetFogParam( 0, 1024, move1*32, move1*64, move1*128 );
+		SetCameraFocusXYZ( 0, 0, 384/2 );
+		SetCameraRadius( 256 );
+		SetCameraAzimuthAngle( 0 );
+		SetCameraElevationAngle( 16 );
+		
+		let spd = move1 * 1;
+		
+		if( frame%4 == 0 ){
+			CreateCloud( [randEffect(-512,-1024),-256,randEffect(-384,384)], [randEffect(2,4),randEffect(-1,-2),0], 1, 60, [192,255,255], move1*96 );
+		}
+		
+		ObjRender_SetPosition( obj[1], -256, 128*cos(180), 128*sin(180) );
+		ObjSprite3D_SetSourceDestRect( obj[1], 0, 0 - frame*spd, 1024, 1024 - frame*spd );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 1; }
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+task DissolveEffect(arg_rgba){
+	if (IsDrawEffect() > 2) { SetDissolve( [384/2,448/2], 1, 270, [3,3], arg_rgba, 100, BLEND_ALPHA ); }
+}
+
+
+
+/// ---------------------------- 追加ぶん
+// 背景軽量版
+task _SetBackGroundBaseLite( arg_obj, arg_num )
+{
+	alternative( arg_num )
+	case( 0 ){
+		while( !GetAreaCommonData(CAREA_STAGE, "STG6B_ATK1", false) ){ yield; }
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[1], 0, 60 );
+	}
+	case( 1 ){
+		DissolveEffect( [512,0,0,255] );
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[2], 0, 60 );
+	}
+	case( 2 ){
+		DissolveEffect( [256,0,512,255] );
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[3], 0, 60 );
+	}
+	case( 3 ){
+		DissolveEffect( [0,256,512,255] );
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[4], 0, 60 );
+	}
+	case( 4 ){
+		DissolveEffect( [256,256,512,255] );
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[5], 0, 60 );
+	}
+	case( 5 ){
+		DissolveEffect( [256,256,256,255] );
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[6], 0, 60 );
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[7], 120, 360 );
+	}
+	case( 6 ){
+		BackgroundLite( arg_obj, ADD_BG_IMAGE_LITE[0], 0, 60 );
+	}
+}
+
+task BackgroundLite( arg_obj, img_files, delay, timer )
+{
+	if (IsDrawBackground() < 1) { return; }
+	
+	waitEx(delay);
+	
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, world_layer);
+	ObjPrim_SetTexture(obj, img_files );
+	ObjRender_SetBlendType(obj, BLEND_ALPHA );
+	ObjSprite2D_SetDestRect(obj, 0, 0, 384, 448);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 384, 448);
+	ObjRender_SetPosition(obj,MinX,MinY,0);
+	
+	let move1 = 0;
+	let moveA = 0;
+	
+	while( !Obj_IsDeleted(arg_obj) ){
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetAlpha(obj, move1*255);
+		if( move1 < 1 ){ moveA = min(90, moveA+90/timer); }
+		yield;
+	}
+	move1 = 0;
+	moveA = 0;
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetAlpha(obj, (1-move1)*255);
+		moveA += 1;
+		yield;
+	}
+	Obj_Delete( obj );
+}
