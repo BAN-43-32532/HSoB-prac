@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["1面　会話前半"]
-#Text["1面　会話前半"]
+#Title["1柺丂夛榖慜敿"]
+#Text["1柺丂夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_RANRAN);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,30 +36,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_RANRAN, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
 	
@@ -72,73 +72,73 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
-			SetTalkEx(cutinPlayer1, "再怎么走也净是黑白色。[r]这可不是什么好兆头。 ");
+			SetTalkEx(cutinPlayer1, "峴偗偳傕峴偗偳傕敀崟偩丅[r]偙傟偼墢婲偑椙偔側偄偤丅");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
 			ChangeTalkTexture(cutinBoss1, I_SMILE2);
-			SetTalkEx2(cutinBoss1, "嘻嘻嘻，[r]那由我给你染成红色如何？ ", -48, -280);
+			SetTalkEx2(cutinBoss1, "僸僢僸僢僸僢丄[r]側傜偽巹偑峠偔愼傔偰傗傠偆偐偹", -48, -280);
 		}
 		case(2)
 		{
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossName(cutinBoss1, objEnemy);
 
-			SetTalkEx(cutinBoss1, "绯绯染色就像这样，[r]涂呀涂呀颜色就变了…… ");
+			SetTalkEx(cutinBoss1, "旉乆怓愼傔偼偙偆傗偭偰丄[r]揾傟偽揾傞傎偳怓偑曄傢偭偰乧");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE);
-			SetTalkEx(cutinPlayer1, "喔，厉害！ ");
+			SetTalkEx(cutinPlayer1, "偍偋丄忋庤偄両");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "你也来买套我染的红色衣服，[r]转职成红魔法使怎么样？ ");
+			SetTalkEx(cutinBoss1, "偍慜偝傫傕巹偺愼傔偨峠偺暈傪攦偄丄[r]愒偄杺朄巊偄偵揮怑偟偰偼偳偆偩偹丠");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_SMILE2);
-			SetTalkEx(cutinBoss1, "攻击、回复、辅助，[r]技能选择也更广泛了不是吗？ ");
+			SetTalkEx(cutinBoss1, "峌寕丒夞暅丒曗彆偲[r]弍偺暆偑峀偔側傝偦偆偠傖傠偆丠");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET);
-			SetTalkEx(cutinPlayer1, "等等，那不是所有技能[r]都只能升到一半的家伙吗？ ");
+			SetTalkEx(cutinPlayer1, "懸偰丄偦傟偼慡晹拞搑敿抂偱[r]懪偪巭傔偵側傞搝偩");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "不要介怀！今天靠上人的力量，[r]我灵气倍增，就为你免费服务吧！ ");
+			SetTalkEx(cutinBoss1, "婥偵偡傞側両丂崱擔偼忋恖偝傑偺屼椡偱[r]楈婥偑燐偭偰偄傞偺偱柍椏僒乕價僗偩両");
 
 			PlayMusicWithName( 3, 30, 30 );
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "连同你一起！[r]将这片灰白的世界，[r]全部染上我的红色吧！ ");
+			SetTalkEx(cutinBoss1, "偍慜偝傫偲傕偳傕両[r]偙偺敀偒悽奅傪慡偰丄[r]変偑峠偵愼傔敳偄偰偔傟傛偆両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		others
@@ -149,13 +149,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["2面　会話前半"]
-#Text["2面　会話前半"]
+#Title["2柺丂夛榖慜敿"]
+#Text["2柺丂夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_CHII);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,30 +36,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_CHII, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
 	
@@ -72,93 +72,93 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_CALM);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM);
-			SetTalkEx(cutinPlayer1, "这还真是厉害，[r]克隆技术已经进入实用化阶段了吗。 ");
+			SetTalkEx(cutinPlayer1, "偙傟偼惁偄偤丄[r]僋儘乕儞媄弍偼傕偆幚梡壔偝傟偰偄偨偲偼");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx2(cutinBoss1, "你很懂吆！ ", -16, -280);
+			SetTalkEx2(cutinBoss1, "暘偐偭偰偔傟偨偱偪側両", -16, -280);
 		}
 		case(2)
 		{
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossNameEx(cutinBoss1, -32, 0, -1, 0, objEnemy);
 
-			SetTalkEx(cutinBoss1, "没错！“可怜”人技术！ ");
+			SetTalkEx(cutinBoss1, "偦偆両丂嬯楯恖媄弍両");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "要量产牙签，[r]需要费多少力气吆！ ");
+			SetTalkEx(cutinBoss1, "捾梜巬偺検嶻壔偵偼[r]懡戝側嬯楯偑偁偭偨傕偺偱偪");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET);
-			SetTalkEx(cutinPlayer1, "嗯，克隆两个字哪儿去了？[r]还有质量守恒定律呢…… ");
+			SetTalkEx(cutinPlayer1, "偆傫丄僋儘乕儞媄弍偳偙峴偭偨丠[r]偁偲幙検曐懚偺朄懃偲偐乧");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "吆吆吆，付丧神的进化日新月异， ");
+			SetTalkEx(cutinBoss1, "僠僢僠僢僠僢丄晅憆恄偺恑壔偼擔恑寧曕");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "怎么能让质量去等在原地。 ");
+			SetTalkEx(cutinBoss1, "偄偮傑偱傕尦偺幙検傪[r]曐懚偟偰傞応崌偠傖側偄偱偪");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "确实，道具是越进步[r]就越轻薄、短小呢。 ");
+			SetTalkEx(cutinPlayer1, "惉傞掱丄妋偐偵摴嬶偼恑曕偡傞偲[r]寉敄抁彫偵側傞偲偄偆");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "质量守恒为假现在已经是常识。 ");
+			SetTalkEx(cutinBoss1, "幙検曐懚偺朄懃偑塕偱偁傞帠偼崱傗忢幆丅");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "超越迷信，[r]小幺的存在感现在仍在加速！ ");
+			SetTalkEx(cutinBoss1, "柪怣傪挻偊丄[r]偪偄偺懚嵼姶偼崱壛懍偡傞偱偪両");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
-			SetTalkEx(cutinPlayer1, "不不，你们付丧神的存在本身不就是迷信么…… ");
+			SetTalkEx(cutinPlayer1, "偄傗丄[ruby rb=\"晅憆恄\" rt=\"偍傑偊偨偪\"]偺懚嵼帺懱偑柪怣偱偼乧");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "凭依在量产的牙签身上，[r]小小的一个人就能变成千人。 ");
+			SetTalkEx(cutinBoss1, "検嶻偟偨捾梜巬傪埶戙偵丄[r]彫偝側堦恖偑愮恖偵側傞丅");
 
 			PlayMusicWithName( 5, 30, 30 );
 		}
 		case(12)
 		{
-			SetTalkEx(cutinBoss1, "这正是一骑当千！来吧魔法使，[r]我要用地狱的针山让你去永远地睡觉觉！ ");
+			SetTalkEx(cutinBoss1, "偙傟偡側傢偪堦婻摉愮両丂偝偁杺朄巊偄丄[r]抧崠偺恓嶳偱偹傫偹偟傗偑傟偱偪両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		others
@@ -169,13 +169,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

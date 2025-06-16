@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["EX　会話前半"]
-#Text["EX　会話前半"]
+#Title["EX丂夛榖慜敿"]
+#Text["EX丂夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,30 +36,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -72,35 +72,35 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "虽然那些家伙又开始闹腾，[r]但没了赛特神的加护，真就是名副其实的乌合之众。 ");
+			SetTalkEx(cutinPlayer1, "傑偨偁偺楢拞偑憶偄偱傞偗偳丄[r]僙僩恄偺壛岇偑柍偗傟偽暥帤捠傝偺塆崌偺廜");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM);
-			SetTalkEx(cutinPlayer1, "这卡诺匹斯罐据说能让我实力翻倍，[r]我带是带来了，可看起来没什么登场机会。 ");
+			SetTalkEx(cutinPlayer1, "擇恖椡偵側傞偲偐偄偆僇僲僾僗偺氣丄[r]帩偭偰棃偨偗偳戝偟偨弌斣傕柍偝偦偆偹");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx2(cutinBoss1, "咕，这种时候右手却涨起来了…… ", -48, -280);
+			SetTalkEx2(cutinBoss1, "偔偭丄偙傫側帪偵塃庤偑醬偔乧", -48, -280);
 		}
 		case(3)
 		{
@@ -108,96 +108,96 @@ function FuncTalk()
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
 
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossName(cutinBoss1, objEnemy);
 
-			SetTalkEx(cutinBoss1, "没想到长时间做赛特神的『代价』，[r]会在这个时候再次发作啊。 ");
+			SetTalkEx(cutinBoss1, "挿傜偔僙僩恄偱偁偭偨亀戙彏亁偑丄[r]偙傫側帪偵嵞敪偟偰棃傞偲偼");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
-			SetTalkEx(cutinPlayer1, "哎呀，说起来你就是那时候的那个。 ");
+			SetTalkEx(cutinPlayer1, "偁傜丄塡傪偡傟偽偁偺帪偺丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "你是赛特神凭依的[r]原本的身体，对吧。 ");
+			SetTalkEx(cutinPlayer1, "婱曽偑僙僩恄偑溸埶偟偰偄偨[r]尦偺恎懱偲偄偆傢偗偹");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "以人类的感觉而言，[r]恐怕是可以这么说。 ");
+			SetTalkEx(cutinBoss1, "恖娫偺姶妎偐傜偡傟偽[r]嫲傜偔偦偆偲尵偊傞偺偩傠偆丅");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
 			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
-			SetTalkEx3(cutinBoss1, "但或许并不是这样也说不定。 ", -96, -96);
+			SetTalkEx3(cutinBoss1, "偟偐偟偦偆偲偼[r]尵偊側偄偐傕抦傟側偄丅", -96, -96);
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
 			SetFukidashiRefresh(cutinBoss1);
-			SetTalkEx(cutinBoss1, "我真正的身体，[r]已经不知忘在哪里了。 ");
+			SetTalkEx(cutinBoss1, "巹偺恀幚偺恎懱偼丄[r]壗張偵偁傞偐朰傟偰偟傑偭偨");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
-			SetTalkEx(cutinPlayer1, "居然能忘掉自己的身体在哪里，[r]我还真羡慕你这种无忧无虑的生活呢。 ");
+			SetTalkEx(cutinPlayer1, "帺暘偺恎懱偺強嵼傪朰傟傜傟傞側傫偰丄[r]擸傒偺彮側偄恖惗偱慉傑偟偄偙偲丅");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
 			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
-			SetTalkEx3(cutinPlayer1, "能别在红魔馆附近闹腾吗？ ", 108, -96);
+			SetTalkEx3(cutinPlayer1, "娰偺嬤偔偱朶傟側偄偱捀偗傑偡丠", 108, -96);
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
-			SetTalkEx(cutinPlayer1, "我这边的人生可是充满忧虑啊。[r]女仆妖精离职率特别高，诸如此类。 ");
+			SetTalkEx(cutinPlayer1, "偙偭偪偼擸傒懡偄恖惗側偺丅[r]儊僀僪梔惛偺棧怑棪偑崅偄偲偐怓乆");
 		}
 		case(12)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "如果能像大家一样过上无忧无虑的生活，[r]我或许是希望着的，并且早就过上了吧。 ");
+			SetTalkEx(cutinBoss1, "奆偺傛偆偵擸傒偺柍偄惗傪憲傟傞側傜偽丄巹[r]偲偰偦偆偟偨偐偭偨偟丄偦偆偟偰偄偨帠偩傠偆");
 		}
 		case(13)
 		{
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
-			SetTalkEx(cutinBoss1, "我没法做一个普通的妖怪。[r]不，说到底，普通到底是什么……？ ");
+			SetTalkEx(cutinBoss1, "巹偼晛捠偺梔夦偵側傟側偐偭偨丅[r]偄傗丄偦傕偦傕晛捠偲偼壗側偺偩乧丠");
 		}
 		case(14)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
-			SetTalkEx(cutinPlayer1, "真要说的话，就是[r]『能够没有这种疑问地生活下去』吧。 ");
+			SetTalkEx(cutinPlayer1, "嫮偄偰尵偆側傜亀偦偆偄偆媈栤傪[r]帩偨側偄偱惗偒偰偄傜傟傞搝亁偐偟傜");
 		}
 		case(15)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
-			SetTalkEx(cutinBoss1, "作为普通妖怪活着，[r]这真的是幸福吗。 ");
+			SetTalkEx(cutinBoss1, "晛捠偺梔夦偲偟偰惗偒傞帠丄[r]偦傟偑壥偨偟偰岾偣側偺偐丅");
 		}
 		case(16)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
 			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
-			SetTalkEx3(cutinBoss1, "不，我不这样认为。 ", -96, -96);
+			SetTalkEx3(cutinBoss1, "偄傗丄巹偼偦偆偼巚傢側偄丅", -96, -96);
 		}
 		case(17)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "更何况，是那种[r]能被普通人类的弹幕给驱逐的妖怪……！ ");
+			SetTalkEx(cutinBoss1, "嫷傗丄扅偺恖娫偵抏枊偱[r]嬱拃偝傟傞梔夦側偳乧両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		case(18)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA);
-			SetTalkEx(cutinPlayer1, "怎么想随你便。 ");
+			SetTalkEx(cutinPlayer1, "偦偆巚偆偺偼婱曽偺彑庤丅");
 		}
 		case(19)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "拥有理想是你的自由。[r]但真要这样，你怎么不自己掀起叛乱呢。 ");
+			SetTalkEx(cutinPlayer1, "棟憐傪帩偮偺傕婱曽偺帺桼丅[r]偱傕丄側傜偽婱曽堦恖偱斀棎傪婲偙偣偽椙偄");
 		}
 		case(20)
 		{
@@ -205,28 +205,28 @@ function FuncTalk()
 			PlayMusicWithName( 15, 30, 30 );
 
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
-			SetTalkEx(cutinBoss1, "或许我是该这么做。 ");
+			SetTalkEx(cutinBoss1, "偦傟偑椙偐偭偨偺偐傕抦傟側偄丅");
 		}
 		case(21)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "我可是寄宿着[r]古代名将——关羽之魂的濑户大将。 ");
+			SetTalkEx(cutinBoss1, "巚偊偽巹偼[r]屆偺柤彨丒娭塇偺嵃傪廻偡悾屗戝彨丅");
 		}
 		case(22)
 		{
 			ChangeTalkTexture(cutinBoss1, I_CUTIN);
-			ResetTalkImagePosition(cutinBoss1, -64, 16, 1.1);	// おまえはそこでずれていけ
-			SetTalkEx(cutinBoss1, "或许是时候赌上一场了……！[r]赌上我的可能性！赌上我自己深处的可能性！ ");
+			ResetTalkImagePosition(cutinBoss1, -64, 16, 1.1);	// 偍傑偊偼偦偙偱偢傟偰偄偗
+			SetTalkEx(cutinBoss1, "崱堦搙搎偗偰傒偰傕椙偄偺偐傕抦傟側偄乧両[r]巹偺壜擻惈両丂巹帺恎偺廻偡壜擻惈偵両");
 		}
 		case(23)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA);
-			SetTalkEx(cutinPlayer1, "是啊。只怕我是很难理解你的主张的。[r]从煽动那边的傻子们的时刻起，[r]你就只是个小丑而已。 ");
+			SetTalkEx(cutinPlayer1, "偦偆偹丅婱曽偺庡挘傪嫲傜偔棟夝傕偟偰側偄[r]偦偙傜曈偺擻揤婥側楢拞傪慀摦偟偨丄偦偺帪[r]揰偱婱曽偼扅偺摴壔丅");
 		}
 		case(24)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA3);
-			SetTalkEx(cutinPlayer1, "你要是这么讨厌被人类击败，[r]那就去做妹妹大人的小丑（Clown）吧，在你坏掉之前！ ");
+			SetTalkEx(cutinPlayer1, "偦傫側偵恖娫偵攕傟傞偺偑偍寵側傜丄夡傟傞[r]傑偱枀條偺[ruby rb=\"摴壔巘\" rt=\"丂僋儔僂儞\"]偑偍帡崌偄偱偡傢両");
 		}
 		others
 		{
@@ -236,13 +236,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

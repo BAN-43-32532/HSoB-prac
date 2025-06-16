@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["EX　会話後半"]
-#Text["EX　会話後半"]
+#Title["EX丂夛榖屻敿"]
+#Text["EX丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
 	
@@ -72,80 +72,80 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_UPSET);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET);
-			SetTalkEx(cutinPlayer1, "卡诺匹斯罐居然坏了……[r]这可是重大的文明损失。 ");
+			SetTalkEx(cutinPlayer1, "僇僲僾僗偺氣偑夡偝傟傞偲偼乧[r]廳戝側暥壔揑懝幐偩偤");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "果然世界并没有爱着我。[r]我的命，就该是背负着罪恶孤独地活下去吗。 ");
+			SetTalkEx(cutinBoss1, "傗偼傝悽奅偼巹傪垽偝側偐偭偨丅巹偼嵾傪[r]攚晧偄堦恖惗偒懕偗傞廻柦側偺偐");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "你这样的，要是在外面世界，[r]似乎就要叫『中二病』或者『二刺螈』了。 ");
+			SetTalkEx(cutinPlayer1, "偦偆偄偆偺傪奜偺悽奅偠傖亀拞擇昦亁偲偐[r]亀僀僉儕僆僞僋亁偲偐尵偆傜偟偄偤丅");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
-			SetTalkEx(cutinPlayer1, "然后被这么叫的人，似乎会希望别人[r]称呼自己为『孤独战士』或者『影子英雄』。 ");
+			SetTalkEx(cutinPlayer1, "偦偟偰尵傢傟偰傞杮恖偼亀屒崅偺愴巑亁偲偐[r]亀僟乕僋僸乕儘乕亁偲偐屇傫偱梸偟偄傜偟偄");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "或许是吧。 ");
+			SetTalkEx(cutinBoss1, "偦偆側偺偐傕抦傟側偄丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "但是除了这种人生，我不知道其他的活法。[r]我也不知道我还能怎么做。 ");
+			SetTalkEx(cutinBoss1, "偩偑巹偼偙偺惗偒曽埲奜傪抦傜側偄丅偱偼壗[r]傪偡傟偽椙偐偭偨偐傕暘偐傜側偄丅");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "不管我重来多少次，我只能觉得，[r]自己只会重复同样的选择。 ");
+			SetTalkEx(cutinBoss1, "巹偑壗搙惗傑傟曄傢偭偰傕丄偙偺慖戰傪偟懕[r]偗傞偺偩偲巚傢偢偵偼偄傜傟側偄");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE);
-			SetTalkEx(cutinPlayer1, "我觉得你所缺乏的，[r]是享受人生的心灵。 ");
+			SetTalkEx(cutinPlayer1, "巚偆偵偍慜偵懌傝側偄偺偼丄[r]恖惗傪妝偟傕偆偲偡傞怱偩側丅");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
-			SetTalkEx(cutinPlayer1, "跟我来香霖堂。[r]那里有许多好康的。 ");
+			SetTalkEx(cutinPlayer1, "偪傚偭偲崄枇摪偵棃偄丄[r]懡暘妝偟偄傕傫偄偭傁偄偁傞偧");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "你这是对我的同情吗。开玩笑，[r]彻头彻尾败掉的我，有什么资格幸福……！ ");
+			SetTalkEx(cutinBoss1, "偦傟偼巹傊偺忣偗偐丅攏幁側丄慡偰偵攕傟偨[r]巹偼岾偣偵側傞帒奿側偳柍偄乧両");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM);
-			SetTalkEx(cutinPlayer1, "你这不也是很懂吗？[r]知道去香霖堂就能幸福。 ");
+			SetTalkEx(cutinPlayer1, "偭偰帠偼暘偐偭偰傞傫偠傖側偄偐丅[r]崄枇摪偵棃傟偽妝偟偄傫偩偭偰");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "咕，看到那里的陶瓷，[r]我作为濑户大将的一面要心痒难耐啊。 ");
+			SetTalkEx(cutinBoss1, "偔偭丄偁偦偙偺從偒暔傪尒傞偲[r]悾屗戝彨偺寣偑醬偔偺偩");
 		}
 		others
 		{

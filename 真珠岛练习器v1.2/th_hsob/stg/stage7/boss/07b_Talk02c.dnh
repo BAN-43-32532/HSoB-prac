@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["EX　会話後半"]
-#Text["EX　会話後半"]
+#Title["EX丂夛榖屻敿"]
+#Text["EX丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -72,81 +72,81 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
-			SetTalkEx(cutinPlayer1, "虽然战斗是我赢了，可没想到，[r]却是我的卡诺匹斯罐先坏掉啊。 ");
+			SetTalkEx(cutinPlayer1, "彑晧偼巹偼彑偪偩偗偳丄婱曽傛傝愭偵丄[r]僇僲僾僗偺氣偑夡傟偰偟傑偭偨傢偹");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "果然世界并没有爱着我。[r]我的命，就该是背负着罪恶孤独地活下去吗。 ");
+			SetTalkEx(cutinBoss1, "傗偼傝悽奅偼巹傪垽偝側偐偭偨丅巹偼嵾傪攚[r]晧偄堦恖惗偒懕偗傞廻柦側偺偐");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER);
-			SetTalkEx(cutinPlayer1, "不是你自己恣意妄为才把周围闹成这个样子的吗？[r]所以，能不能不要再说些什么[r]自己是不被周围人理解的可怜人啊？ ");
+			SetTalkEx(cutinPlayer1, "岲偒曻戣傗偭偰婙怓偑埆偔側偭偰偐傜丄帺暘[r]偼廃傝偵暘偐偭偰栣偊側偄偐傢偄偦偆側搝偩[r]偭偰尵偆偺傗傔傑偣傫丠");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "那么，『愚蠢的托辞』也就不必了。 ");
+			SetTalkEx(cutinBoss1, "側傜偽亀嬸偐側尵偄栿亁偼柍梡丅");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "做什么『妹妹大人的小丑』也好什么也好都随意。[r]这就是我的命运。 ");
+			SetTalkEx(cutinBoss1, "亀枀條偺[ruby rb=\"摴壔巘\" rt=\"僋儔僂儞\"]亁偱傕壗偱傕岲偒偵偡傞偑椙[r]偄丅偦傟偑巹偺塣柦偩偭偨偺偩");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
-			SetTalkEx(cutinPlayer1, "让自暴自弃的家伙就这么死了，[r]某种意义上讲也是她的胜利啊。 ");
+			SetTalkEx(cutinPlayer1, "幪偰敨側搝傪慺捈偵巰側偣偰傕丄偦偄偮偵[r]偲偭偰偼偁傞庬偺彑偪側偺傛偹丅");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
 			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
-			SetTalkEx3(cutinPlayer1, "那就这么办吧。 ", 108, -96);
+			SetTalkEx3(cutinPlayer1, "偱偼偙偆偟傑偟傚偆丅", 108, -96);
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "红魔馆的花瓶和餐具准备换了。 ");
+			SetTalkEx(cutinPlayer1, "峠杺娰偺壴時傗怘婍椶傪怴挷偟偨偄偺丅");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "我要你去准备好我们希望的东西交过来。 ");
+			SetTalkEx(cutinPlayer1, "婱曽偺偮偰偱丄偙偪傜偺婓朷捠傝偺[r]昳傪廤傔偰擺昳偟偰捀懻");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "咕，恶魔的女仆比我还疯。 ");
+			SetTalkEx(cutinBoss1, "偔偭丄埆杺偺儊僀僪偼巹埲忋偵嫸偭偰偄傞丅");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "我能收集的只有被抛弃的陈旧濑户物，[r]根本没有什么新品或者良品…… ");
+			SetTalkEx(cutinBoss1, "巹偵廤傔傜傟傞偺偼幪偰傜傟偨屆偄悾屗暔[r]偽偐傝偩丅怴昳傗旤昳側偳乧");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
-			SetTalkEx2(cutinPlayer1, "所以才要你加油找嘛。[r]在这个过程中，你的疯狂也多半会消除的。 ", -16, -32);
+			SetTalkEx2(cutinPlayer1, "偦傟傪婃挘偭偰扵偡偆偪偵婱曽偺[r]嫸婥偛偲偒偼懡暘彍偐傟傞偺傛偹", -16, -32);
 			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
 		}
 		others

@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["5面　ボス会話後半"]
-#Text["5面　ボス会話後半"]
+#Title["5柺丂儃僗夛榖屻敿"]
+#Text["5柺丂儃僗夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include "./../../../lib/lib_Stage.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,12 +23,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_SET);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -38,29 +38,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_SET, true);
 	let cutinPlayer1   = CreateTalkObject(BOSS_ID_KAGUYA, false);
 	
@@ -73,73 +73,73 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
-			SetTalkEx(cutinPlayer1, "……此时此刻，这根绳子毫无杂质，[r]拥有的是最高的强度…… ");
+			SetTalkEx(cutinPlayer1, "乧偱丄偦偺帪昍偐傜梋寁側暔偑柍偔側傝[r]嵟嫮偺嫮搙偵側偭偰乧");
 		}
 		case(1)
 		{
-			SetTalkEx(cutinBoss1, "够了，我再不吭气你要说到什么时候去啊。 ");
+			SetTalkEx(cutinBoss1, "偊偊偄丄栙偭偰暦偄偰偄傟偽偄偮傑偱懕偔偺偩");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
-			SetTalkEx(cutinPlayer1, "嘛，简单说就是费米最强就对了。 ");
+			SetTalkEx(cutinPlayer1, "傑偁梫偡傞偵僼僃儉僩偭偰嵟嫮偭偰帠側偺傛");
 		}
 		case(3)
 		{
-			SetTalkEx(cutinBoss1, "我居然输给了这种家伙吗，人生真是空虚。 ");
+			SetTalkEx(cutinBoss1, "壌偼偙傫側搝偵晧偗偨偺偐丄嫊偟偄");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM2);
-			SetTalkEx(cutinPlayer1, "你一定有那种，[r]尊重别人善于聆听的才能呢。 ");
+			SetTalkEx(cutinPlayer1, "偒偭偲偁側偨偵偼丄[r]憡庤傪棫偰傞暦偒忋庤偺嵥擻偑偁傞偺傛");
 		}
 		case(5)
 		{
-			SetTalkEx(cutinBoss1, "事到如今再搞这种少到等于没有的吹捧也迟了。[r]我要把你打落地底…… ");
+			SetTalkEx(cutinBoss1, "崱峏怽偟栿掱搙偵帩偪忋偘偰傕抶偄丅[r]壌偼婱條傪抧偺掙傊棊偲偡偧乧");
 		}
 		case(6)
 		{
 			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
-			SetTalkEx3(cutinBoss1, "崩的一声！ ", -86, -86);
+			SetTalkEx3(cutinBoss1, "億僠偭偲側", -86, -86);
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_QUESTION);
-			SetTalkEx(cutinPlayer1, "……崩的一声？ ");
+			SetTalkEx(cutinPlayer1, "乧億僠偭偲側丠");
 		}
 		case(8)
 		{
-			SetTalkEx(cutinBoss1, "发动对盗墓者的裁决（Trap Switch）！[r]禁咒塔的自爆装置！ ");
+			SetTalkEx(cutinBoss1, "[ruby rb=\"搻孈幰傊偺嵸偒\" rt=\"丂丂僩儔僢僾僗僀僢僠\"]傪敪摦両[r]嬛庺搩偺帺敋憰抲偩両");
 		}
 		case(9)
 		{
-			SetTalkEx(cutinBoss1, "你逃不掉的，[r]就在这里和我（临时的肉体）一起灭亡吧！ ");
+			SetTalkEx(cutinBoss1, "摝偑偟偼偣傫丄偍慜偼[r]壌乮偺壖弶傔偺擏懱乯偲嫟偵柵傃傞偺偩両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
-			SetTalkEx(cutinPlayer1, "救……救救我永琳！救救我永琳！ ");
+			SetTalkEx(cutinPlayer1, "偨乧彆偗偰塱椩両丂彆偗偰塱椩両");
 
-			// 背景チェンジ！
+			// 攚宨僠僃儞僕両
 			NextStageScene();
 		}
 		others

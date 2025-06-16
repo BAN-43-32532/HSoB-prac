@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["4面　道中会話後半"]
-#Text["4面　道中会話後半"]
+#Title["4柺丂摴拞夛榖屻敿"]
+#Text["4柺丂摴拞夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include"./lib_Siran.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,12 +23,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
-	SetSiranRosary();	// 数珠配置
+	SetSiranRosary();	// 悢庫攝抲
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -38,28 +38,28 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(60);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
 	let cutinPlayer1   = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -72,31 +72,31 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
-			SetTalkEx(cutinBoss1, "这可不成。[r]我得上噪特搞点儿新符卡去。 ");
+			SetTalkEx(cutinBoss1, "偙傟偼偄偐傫偧偄丅僒僄僘僢僞乕偱[r]怴偨側僗儁儖傪巇擖傟側偗傟偽");
 			WaitNextTimer(150);
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "我无法停止的符卡，[r]在这地上只有一点！ ");
+			SetTalkEx(cutinPlayer1, "巹偵巭傔傜傟側偄僗儁儖側偳丄[r]偙偺抧忋偵彮偟偟偐柍偄");
 			EnterBoss();
 			WaitNextTimer(150);
 		}
@@ -108,7 +108,7 @@ function FuncTalk()
 	}
 }
 
-// にげるよ
+// 偵偘傞傛
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
@@ -117,7 +117,7 @@ task EnterBoss()
 	wait(60);
 	if (!GetAreaCommonData(CAREA_STAGE, "BeforeTimeout", true))
 	{
-		// しっかり倒していたならボムあげる
+		// 偟偭偐傝搢偟偰偄偨側傜儃儉偁偘傞
 		SetItem(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), MY_ITEM_SPELL);
 	}
 

@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["6面　会話前半"]
-#Text["6面　会話前半"]
+#Title["6柺丂夛榖慜敿"]
+#Text["6柺丂夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_HOROU);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,30 +36,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_HOROU, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_KAGUYA, false);
 	
@@ -72,35 +72,35 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "永琳走了，永远也消失了。[r]太阳的力量即将再次充满幻想乡。 ");
+			SetTalkEx(cutinPlayer1, "塱椩偼嫃側偔側偭偨偟丄塱墦傕柍偔側偭偨丅[r]懢梲偺椡偑嵞傃尪憐嫿傪枮偨偟偰峴偔傢丅");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
-			SetTalkEx(cutinPlayer1, "本想代表月亮惩治黑幕，[r]结果现在反而不太合适了。 ");
+			SetTalkEx(cutinPlayer1, "寧偵戙傢偭偰崟枊傪偍巇抲偒偡傞偵偼丄[r]媝偭偰搒崌偑埆偔側偭偪傖偭偨偐傕");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
-			SetTalkEx2(cutinBoss1, "赛特君被打败了吗…… ", -48, -280);
+			SetTalkEx2(cutinBoss1, "僙僩偔傫偑捵傟偰偟傑偭偨偐乧", -48, -280);
 		}
 		case(3)
 		{
@@ -108,115 +108,115 @@ function FuncTalk()
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
 
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossName(cutinBoss1, objEnemy);
 
-			SetTalkEx(cutinBoss1, "库库库，[r]赛特君在我们妖土真宗中也是最弱的一个…… ");
+			SetTalkEx(cutinBoss1, "僋僋僋丄[r]僙僩偔傫偼変傜梔搚恀廆偺拞偱傕嵟庛乧");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE2);
-			SetTalkEx(cutinPlayer1, "这次异变中遇到的敌人，她是最强的啊。 ");
+			SetTalkEx(cutinPlayer1, "崱夞偺堎曄偱弌夛偭偨揋偱堦斣嫮偐偭偨傢");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
-			SetTalkEx(cutinBoss1, "妖土真宗采用年功序列制啊。 ");
+			SetTalkEx(cutinBoss1, "梔搚恀廆偼擭岟彉楍傪庢傝擖傟偨傫偩丅");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "新人要尊敬前辈，[r]据此才决定是否能够往生极乐。 ");
+			SetTalkEx(cutinBoss1, "怴擖傝偼愭攜傪宧偭偰丄[r]偦傟偱嬌妝偵峴偗傞偐寛傑傞傫偩傛丅");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
-			SetTalkEx(cutinBoss1, "嘛，赛特君给了我一本什么厚书，[r]还教会了我能停止时间的厉害咒语，[r]是个好人呢！ ");
+			SetTalkEx(cutinBoss1, "傑偁丄僙僩偔傫偼巹偵側傫偐岤偄杮偔傟偨偟丄[r]帪傪巭傔傞偡偛偄庺暥偲偐嫵偊偰偔傟偨偐傜[r]偄偄搝偩偭偨偹両");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
-			SetTalkEx(cutinPlayer1, "换句话说，你拿着的那本『书』[r]就是异变的元凶么。 ");
+			SetTalkEx(cutinPlayer1, "偮傑傝偁側偨偺帩偮亀杮亁偑[r]堎曄偺尦嫢側偺偹丅");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE);
-			SetTalkEx(cutinPlayer1, "不是月球人搞事真的太好了。 ");
+			SetTalkEx(cutinPlayer1, "寧偺楢拞偠傖側偔偰椙偐偭偨丅");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET3);
-			SetTalkEx(cutinPlayer1, "我真不希望看到自己故乡的那群人，[r]居然堕落到把力量借给这样的家伙们的地步。 ");
+			SetTalkEx(cutinPlayer1, "屆憙偺楢拞偑丄偙傫側搝傜偵椡傪[r]戄偡傎偳懧棊偟偨偲偼巚偄偨偔側偄偟");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "你是月亮人吗？[r]那么，在这里和我碰上是你的好运到头了呢！ ");
+			SetTalkEx(cutinBoss1, "偍慜偼寧偺搝側偺偐偄丠[r]偠傖偁偙偙偱巹偲弌夛偭偨偺偑塣偺恠偒偩偹");
 		}
 		case(12)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
-			SetTalkEx(cutinBoss1, "这本书中记载的，[r]异国的朱鹮神大人的武勇传说，你知道吗？ ");
+			SetTalkEx(cutinBoss1, "偙偺杮傪彂偄偨丄堎崙偺[ruby rb=\"庨嶋恄\" rt=\"僩丂僩\"]條偺[r]晲桬揱傪抦偭偰傞偐偄丠");
 		}
 		case(13)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "他曾和月亮打赌并获胜，[r]于是能够操纵月亮的力量以及时间了啊。 ");
+			SetTalkEx(cutinBoss1, "寧偲搎偗傪偟偰彑偭偰丄寧偺椡偲[r]帪娫傪憖傟傞傛偆偵側偭偨偭偰偝丅");
 		}
 		case(14)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "果然朱鹮是一种国际性的超强种族嘛。 ");
+			SetTalkEx(cutinBoss1, "傗偭傁傝庨嶋偼崙嵺揑偵[r]惁偔偰嫮偄庬懓偩偭偨傛");
 		}
 		case(15)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY4);
-			SetTalkEx(cutinPlayer1, "诶，外国的月人[r]原来要更笨更蠢的吗，心情复杂。 ");
+			SetTalkEx(cutinPlayer1, "偊乕丄奜崙偺寧恖偼傕偭偲[r]攏幁偱捁摢側偺丄偆乕傫暋嶨");
 		}
 		case(16)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
-			SetTalkEx(cutinBoss1, "我就特别放过你好了，[r]因为我马上要离开幻想乡，正忙着呢！ ");
+			SetTalkEx(cutinBoss1, "摿暿偵尒摝偟偰傗傠偆丄巹偼偙傟偐傜[r]尪憐嫿偺奜偵弌傞巇帠偑朲偟偄偐傜側両");
 		}
 		case(17)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE4);
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "再见！ ");
+			SetTalkEx(cutinBoss1, "偠傖両");
 		}
 		case(18)
 		{
-			while(!MOVE_END) { yield; }	// 前の移動が終わるまで待機
+			while(!MOVE_END) { yield; }	// 慜偺堏摦偑廔傢傞傑偱懸婡
 			MoveBossT01_a();
 
-			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			SetImageVisible(cutinBoss1, false);	// 儃僗夋憸弌尰僼儔僌
 			DeleteAllFukidashi();
 		}
 		case(19)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM2);
-			SetTalkEx(cutinPlayer1, "模仿一下永琳的法术，[r]我也来做个密室好了。 ");
+			SetTalkEx(cutinPlayer1, "塱椩偺弍傪恀帡偟偰[r]枾幒傪嶌偭偰傒傛偆偐側偀");
 		}
 		case(20)
 		{
-			while(!MOVE_END) { yield; }	// 前の移動が終わるまで待機
+			while(!MOVE_END) { yield; }	// 慜偺堏摦偑廔傢傞傑偱懸婡
 			MoveBossT01_b();
 
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "Qhu！？ ");
+			SetTalkEx(cutinBoss1, "傎傠偭両丠");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		case(21)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "是解决异变的时间了。来玩弹幕游戏吧。[r]你来扮演密室杀人案的被害者。 ");
+			SetTalkEx(cutinPlayer1, "堎曄夝寛傛丅抏枊偛偭偙偱梀傃傑偟傚偆[r]偁側偨偼枾幒嶦恖偺旐奞幰栶");
 		}
 		case(22)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "明明都说了我要放过你的。[r]没办法，中意玩我就陪你玩哈。 ");
+			SetTalkEx(cutinBoss1, "尒摝偟偰傗傠偆偭偰尵偭偨偺偵丅[r]巇曽側偄偐傜梀傫偱傗傞偟偐側偄丅");
 		}
 		case(23)
 		{
@@ -224,33 +224,33 @@ function FuncTalk()
 			PlayMusicWithName( 13, 30, 30 );
 			
 			ChangeTalkTexture(cutinBoss1, I_DOYA2);
-			SetTalkEx(cutinBoss1, "我乃时之主角，");
+			SetTalkEx(cutinBoss1, "変偼帪偺庡栶丄丂丂丂丂丂丂丂丂丂丂");
 			WaitNext();
 			SetFukidashiRefresh(cutinBoss1);
-			SetTalkEx(cutinBoss1, "我乃时之主角，[r]我乃将远方之人带回之角色， ");
+			SetTalkEx(cutinBoss1, "変偼帪偺庡栶丄丂丂丂丂丂丂丂丂丂丂[r]丂丂変偼墦曽偺幰傪楢傟栠偡栶丄");
 			WaitNext();
 			SetFukidashiRefresh(cutinBoss1);
-			SetTalkEx(cutinBoss1, "我乃时之主角，[r]我乃将远方之人带回之角色，[r]我乃分开两位战士之角色。 ");
+			SetTalkEx(cutinBoss1, "変偼帪偺庡栶丄丂丂丂丂丂丂丂丂丂丂[r]丂丂変偼墦曽偺幰傪楢傟栠偡栶丄[r]丂丂丂丂変偼擇恖偺愴巑傪暘偗傞栶丅");
 		}
 		case(24)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "游戏什么的太无趣了！ ");
+			SetTalkEx(cutinBoss1, "偛偭偙梀傃側傫偰柍悎両");
 		}
 		case(25)
 		{
 			ChangeTalkTexture(cutinBoss1, I_SPECIAL);
-			SetTalkEx(cutinBoss1, "就像这七色的翅膀一样，[r]多才多艺的我就把全部的角色都包下来给你看！ ");
+			SetTalkEx(cutinBoss1, "偙偺幍怓偺梼偺傛偆偵丄[r]懡嵥側巹偑慡晹偺栶傪偟偰偁偘傞偐傜両");
 		}
 		case(26)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "『想要被承认，不想被忘记』， ");
+			SetTalkEx(cutinPlayer1, "亀擣傔偰梸偟偄丄朰傟傜傟偨偔側偄亁");
 		}
 		case(27)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL6);
-			SetTalkEx(cutinPlayer1, "到现在为止已经使多少人类与妖怪败退的究极难题，[r]你们究竟能解开吗？ ");
+			SetTalkEx(cutinPlayer1, "崱傑偱懡偔偺恖梔偑攕傟嫀偭偰峴偭偨[r]媶嬌擄戣丄偁側偨偵壥偨偟偰夝偗傞偐偟傜両丠");
 		}
 		others
 		{
@@ -260,25 +260,25 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);
 	MOVE_END = true;
 }
-// 移動さん
+// 堏摦偝傫
 task MoveBossT01_a()
 {
-	while(!MOVE_END) { yield; }	// 前の移動が終わるまで待機
+	while(!MOVE_END) { yield; }	// 慜偺堏摦偑廔傢傞傑偱懸婡
 	MOVE_END = false;
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 120);
 	MoveToSlowdown(objEnemy, MinX-64, 140-64, 60);
 	wait(60);
@@ -287,10 +287,10 @@ task MoveBossT01_a()
 
 task MoveBossT01_b()
 {
-	while(!MOVE_END) { yield; }	// 前の移動が終わるまで待機
+	while(!MOVE_END) { yield; }	// 慜偺堏摦偑廔傢傞傑偱懸婡
 	MOVE_END = false;
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 120);
 	ObjMove_SetPosition(objEnemy, MaxX+64, 140-64);
 	MoveToSlowdown(objEnemy, CenX, 140, 60);

@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["1面　会話前半"]
-#Text["1面　会話前半"]
+#Title["1柺丂夛榖慜敿"]
+#Text["1柺丂夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_RANRAN);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,30 +36,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_RANRAN, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
 	
@@ -72,78 +72,78 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
-			SetTalkEx(cutinPlayer1, "为什么妖精和妖怪没有被冻住啊！[r]难道说我连它们都不如吗？ ");
+			SetTalkEx(cutinPlayer1, "側傫偱梔惛傗梔夦偑巭傑偭偰側偄偺傛両[r]巹偼偙偄偮傜傛傝壓摍側懚嵼側偺丠");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
-			SetTalkEx2(cutinBoss1, "嘻嘻嘻，[r]可不就是这样吗？ ", -48, -280);
+			SetTalkEx2(cutinBoss1, "僸僢僸僢僸僢丄[r]偦偺捠傝偱偼側偄偐偹丠", -48, -280);
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossName(cutinBoss1, objEnemy);
 
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx(cutinBoss1, "你什么时候产生了自己是高贵种族的错觉？ ");
+			SetTalkEx(cutinBoss1, "偄偮偐傜帺暘偑崅彯側懚嵼偩偲嶖妎偟偰偄偨丠");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET);
-			SetTalkEx(cutinPlayer1, "我觉得人类至少比猴子要高贵。 ");
+			SetTalkEx(cutinPlayer1, "墡傛傝偼恖娫偺曽偑崅埵偩偲巚偆傫偱偡偗偳");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA2);
-			SetTalkEx(cutinBoss1, "嘻嘻，蠢货。 ");
+			SetTalkEx(cutinBoss1, "僸僸僢丄嬸偐側丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_SMILE);
-			SetTalkEx(cutinBoss1, "习得了妖术，成为魔猴的我，[r]已经攀上了人类远远及不上的高枝！ ");
+			SetTalkEx(cutinBoss1, "梔弍傪恎偵晅偗儅僕僢僋儌儞僉乕偲側偭偨巹偼[r]偦偺恖娫傛傝傕崅傒偵搊偭偨偺偩両");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx(cutinPlayer1, "不是有句老话叫“猴子也会从树上掉下来”么？ ");
+			SetTalkEx(cutinPlayer1, "墡傕栘偐傜棊偪傞偲偄偆偙偲傢偞偑偁偭偰偹");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
-			SetTalkEx(cutinBoss1, "也有句老话叫“巫女的空话”啊。 ");
+			SetTalkEx(cutinBoss1, "涋彈偺嫊尵偲偄偆偙偲傢偞傕偁傞偑偹丅");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinBoss1, I_SMILE2);
-			SetTalkEx(cutinBoss1, "哼，今天靠上人的力量，[r]我的灵气倍增了！ ");
+			SetTalkEx(cutinBoss1, "偳偆傟丄崱擔偼忋恖偝傑偺[r]屼椡偱楈婥偑燐偭偰偄傞丅");
 
 			PlayMusicWithName( 3, 30, 30 );
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "这片灰白的世界，[r]全部染上我的红色吧！ ");
+			SetTalkEx(cutinBoss1, "偙偺敀偒悽奅傪慡偰丄[r]変偑峠偵愼傔敳偄偰偔傟傛偆両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		others
@@ -154,13 +154,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

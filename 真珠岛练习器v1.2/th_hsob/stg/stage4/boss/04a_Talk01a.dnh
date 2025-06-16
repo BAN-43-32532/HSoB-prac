@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["4面　道中会話"]
-#Text["4面　道中会話"]
+#Title["4柺丂摴拞夛榖"]
+#Text["4柺丂摴拞夛榖"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include"./lib_Siran.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,12 +23,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
-	SetSiranRosary();	// 数珠配置
+	SetSiranRosary();	// 悢庫攝抲
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -38,63 +38,63 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	EnterBoss();
 	wait(90);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
-	// こっちでウェイトをかける
+	// 偙偭偪偱僂僃僀僩傪偐偗傞
 	wait(15+150-59);
 	
-	// 先に次のフェーズへ移動（スペカ宣言）
+	// 愭偵師偺僼僃乕僘傊堏摦乮僗儁僇愰尵乯
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 task FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
 	
 	local
 	{
-		// 初期設定
+		// 弶婜愝掕
 		SetImageFoward(cutinBoss1, true);
 		ChangeTalkTexture(cutinBoss1, I_DOYA);
-		wait(15);	// 表示しきるまでウェイト
+		wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
 	}
 	local
 	{
 		ChangeTalkTexture(cutinBoss1, I_DOYA);
-		SetTalkEx(cutinBoss1, "果然还有人能活动啊。 ");
+		SetTalkEx(cutinBoss1, "傗偼傝摦偄偰偄傞恖娫偑嫃偨偧偄丅");
 		WaitNextTimer(150);
 	}
 	local
 	{
 		ChangeTalkTexture(cutinBoss1, I_NORMAL);
-		SetTalkEx(cutinBoss1, "那就让小僧的念佛（Spell），[r]把你们送去极乐净土！ ");
+		SetTalkEx(cutinBoss1, "偳傟丄愘憁偺[ruby rb=\"擮暓\" rt=\"僗儁儖\"]偱[r]嬌妝忩搚傊憲偭偰恑偤傛偆両");
 	}
-	// 少し待ってから会話終了
+	// 彮偟懸偭偰偐傜夛榖廔椆
 	wait(135);
 	FinishTalk(true);
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetActionSiran(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

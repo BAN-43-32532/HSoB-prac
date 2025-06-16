@@ -100,7 +100,6 @@ task Task_Main
 	
 	task TSandstorm(timer, x, muki)
 	{
-		//timer=360,x=boss.x,muki=1 or -1
 		let wt = 1;
 		let max_r = 360;
 		let speed = 3;

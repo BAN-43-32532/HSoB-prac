@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["5面　ボス会話後半"]
-#Text["5面　ボス会話後半"]
+#Title["5柺丂儃僗夛榖屻敿"]
+#Text["5柺丂儃僗夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include "./../../../lib/lib_Stage.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,12 +23,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_SET);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -38,29 +38,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_SET, true);
 	let cutinPlayer1   = CreateTalkObject(BOSS_ID_MARISA, false);
 	
@@ -73,98 +73,98 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_DOYA);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
-			SetTalkEx(cutinBoss1, "唔，你不畏惧死亡吗？ ");
+			SetTalkEx(cutinBoss1, "傓偆丄婱條偼巰偑晐偔側偄偺偐");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "怕，太怕了。可是，[r]该站起来的时候不站，可就太逊了。 ");
+			SetTalkEx(cutinPlayer1, "晐偄側丄挻晐偄丅偩偗偳丄[r]傗傞帪傖傗傜側偒傖妴岲偑偮偐傫偤丅");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "就算我死了，[r]只要我的英姿能够留在你们心中——");
+			SetTalkEx(cutinPlayer1, "壖偵巹偑巰傫偱傕丄[r]巹偺惗偒條偑偍慜払偺婰壇偵巆傟偽乗乗");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE2);
-			SetTalkEx(cutinPlayer1, "我就活在你们心里啊。 ");
+			SetTalkEx(cutinPlayer1, "巹偼丄偍慜払偺怱偺拞偱惗偒偰偄偔偺偝丅");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
-			SetTalkEx(cutinPlayer1, "你们这些黑幕，[r]总是要害我们人类。 ");
+			SetTalkEx(cutinPlayer1, "偍慜傜崟枊偼偄偮傕[r]巹偨偪恖娫傪媠傔傗偑傞丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA);
-			SetTalkEx(cutinPlayer1, "那么，受害的人生气起来会有多恐怖，[r]就由我来告诉你们吧。 ");
+			SetTalkEx(cutinPlayer1, "媠傔傜傟偭巕傪搟傜偣偨傜晐偄帠傪丄[r]巹偼嫵偊偰傗傝偨偄偤");
 		}
 		case(6)
 		{
-			SetTalkEx(cutinBoss1, "你那强大而自信的意志值得敬佩。 ");
+			SetTalkEx(cutinBoss1, "偦偺嫮偔屩傝崅偒堄巚偵[r]宧堄傪昞偦偆丅");
 		}
 		case(7)
 		{
-			SetTalkEx(cutinBoss1, "因此，我不能让你去见到鸟公。 ");
+			SetTalkEx(cutinBoss1, "屘偵婱條傪[ruby rb=\"捁岞\" rt=\"偲傝偙偆\"]偵[r]夛傢偣傞傢偗偵偼偄偐傫傛偆偩");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET);
-			SetTalkEx(cutinPlayer1, "这次怎么这么多啊，鸟。[r]我都快忘掉已经有多少只了。 ");
+			SetTalkEx(cutinPlayer1, "崱夞懡偄側丄捁丅[r]傕偆壗旵栚偩偐朰傟偪傑偭偨偧丅");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
-			SetTalkEx(cutinPlayer1, "这就是真正的鸟头吗？说笑的。 ");
+			SetTalkEx(cutinPlayer1, "偙傟偑杮摉偺捁摢丄側傫偰側");
 		}
 		case(10)
 		{
-			SetTalkEx(cutinBoss1, "事情变得无趣了，所以我要给你惩罚。 ");
+			SetTalkEx(cutinBoss1, "柺敀偔側偐偭偨備偊偵敱傪梌偊傞丅");
 		}
 		case(11)
 		{
 			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
-			SetTalkEx3(cutinBoss1, "崩的一声。 ", -86, -86);
+			SetTalkEx3(cutinBoss1, "億僠偭偲側", -86, -86);
 		}
 		case(12)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_QUESTION2);
-			SetTalkEx(cutinPlayer1, "……崩的一声？ ");
+			SetTalkEx(cutinPlayer1, "乧億僠偭偲側丠");
 		}
 		case(13)
 		{
-			SetTalkEx(cutinBoss1, "发动对盗墓者的裁决（Trap Switch）！[r]禁咒塔的自爆装置！ ");
+			SetTalkEx(cutinBoss1, "[ruby rb=\"搻孈幰傊偺嵸偒\" rt=\"丂丂僩儔僢僾僗僀僢僠\"]傪敪摦両[r]嬛庺搩偺帺敋憰抲偩両");
 		}
 		case(14)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx(cutinBoss1, "你逃不掉的，[r]就在这里和我（临时的肉体）一起灭亡吧！ ");
+			SetTalkEx(cutinBoss1, "摝偑偟偼偣傫丄偍慜偼[r]壌乮偺壖弶傔偺擏懱乯偲嫟偵柵傃傞偺偩両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		case(15)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER);
-			SetTalkEx(cutinPlayer1, "我、我的房子——————！ ");
+			SetTalkEx(cutinPlayer1, "傢丄巹偺壠乕乕乕乕乕両");
 
-			// 背景チェンジ！
+			// 攚宨僠僃儞僕両
 			NextStageScene();
 		}
 		others

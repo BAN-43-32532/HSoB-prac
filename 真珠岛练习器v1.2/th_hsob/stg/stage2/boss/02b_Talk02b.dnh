@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["2面　会話後半"]
-#Text["2面　会話後半"]
+#Title["2柺丂夛榖屻敿"]
+#Text["2柺丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_CHII);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_CHII, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
 	
@@ -72,50 +72,50 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "你该不会不知道，[r]一骑当千的意思其实是一个人干掉一千个敌人的吧？ ");
+			SetTalkEx(cutinPlayer1, "暘偐偭偰傞偲巚偆偑丄[r]堦婻摉愮偲偼堦恖偱愮恖偺揋傪搢偡帠偱側");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "你想说你才是一骑当千吆？ ");
+			SetTalkEx(cutinBoss1, "偮傑傝帺暘偺偙偲偩偲尵偄偨偄偱偪側");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
-			SetTalkEx(cutinPlayer1, "我没那么自负…… ");
+			SetTalkEx(cutinPlayer1, "巹偼偦傫側偵橖枬偠傖側偄偺偩偑乧");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
-			SetTalkEx(cutinPlayer1, "算了，无所谓，从今往后[r]你叫我一骑当千的大魔法使也不错。 ");
+			SetTalkEx(cutinPlayer1, "傑偁椙偄傗丄偙傟偐傜偼[r]堦婻摉愮偺戝杺朄巊偄偲屇傫偱偔傟");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "那么小的炉子却有那么强的火力……[r]好不甘心吆，好羡慕吆。 ");
+			SetTalkEx(cutinBoss1, "偦傫側彫偝側楩偱偦偺壩椡乧[r]夨偟偄偱偪偂丄慉傑偟偄偱偪偂");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE3);
-			SetTalkEx(cutinPlayer1, "毕竟不是保藏质量的时候了嘛。 ");
+			SetTalkEx(cutinPlayer1, "尦偺幙検傪曐懚偟偰傞応崌偠傖側偄傫偱側");
 		}
 		others
 		{
@@ -125,13 +125,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

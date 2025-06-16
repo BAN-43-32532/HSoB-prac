@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["3面　スペカ前口上"]
-#Text["3面　スペカ前口上"]
+#Title["3柺丂僗儁僇慜岥忋"]
+#Text["3柺丂僗儁僇慜岥忋"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include"./lib_Hikariko.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,11 +23,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_HIKARIKO);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(45);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_HIKARIKO, true);
 	
 	let talkID = -1;
@@ -71,31 +71,31 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "……噪特……[r]是我等鸟妖智慧（Sefer）的聚集处（Rasiel）。 ");
+			SetTalkEx(cutinBoss1, "乧僒僄僘僢僞乕偼乧[r]変傜捁偺梔夦偺[ruby rb=\"塨抭偺廤愊応\" rt=\"丂僙僼傽乕丒儔僕僄儖\"]");
 			waitEx(180);
 			talk_type = 2;
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "就算相距万里，就算素昧平生，[r]从古老记忆（Archive）中再现的这个招数（Spell），见识一下吧！ ");
+			SetTalkEx(cutinBoss1, "屳偄偵墦偔棧傟偰偄偰傕丄柺幆偑柍偔偲傕丄[r][ruby rb=\"屆偺婰壇\" rt=\"丂傾乕僇僀償\"]傛傝嵞尰偟偨[ruby rb=\"偙偺媄\" rt=\"丂僗儁儖\"]傪尒傛両");
 			SetCharge();
 			waitEx(240);
 			talk_type = 2;
@@ -111,7 +111,7 @@ function FuncTalk()
 task SetCharge()
 {
 	waitObj(objEnemy, 120);
-	// 開幕
+	// 奐枊
 	BossCharge(objEnemy);
 	SetAction(objEnemy, ACT_SHOT1, 60*120);
 	MoveTo(objEnemy, CenX, CenY, 120);
@@ -124,7 +124,7 @@ task SetCharge()
 	}
 }
 
-// 人魂
+// 恖嵃
 task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
 {
 	let eSize = ENEMY_M;
@@ -132,7 +132,7 @@ task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
 	let baseAngle = iniAngle;
 	
 	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
-	CheckLinkLife_Familier(objEnemy, objFamilier, 0.1);	// ボスと体力連動
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.1);	// 儃僗偲懱椡楢摦
 	DrawBirdOption(objFamilier, EFF_BLUE, iniAngle, 1);
 	TAct();
 	WaitForKilledFamilier(objFamilier, 0, 0);

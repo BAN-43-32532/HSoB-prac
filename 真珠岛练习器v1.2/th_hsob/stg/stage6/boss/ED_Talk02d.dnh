@@ -1,13 +1,13 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["辉夜エンディング-Bad"]
-#Text["辉夜エンディング-Bad"]
+#Title["婸栭僄儞僨傿儞僌-Bad"]
+#Text["婸栭僄儞僨傿儞僌-Bad"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk_ed.dnh"
 
@@ -28,7 +28,7 @@
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
 	TBackground();
@@ -37,7 +37,7 @@ task Task_Main()
 	//  BGM
 	PlayMusic( 16, 120, 60 );
 	
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 	TalkFlame();
 	wait(120);
@@ -45,7 +45,7 @@ task Task_Main()
 	FuncTalk();
 	wait(15);
 
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	SetForbidPlayerShot(true);
 	SetForbidPlayerSpell(true);
@@ -56,14 +56,14 @@ task Task_Main()
 	CloseStgScene();
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
 	let COL0 = [160, 160, 160];
 	let COL1 = [108, 255, 108];
 	let COL2 = [108, 255, 255];
 	
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinDescri = CreateDescriptiveObject();
 	wait(15);
 	
@@ -75,83 +75,83 @@ function FuncTalk()
 		talkID = max(0, talkID+WaitNext());
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(0)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「……以上，我们妖土真宗欢迎新门徒的到来。」 ", [192, 108, 255]);
+			SetTalkEx(cutinDescri, "巼阛[r]乽乧偲偄偆帠偱丄変傜梔搚恀廆偵怴偨側栧搆偑擖怣偧偄乿", [192, 108, 255]);
 		}
 		case(1)
 		{
-			SetTalkEx(cutinDescri, "乱乱[r]「嘻嘻，真是值得庆贺。我给你做件红色的袈裟吧。」 ", [255, 108, 108]);
+			SetTalkEx(cutinDescri, "棎乆[r]乽僸僸僢丄偙傟偼傔偱偨偄丅峠怓偺孶嵕傪嶌偭偰傗傠偆乿", [255, 108, 108]);
 		}
 		case(2)
 		{
-			SetTalkEx(cutinDescri, "幺[r]「永远亭要常备牙签了吆！这是小幺第一笔做成的生意吆！」 ", [130, 130, 220]);
+			SetTalkEx(cutinDescri, "偪偄[r]乽塱墦掄偵偮傑傛偆偠傪忢旛偟偰傕傜偆偱偪偂両丂偪偄偺弶傔偰偺偍庢堷愭偵側傞偱偪両乿", [130, 130, 220]);
 		}
 		case(3)
 		{
-			SetTalkEx(cutinDescri, "光子[r]「你也拿上这个噪特客户端吧……这样我和你就是……死宅伙伴（Friends of Hermit）。」 ", [108, 108, 255]);
+			SetTalkEx(cutinDescri, "傂偐傝巕[r]乽偍慜偵傕僒僄僘僢僞乕抂枛傪傗傠偆乧偙傟偱巹偲偍慜偼乧堷偒偙傕傝拠娫乮僼儗儞僘丒僆僽丒僴乕儈僢僩乯乿", [108, 108, 255]);
 		}
 		case(4)
 		{
-			SetTalkEx(cutinDescri, "珠乌[r]「作为反省、入教和新人的证明，把头剃光怎么样！交给我的炼金剑Last Azoth吧！」 ", COL2);
+			SetTalkEx(cutinDescri, "庫塆[r]乽斀徣偲擖怣偲怴擖傝偺徹偵摢傪娵傔傞偺偼偳偆偐側両丂巹偺楤嬥寱儔僗僩傾僝乕僩偵擟偣偰両乿", COL2);
 		}
 		case(5)
 		{
-			SetTalkEx(cutinDescri, "辉夜[r]「这帮家伙，绝对只是一个人很寂寞而已吧！」 ", COL1);
+			SetTalkEx(cutinDescri, "婸栭[r]乽偙偄偮傜丄愨懳傏偭偪偑庘偟偐偭偨偩偗偩両乿", COL1);
 		}
 		case(6)
 		{
-			SetTalkEx(cutinDescri, "[r]战败了的辉夜，本以为万事休矣，等着她的却是妖土真宗温暖(?)的欢迎。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]愴偄偵攕傟偨婸栭丅枩帠媥偡偲巚傢傟偨偑丄懸偭偰偄偨偺偼梔搚恀廆偵傛傞惗抔偐偄娊寎偱偁偭偨丅", COL0);
 		}
 		case(7)
 		{
-			SetTalkEx(cutinDescri, "[r]看来只要没有异国的暴神赛特以及他拿来的托特之书的话，妖土真宗本来是一个非常和平的亲善妖怪团体才对的。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偳偆傗傜堎崙偺朶恄僙僩偲丄斵偑帩偪崬傫偩僩僩偺彂偑柍偗傟偽丄梔搚恀廆偼傑偭偨偔暯榓偱拠偺椙偄梔夦僌儖乕僾偩偭偨傜偟偄丅", COL0);
 		}
 		case(8)
 		{
-			SetTalkEx(cutinDescri, "[r]然后，辉夜也知道了珠乌的目的是通过停止时间来停止幻想乡的结界，以跨越结界飞往外面世界去。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偦偟偰丄庫塆偼尪憐嫿偺寢奅傪帪娫偛偲掆巭偝偣丄寢奅傪挻偊偰奜偺悽奅傊旘傃棫偮栚揑偩偭偨偙偲傕暘偐偭偨丅", COL0);
 		}
 		case(9)
 		{
-			SetTalkEx(cutinDescri, "[r]赛特且不论，她的目的并不是危险的侵略行为。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]僙僩偼揺傕妏丄斵彈偼婋尟側怤棯峴堊傪栚揑偲偼偟偰偄側偐偭偨偺偩丅", COL0);
 		}
 		case(10)
 		{
 			TEndingImage(imgEdBad[3][1], 30);
-			SetTalkEx(cutinDescri, "珠乌[r]「那，我这次真的要走了！」 ", COL2);
+			SetTalkEx(cutinDescri, "庫塆[r]乽偠傖丄巹崱搙偙偦峴偭偰棃傞偐傜両乿", COL2);
 		}
 		case(11)
 		{
-			SetTalkEx(cutinDescri, "辉夜[r]「啊稍等一下，超强的珠乌前辈！能操纵时间的托特之书好厉害啊，好羡慕啊！」 ", COL1);
+			SetTalkEx(cutinDescri, "婸栭[r]乽偁偭偪傚偭偲懸偭偰丄惁偔偰嫮偄庫塆愭攜乕丅帪娫傪憖傟傞僩僩偺彂偡偛偄側乕偁偙偑傟偪傖偆側乕丅乿", COL1);
 		}
 		case(12)
 		{
-			SetTalkEx(cutinDescri, "辉夜[r]「话说回来，卷回时间的法术也有吗？我好想看看漂亮又可爱的珠乌前辈卷回时间的样子啊！」 ", COL1);
+			SetTalkEx(cutinDescri, "婸栭[r]乽偲偙傠偱帪娫傪栠偡弍傕偁傞丠丂巹丄楉偟偔傕壜垽偄庫塆愭攜偑帪娫傪栠偡偺尒偰傒偨偄側乕乿", COL1);
 		}
 		case(13)
 		{
-			SetTalkEx(cutinDescri, "珠乌[r]「什么嘛，小事一桩！就交给珠乌前辈吧！」 ", COL2);
+			SetTalkEx(cutinDescri, "庫塆[r]乽側傫偩偦傫側帠偐両丂傛偭偟庫塆愭攜偵擟偣傠乕両乿", COL2);
 		}
 		case(14)
 		{
-			SetTalkEx(cutinDescri, "[r]就这样，公主成功返回了异变刚刚发生的时间点。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偐偔偟偰柍帠堎曄敪惗捈屻偺帪娫幉偵婣娨偟偨変傜偑昉條丅", COL0);
 		}
 		case(15)
 		{
-			SetTalkEx(cutinDescri, "[r]不必说她也知道敌人是弱小无害的了。不彻底干倒，怎么咽得下去这口气呢。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]揋偑柍奞偩偭偨偲偐尵傢傟偰傕抦傜傫丅傇偪偺傔偝側偄偲婥偑嵪傓傢偗偑側偄偱偟傚偆丅", COL0);
 		}
 		case(16)
 		{
-			SetTalkEx(cutinDescri, "[r]下次加油辉夜！[r]偶尔也要靠自己的力量解决难题嘛！ ", COL0);
+			SetTalkEx(cutinDescri, "[r]師偼婃挘傟婸栭両[r]偨傑偵偼帺暘偺椡偱擄戣傪夝偄偰尒偣傠両", COL0);
 		}
 		case(17)
 		{
-			SetTalkEx(cutinDescri, "[r][r][r]Ending.08　不过公主剃光头确实有点想看 ", COL0);
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.08丂偱傕昉條偺掍敮側傜偪傚偭偲尒偰傒偨偄偐傕", COL0);
 		}
 		others
 		{

@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["4面　ボス会話前半"]
-#Text["4面　ボス会話前半"]
+#Title["4柺丂儃僗夛榖慜敿"]
+#Text["4柺丂儃僗夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include"./lib_Siran.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,12 +23,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_SIRAN);
-	SetSiranRosary();	// 数珠配置
+	SetSiranRosary();	// 悢庫攝抲
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -38,30 +38,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_SIRAN, true);
 	let cutinPlayer1   = CreateTalkObject(BOSS_ID_REIMU, false);
 	
@@ -74,30 +74,30 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE2);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE2);
-			SetTalkEx(cutinPlayer1, "刚刚那家伙就是黑幕吧，[r]我一定会干掉她！ ");
+			SetTalkEx(cutinPlayer1, "偝偭偒偺搝偑崟枊偹丄[r]愨懳偵巇棷傔傞傢傛両");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx2(cutinBoss1, "呵，巫女的恶性越发难制。 ", -48, -280);
+			SetTalkEx2(cutinBoss1, "傓偆丄涋彈偺埆惈偝傜偵巭傔偑偨偟", -48, -280);
 		}
 		case(2)
 		{
@@ -105,119 +105,119 @@ function FuncTalk()
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
 
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossName(cutinBoss1, objEnemy);
 
-			SetTalkEx(cutinBoss1, "这心肠，诚如蛇蝎！ ");
+			SetTalkEx(cutinBoss1, "偦偺怱丄惤偵幹鍣偺擛偔偧偄");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "你就是那个上人？ ");
+			SetTalkEx(cutinPlayer1, "偁傫偨偑忋恖偝傑偹丠");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE2);
-			SetTalkEx(cutinPlayer1, "白打命莲寺了，[r]把我浪费的时间还给我！ ");
+			SetTalkEx(cutinPlayer1, "柍懯偵柦楡帥偵墸傝崬傫偩[r]帪娫傪曉偟側偝偄傛");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "安心吧。 ");
+			SetTalkEx(cutinBoss1, "埨怱偡傞偧偄丅");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "只要一切结束，[r]幻想乡所停止的时间全都会还给你们的。 ");
+			SetTalkEx(cutinBoss1, "慡偰廔傢傟偽丄尪憐嫿偺巭傑偭偨[r]帪娫傕慡偰曉偟偰傗傞偧偄");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER2);
 			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
-			SetTalkEx3(cutinBoss1, "……应该吧。 ", -86, -86);
+			SetTalkEx3(cutinBoss1, "乧懡暘", -86, -86);
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "操纵时间的就是你吗？[r]又是靠外面世界的奇怪道具？ ");
+			SetTalkEx(cutinPlayer1, "帪娫傪憖偭偰偄傞偺偼偁傫偨丠[r]傑偨奜偺悽奅偺曄側傾僀僥儉丠");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "小僧只不过是在念佛而已。 ");
+			SetTalkEx(cutinBoss1, "愘憁偼偨偩擮暓傪抳偟偨偩偗丅");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "只不过是念佛的奇迹之力，[r]将小僧等人连接在一起。 ");
+			SetTalkEx(cutinBoss1, "擮暓偺婏愓偺椡偑丄[r]愘憁払傪寢傃晅偗偨偩偗偧偄");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM);
-			SetTalkEx(cutinPlayer1, "幻想乡比起佛教更接受神道！ ");
+			SetTalkEx(cutinPlayer1, "尪憐嫿偼暓嫵傛傝恄摴両");
 		}
 		case(12)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE2);
-			SetTalkEx(cutinPlayer1, "果然人类村落主要崇拜神道教是件好事啊。 ");
+			SetTalkEx(cutinPlayer1, "傗偼傝恖棦偼恄摴拞怱偱峴偭偨[r]曽偑椙偄帠偑敾柧偟偨傢偹");
 		}
 		case(13)
 		{
 			ChangeTalkTexture(cutinBoss1, I_UPSET);
-			SetTalkEx(cutinBoss1, "冷静。 ");
+			SetTalkEx(cutinBoss1, "棊偪拝偔偧偄丅");
 		}
 		case(14)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "小僧接受信者的布施，[r]比你有钱，所以比你厉害。 ");
+			SetTalkEx(cutinBoss1, "愘憁偼怣幰偐傜偺屼晍巤偱[r]偦側偨傛傝嬥帩偪丄懄偪執偄丅");
 		}
 		case(15)
 		{
 			ChangeTalkTexture(cutinBoss1, I_SMILE);
-			SetTalkEx(cutinBoss1, "给你这些人类的钞票，回去吧。 ");
+			SetTalkEx(cutinBoss1, "傎傟丄恖娫偺嶥懇傪傗傞偐傜婣傞偧偄");
 		}
 		case(16)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SPECIAL);
-			SetTalkEx(cutinPlayer1, "多少钱！？ ");
+			SetTalkEx(cutinPlayer1, "壗枃偩両丠");
 		}
 		case(17)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "南无阿弥陀？（和多少钱同音） ");
+			SetTalkEx(cutinBoss1, "[ruby rb=\"撿柍垻栱懮\" rt=\"丂丂側傫傑偄偩\"]丠");
 		}
 		case(18)
 		{
 			ChangeTalkTexture(cutinBoss1, I_SMILE);
-			SetTalkEx(cutinBoss1, "很好！[r]神社的巫女念起佛了！ ");
+			SetTalkEx(cutinBoss1, "偙傟偼椙偄偧偄両[r]恄幮偺涋彈偑擮暓傪彞偊傞偲偼両");
 		}
 		case(19)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL3);
-			SetTalkEx(cutinPlayer1, "安心，[r]这是给你吊丧用的佛号。 ");
+			SetTalkEx(cutinPlayer1, "埨怱側偝偄丄[r]偙傟偼偁傫偨傪挗偆擮暓丅");
 		}
 		case(20)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "我会把你拔了翅膀的惨样儿，[r]上传到那个什么噪特上永远挂着！ ");
+			SetTalkEx(cutinPlayer1, "塇傪傕偑傟偨柍條側巔丄[r]僒僄僘僢僞乕偲傗傜偵塱墦偵巆偟側偝偄両");
 		}
 		case(21)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "愚蠢。口中宣一声佛号，[r]那瞬间你就已经是我妖土真宗的门徒。 ");
+			SetTalkEx(cutinBoss1, "嬸偐偧偄丅擮暓傪彞偊偨弖娫偐傜丄[r]偦側偨傕変傜梔搚恀廆偺栧搆");
 
 			PlayMusicWithName( 9, 30, 30 );
 		}
 		case(22)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER);
-			SetTalkEx(cutinBoss1, "因此已经注定了永远的救赎！ ");
+			SetTalkEx(cutinBoss1, "偙傟偵偰塱墦偺媬偄偼栺懇偝傟偨両");
 		}
 		case(23)
 		{
 			ChangeTalkTexture(cutinBoss1, I_ANGER2);
-			SetTalkEx(cutinBoss1, "来吧，接下来便是赞颂祖师小僧，[r]诵唱佛号以示感谢吧！ ");
+			SetTalkEx(cutinBoss1, "偝偁丄師偼廆慶偨傞愘憁傪徧偊丄[r]姶幱偺擮暓傪彞偊傞偧偄両");
 		}
 		others
 		{
@@ -227,13 +227,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetActionSiran(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

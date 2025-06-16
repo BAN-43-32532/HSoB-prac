@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["2面　会話後半"]
-#Text["2面　会話後半"]
+#Title["2柺丂夛榖屻敿"]
+#Text["2柺丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_CHII);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_CHII, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -72,60 +72,60 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "噫——！[r]付丧神界的传说武器，为什么会在你手里！ ");
+			SetTalkEx(cutinBoss1, "偪偂乕偭両[r]晅憆恄奅偺揱愢偺晲婍傪壗屘偍慜偑偀");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "弹幕的理念与意义，[r]其中蕴藏着美（大概）。 ");
+			SetTalkEx(cutinPlayer1, "抏枊偺棟擮偲堄媊丄[r]偦傟偼旤偟偝偵偁傞乮偲巚偆乯");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "从你为了杀人而行动的那一刻起，[r]就证明了你和我的实力差距（虎躯一震）。 ");
+			SetTalkEx(cutinPlayer1, "嶦奞偟傛偆側偳偲桇婲偵側傞帠帺懱偑[r]巹偲偺幚椡嵎偺徹嫆側偺傛乮坟瘉j");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "……所以为什么付丧神界的传说武器会在你手里…… ");
+			SetTalkEx(cutinBoss1, "乧偱丄晅憆恄奅偺揱愢偺晲婍傪壗屘偍慜偑乧");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
-			SetTalkEx(cutinPlayer1, "……为啥来着。好像是自然而然就…… ");
+			SetTalkEx(cutinPlayer1, "乧偊乕偲丄壗屘偱偟傚偆丄側傫偐惉傝峴偒揑偵");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "好想要Silver Blade…… ");
+			SetTalkEx(cutinBoss1, "僔儖僶乕僽儗乕僪梸偟偄偱偪偂乧");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "我的银子全都用来做牙签、勺子、叉子了…… ");
+			SetTalkEx(cutinBoss1, "帩偭偰偨嬧偼慡晹捾梜巬偲僗僾乕儞偲[r]僼僅乕僋偵偟偰偟傑偭偨偱偪乧");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "正所谓妖妖餐具呢。 ");
+			SetTalkEx(cutinPlayer1, "偙傟偑杮摉偺梔怘婍丄偱偡偹");
 		}
 		others
 		{
@@ -135,13 +135,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

@@ -1,10 +1,10 @@
 #include "../../lib/SpellData.dnh"
 #include "../../lib/effect/lib_EffectLib.dnh"
-// リザルト用
+// 儕僓儖僩梡
 #include "./../../lib/lib_result.dnh"
 
 
-// プレイできるスペカがあるかのチェック
+// 僾儗僀偱偒傞僗儁僇偑偁傞偐偺僠僃僢僋
 function CheckPlayableSpell(spellList, idDifficult)
 {
 	let flg = 0;
@@ -17,7 +17,7 @@ function CheckPlayableSpell(spellList, idDifficult)
 	return(flg);
 }
 
-// ステージ選択画面
+// 僗僥乕僕慖戰夋柺
 function SceneSpellSelect(selectedDedault)
 {
 	let viewMax2 = 8;
@@ -28,7 +28,7 @@ function SceneSpellSelect(selectedDedault)
 	let d4 = 0;
 	let d5 = 0;
 
-	//自動選択
+	//帺摦慖戰
 	let tmpMemory = CheckAutoSelectMemory();
 	let tmpMemory2 = CheckAutoSelectMemory();
 	let tmpMemory3 = CheckAutoSelectMemory();
@@ -48,12 +48,12 @@ function SceneSpellSelect(selectedDedault)
 		d5 = -max(0, d2-viewMax2+1);
 	}
 	
-	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
-	Obj_SetValue(objParent, "VALUE", d1);	// ステージ
-	Obj_SetValue(objParent, "VALUE2", d2);	// 右画面選択位置
-	Obj_SetValue(objParent, "VALUE2b", d5);	//選択位置オフセット
-	Obj_SetValue(objParent, "VALUE_D", d3);	//難易度
-	Obj_SetValue(objParent, "VALUE_X", d4);	//メニュー階層（ステージ選択orスペカ選択）
+	let objParent = ObjText_Create();	//揔摉側僆僽僕僃僋僩傪惗惉乮僨乕僞偺傗傝庢傝梡乯
+	Obj_SetValue(objParent, "VALUE", d1);	// 僗僥乕僕
+	Obj_SetValue(objParent, "VALUE2", d2);	// 塃夋柺慖戰埵抲
+	Obj_SetValue(objParent, "VALUE2b", d5);	//慖戰埵抲僆僼僙僢僩
+	Obj_SetValue(objParent, "VALUE_D", d3);	//擄堈搙
+	Obj_SetValue(objParent, "VALUE_X", d4);	//儊僯儏乕奒憌乮僗僥乕僕慖戰or僗儁僇慖戰乯
 
 	let selectMax = STAGE_MAX;
 	let diffMax = 4;
@@ -61,14 +61,14 @@ function SceneSpellSelect(selectedDedault)
 	let resultIndex = -1;
 	let resultIndexD = -1;
 	
-	// Exを表示させる
+	// Ex傪昞帵偝偣傞
 	if (!GetAreaCommonData(CAREA_SAVE, "ExtraStandby", false ))
 	{
 		selectMax -= 1;
 		d1 %= selectMax;
-		Obj_SetValue(objParent, "VALUE", d1);	// ステージ
+		Obj_SetValue(objParent, "VALUE", d1);	// 僗僥乕僕
 	}
-	// Exモード違いを表示させる
+	// Ex儌乕僪堘偄傪昞帵偝偣傞
 	if (GetAreaCommonData(CAREA_SAVE, "EXTRA_ENTER_1", false)) { diffEx = diffEx ~ [1]; }
 	if (GetAreaCommonData(CAREA_SAVE, "EXTRA_ENTER_2", false)) { diffEx = diffEx ~ [2]; }
 
@@ -77,8 +77,8 @@ function SceneSpellSelect(selectedDedault)
 	let SLIST_Data = [];
 	let selectMax2 = length(SLIST);
 
-	//メニュー配置
-	TMenuItemInfo(objParent, 16, 420, "上下方向键:关卡&符卡切换[r]左右方向键:难易度切换 ");
+	//儊僯儏乕攝抲
+	TMenuItemInfo(objParent, 16, 420, "忋壓僉乕:僗僥乕僕仌僗儁儖慖戰[r]嵍塃僉乕:擄堈搙慖戰");
 	TMenuItemDifficult(objParent, 120, 104);
 	ascent(i in 0 .. selectMax)
 	{
@@ -88,7 +88,7 @@ function SceneSpellSelect(selectedDedault)
 		TMenuItemText(objParent, i, base_x, base_y, STAGE_NAME[i]);
 	}
 	wait(10);
-	//キー状態がリセットされるまで待機
+	//僉乕忬懺偑儕僙僢僩偝傟傞傑偱懸婡
 	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
 
 	loop
@@ -105,28 +105,28 @@ function SceneSpellSelect(selectedDedault)
 			selectMax2 = length(SLIST);
 			if (selectMax2 <= 0)
 			{
-				// メニューを戻る
+				// 儊僯儏乕傪栠傞
 				Obj_SetValue(objParent, "VALUE_X", 0);
 			}
 			else
 			{
-				// 選択位置補正
+				// 慖戰埵抲曗惓
 				Obj_SetValue(objParent, "VALUE2", min(selectMax2-1, max(0, Obj_GetValueD(objParent, "VALUE2", -1))));
 				let tmp2 = Obj_GetValueD(objParent, "VALUE2", 0);
 				let tmp2b = -max(0, tmp2-viewMax2+1);
 				Obj_SetValue(objParent, "VALUE2b", tmp2b);
 				
-				//メニュー配置
+				//儊僯儏乕攝抲
 				let tmpDifficulty	= Obj_GetValueD(objParent, "VALUE_D", 0);
 				if (IsExtraSelect()) { tmpDifficulty = diffEx[tmpDifficulty%length(diffEx)]; }
 				
-				// 文字用
+				// 暥帤梡
 				TMenuItemSpellImage(objParent, 210+350, 150-20-12,  0, 24, 32, 34);
 				TMenuItemSpellImage(objParent, 210+350, 150-20, 32, 24, 64, 34);
 				
 				ascent(i in 0 .. selectMax2)
 				{
-					// リザルトロード
+					// 儕僓儖僩儘乕僪
 					let sID = GetSpellCardIDEx( SLIST[i], tmpDifficulty );
 					let flg = LoadResult( GetSpellCardIndex(sID) );
 					SLIST_Data = SLIST_Data ~ [flg];
@@ -136,7 +136,7 @@ function SceneSpellSelect(selectedDedault)
 			}
 		}
 
-		//キー入力待ち
+		//僉乕擖椡懸偪
 		let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_CANCEL, VK_OK]);
 		
 		alternative (downKey)
@@ -247,14 +247,14 @@ function SceneSpellSelect(selectedDedault)
 				WaitForResetKeyEx([VK_OK, VK_CANCEL]);
 			}
 		}
-		wait(2);	//適当に固定ディレイ
+		wait(2);	//揔摉偵屌掕僨傿儗僀
 	}
 
 	d1 = Obj_GetValueD(objParent, "VALUE", 0);
 	d2 = Obj_GetValueD(objParent, "VALUE2", 0);
 	d3 = Obj_GetValueD(objParent, "VALUE_D", 0);
 
-	// Ex用
+	// Ex梡
 	let resultIndexD_Ex = 0;
 	if (IsExtraSelect)
 	{
@@ -264,17 +264,17 @@ function SceneSpellSelect(selectedDedault)
 
 	Obj_Delete(objParent);
 	
-	//選択記憶
+	//慖戰婰壇
 	SetMenuMemory("Menu_Spell_1", d1);
 	SetMenuMemory("Menu_Spell_2", d2);
 	SetMenuMemory("Menu_Spell_3", d3);
 
-	// 前半2つは次のスクリプトに渡す値、最後の3つは選択肢保存用
+	// 慜敿2偮偼師偺僗僋儕僾僩偵搉偡抣丄嵟屻偺3偮偼慖戰巿曐懚梡
 	return([resultIndex, resultIndexD,
 		d1, d2, d3, resultIndexD_Ex]);
 	
 	
-	// メニュー選択時モーション
+	// 儊僯儏乕慖戰帪儌乕僔儑儞
 	function MenuEnter(parent, ftype)
 	{
 		CallSoundPackage(sndTtDecide);
@@ -401,9 +401,9 @@ function SceneSpellSelect(selectedDedault)
 		let eff_x = base_x + add_x*index;
 		let eff_y = base_y + add_y*index;
 		
-		if (DEBUG_MODE) { /* 匿名化するー */ }
-		else if (!isVisible) { text = "（未确认的符卡） "; }
-		else if (isTyousen) { text = "＊挑战者募集中！ "; }
+		if (DEBUG_MODE) { /* 摻柤壔偡傞乕 */ }
+		else if (!isVisible) { text = "(枹妋擣偺僗儁儖僇乕僪)"; }
+		else if (isTyousen) { text = "仏挧愴幰媮傓両"; }
 		
 		let objText = SetSystemText(eff_x, eff_y, text);
 		if (isVisible) { ObjRender_SetColor(objText, 120, 120, 160); }
@@ -417,7 +417,7 @@ function SceneSpellSelect(selectedDedault)
 		if (isVisible) { ObjRender_SetColor(objTextS, 255, 255, 96); }
 		else { ObjRender_SetColor(objTextS, 96, 96, 96); }
 		
-		// 
+		// 岩不輧X儁僇柤挿偡偓傝傘偆乮挿偄僗儁僇柤懳嶔乯
 		if (ObjText_GetTotalWidth(objText) > 300)
 		{
 			let sc = 300 / ObjText_GetTotalWidth(objText);
@@ -425,7 +425,7 @@ function SceneSpellSelect(selectedDedault)
 			ObjRender_SetScaleX(objTextS, sc);
 		}
 		
-		//リザルト
+		//儕僓儖僩
 		let objNumber = [ObjPrim_Create(OBJ_PRIMITIVE_2D), ObjPrim_Create(OBJ_PRIMITIVE_2D)];
 		if (isVisible)
 		{
@@ -479,14 +479,14 @@ function SceneSpellSelect(selectedDedault)
 		let t = 0;
 		while(!Obj_IsDeleted(parent))
 		{
-			// 選択変更
+			// 慖戰曄峏
 			let selected_index = Obj_GetValueD(parent, "VALUE2", -1);
 			if (selected_index != before_index)
 			{
 				Obj_SetVisible(objTextS, (selected_index==index));
 				before_index = selected_index;
 			}
-			// メニュー位置ずらし
+			// 儊僯儏乕埵抲偢傜偟
 			let selected_index2 = Obj_GetValueD(parent, "VALUE2b", -1);
 			if (selected_index2 != before_index2)
 			{
@@ -601,14 +601,14 @@ function SceneSpellSelect(selectedDedault)
 		}
 		Obj_Delete(objText);
 	}
-	// チェック
+	// 僠僃僢僋
 	function CheckDifficulty()
 	{
 		let tmp = Obj_GetValueD(objParent, "VALUE", 0);
 		let tmp_d = Obj_GetValueD(objParent, "VALUE_D", 0);
 		let beforeExtra = Obj_GetValueD(objParent, "BEFORE_EXTRA", IsExtraSelect());
 		
-		// Extra選択で難度入れ替え
+		// Extra慖戰偱擄搙擖傟懼偊
 		if (IsExtraSelect() && !beforeExtra)
 		{
 			let tmp_d_tmp = Obj_GetValueD(objParent, "VALUE_D_tmpex", tmp_d);
@@ -628,5 +628,6 @@ function SceneSpellSelect(selectedDedault)
 		return(Obj_GetValueD(objParent, "VALUE", 0) == STAGE_EXTRA-1);
 	}
 }
+
 
 

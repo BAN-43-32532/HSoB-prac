@@ -1,18 +1,18 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["5面　ボス会話後半"]
-#Text["5面　ボス会話後半"]
+#Title["5柺丂儃僗夛榖屻敿"]
+#Text["5柺丂儃僗夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 #include "./../../../lib/lib_Stage.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -23,12 +23,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_SET);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -38,29 +38,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_SET, true);
 	let cutinPlayer1   = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -73,99 +73,99 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
-			SetTalkEx(cutinBoss1, "阿波菲斯计划竟然被破坏了……[r]改名叫阿波罗计划好了。 ");
+			SetTalkEx(cutinBoss1, "傾億僼傿僗寁夋偑攋傜傟傞偲偼乧[r]柤慜傪曄偊傾億儘寁夋偲偟傛偆");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
-			SetTalkEx(cutinPlayer1, "所以说那不是一回事啦。 ");
+			SetTalkEx(cutinPlayer1, "偩偐傜偦傟偼暿偺搝偱偡丅");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER);
-			SetTalkEx(cutinPlayer1, "而且你说什么力量，[r]你耍的花招还不够多吗。 ");
+			SetTalkEx(cutinPlayer1, "椡偲偐尵偭偰傞暼偵偪傚偭偲[r]彫嵶岺偟偡偓偱偟傚偆丅");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "赶紧解除掉时间停止！ ");
+			SetTalkEx(cutinPlayer1, "憗偔巭傑偭偨帪娫傪摦偐偟側偝偄");
 		}
 		case(4)
 		{
-			SetTalkEx(cutinBoss1, "我可没有操纵时间。 ");
+			SetTalkEx(cutinBoss1, "壌偵帪娫偼楳傟偸偧丅");
 		}
 		case(5)
 		{
-			SetTalkEx(cutinBoss1, "停止时间的，是智者托特的眷族，[r]那位鸟公。 ");
+			SetTalkEx(cutinBoss1, "帪娫傪巭傔偨偺偼丄[ruby rb=\"抦宐幰\" rt=\"丂僩丂僩\"]偺崤懏偨傞[r]偁偺[ruby rb=\"捁岞\" rt=\"偲傝偙偆\"]偱偁傞");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
-			SetTalkEx(cutinPlayer1, "又是这样，安排别人做实行犯，[r]试图分散风险。 ");
+			SetTalkEx(cutinPlayer1, "傑乕偨偦偆傗偭偰暿偺幚峴斊傪[r]梡堄偟偰儕僗僋暘嶶傪恾傞");
 		}
 		case(7)
 		{
-			SetTalkEx(cutinBoss1, "因为我听说，[r]这个国家的社会是只要失误一次就万事皆休的啊。 ");
+			SetTalkEx(cutinBoss1, "堦搙儈僗傪偡傟偽廔傢傝丄[r]偙偺崙偼偦偆偄偆幮夛偩偲暦偔丅");
 		}
 		case(8)
 		{
-			SetTalkEx(cutinBoss1, "总之我不会让你们见到鸟公的。 ");
+			SetTalkEx(cutinBoss1, "偲偵偐偔婱條傪捁岞偺尦傊偼捠偝傫丅");
 		}
 		case(9)
 		{
 			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
-			SetTalkEx3(cutinBoss1, "崩的一声！ ", -86, -86);
+			SetTalkEx3(cutinBoss1, "億僠偭偲側", -86, -86);
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
-			SetTalkEx(cutinPlayer1, "……崩的一声？ ");
+			SetTalkEx(cutinPlayer1, "乧億僠偭偲側丠");
 		}
 		case(11)
 		{
-			SetTalkEx(cutinBoss1, "发动对盗墓者的裁决（Trap Switch）！[r]禁咒塔的自爆装置！ ");
+			SetTalkEx(cutinBoss1, "[ruby rb=\"搻孈幰傊偺嵸偒\" rt=\"丂丂僩儔僢僾僗僀僢僠\"]傪敪摦両[r]嬛庺搩偺帺敋憰抲偩両");
 		}
 		case(12)
 		{
-			SetTalkEx(cutinBoss1, "你逃不掉的，[r]就在这里和我（临时的肉体）一起灭亡吧！ ");
+			SetTalkEx(cutinBoss1, "摝偑偟偼偣傫丄偍慜偼[r]壌乮偺壖弶傔偺擏懱乯偲嫟偵柵傃傞偺偩両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 		}
 		case(13)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA);
-			SetTalkEx(cutinPlayer1, "The  World! ");
+			SetTalkEx(cutinPlayer1, "[ruby rb=\"嶇栭偺悽奅\" rt=\"丂丂僓丒儚乕儖僪\"]両");
 		}
 		case(14)
 		{
 			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
 			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
-			SetTalkEx3(cutinPlayer1, "……发动不了！？ ", 108, -128);
+			SetTalkEx3(cutinPlayer1, "乧敪摦偟側偄両丠", 108, -128);
 			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
 		}
 		case(15)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
-			SetTalkEx(cutinPlayer1, "这是……时间停止返（Block Routine）！ ");
+			SetTalkEx(cutinPlayer1, "偙傟偼[ruby rb=\"帪娫掆巭曉偟\" rt=\"丂僽儘僢僋儖乕僠儞\"]両");
 			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
 
-			// 背景チェンジ！
+			// 攚宨僠僃儞僕両
 			NextStageScene();
 		}
 		others

@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["3面　会話後半"]
-#Text["3面　会話後半"]
+#Title["3柺丂夛榖屻敿"]
+#Text["3柺丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_HIKARIKO);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_HIKARIKO, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -72,60 +72,60 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "咕，你要夺走我的噪特（World）吗……[r]即便是赌上这条性命也不会让你得逞……！ ");
+			SetTalkEx(cutinBoss1, "偔偭丄巹偐傜[ruby rb=\"僒僄僘僢僞乕\" rt=\"丂丂丂偣丂偐丂偄\"]傪扗偆偲尵偆偺偐乧[r]偦傟偩偗偼偙偺柦傪搎偟偰傕乧");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SURPRISE2);
-			SetTalkEx(cutinPlayer1, "你的世界该不会就是那个小机器吧。[r]那东西随你便啦。 ");
+			SetTalkEx(cutinPlayer1, "乧傕偟偐偟偰丄婱曽偺悽奅偭偰偦偺婡夿偺帠[r]側偺偐偟傜丅偦傫側偺偼暿偵壗偱傕偄偄偺傛");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "我要你做的只不过是，[r]把我们生活的这个幻想乡的时间恢复而已。 ");
+			SetTalkEx(cutinPlayer1, "巹偨偪偺崱嫃傞尪憐嫿偺帪娫丄[r]偦傟傪尦偵栠偟偰梸偟偄偺傛");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "………… ");
+			SetTalkEx(cutinBoss1, "乧乧乧乧");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
-			SetTalkEx(cutinPlayer1, "这人怎么突然就安静了。 ");
+			SetTalkEx(cutinPlayer1, "媫偵岥悢偑尭偭偨傛偆側");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "……我和噪特（World）里的自己之间的同步（Assimilation）……时间到了…… ");
+			SetTalkEx(cutinBoss1, "乧[ruby rb=\"僒僄僘僢僞乕忋偺巹\" rt=\"丂丂丂儁丂丂儖丂丂僜丂丂僫\"]偲偺[r][ruby rb=\"丂摨壔丂\" rt=\"傾僔儈儗乕僔儑儞\"]偑乧愗傟偨偺偩乧");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "这边世界的话……稍等……[r]我去向上人提一下…… ");
+			SetTalkEx(cutinBoss1, "偙偪傜偺悽奅偵偮偄偰偼乧彮偟懸偰乧[r]忋恖偝傑偵怽偟忋偘偰傒傞偲偟傛偆乧");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "上人（Master Buddism）什么的，[r]还是赶紧净化（Purify）了为妙吧。 ");
+			SetTalkEx(cutinPlayer1, "[ruby rb=\"丂忋恖偝傑丂\" rt=\"儅僗僞乕丒僽僨傿僘儉\"]偲傗傜傪[r]偝偭偝偲[ruby rb=\" 忩壔丂\" rt=\"僺儏儕僼傽僀\"]偡傞偺偑椙偝偦偆偹");
 		}
 		others
 		{
@@ -135,13 +135,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

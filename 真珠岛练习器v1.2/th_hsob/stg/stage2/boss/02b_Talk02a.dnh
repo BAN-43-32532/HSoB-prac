@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["2面　会話後半"]
-#Text["2面　会話後半"]
+#Title["2柺丂夛榖屻敿"]
+#Text["2柺丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_CHII);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_CHII, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
 	
@@ -72,50 +72,50 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_SMILE);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "吆呜——！真不甘心吆！ ");
+			SetTalkEx(cutinBoss1, "偪偂乕偭両丂惤偵柍擮偱偪");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_SMILE);
-			SetTalkEx(cutinPlayer1, "正好我们那儿牙签用完了。[r]宴会要用，我就拿走一些了。 ");
+			SetTalkEx(cutinPlayer1, "偪傚偆偳捾梜巬偑愗傟偰偨偺傛偹丅[r]墐夛偵巊偆偟栣偭偰峴偔傢傛");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "给我等一下吆！木牙签需要1 Tsukumo Credit，[r]银牙签需要20000 Tsukumo Credit吆！ ");
+			SetTalkEx(cutinBoss1, "偪偭偲懸偮偱偪両丂栘偺捾梜巬[ruby rb=\"偼1TC丂\" rt=\"僣僋儌僋儗僕僢僩\"][r]嬧偺捾梜巬偑[ruby rb=\"擇枩TC\" rt=\"僣僋儌僋儗僕僢僩\"]偱偪側両");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
-			SetTalkEx(cutinPlayer1, "居然要钱的吗？话说TC是啥？ ");
+			SetTalkEx(cutinPlayer1, "偊偭偍嬥庢傞偺丅偰尵偆偐TC偭偰");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "小幺记住了。[r]把你们需要的东西强行卖到你们手里，[r]这样小幺的地位就能上升。 ");
+			SetTalkEx(cutinBoss1, "偪偄妎偊偨丅[r]偍慜払偺媮傔傞摴嬶傪攧傝偮偗傞丅[r]偡傞偲偪偄偺抧埵偑忋偑傞丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "这才是真正的下克上的秘诀（薄利多销）吆。 ");
+			SetTalkEx(cutinBoss1, "偙傟偧惁偄[ruby rb=\"壓崕忋偺旈實\" rt=\"丂偼 偔 傝 偨 偽 偄\"]偱偪");
 		}
 		others
 		{
@@ -125,13 +125,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

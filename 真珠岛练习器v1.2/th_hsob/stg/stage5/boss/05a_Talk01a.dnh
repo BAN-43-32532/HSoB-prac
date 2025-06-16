@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["5面　道中会話"]
-#Text["5面　道中会話"]
+#Title["5柺丂摴拞夛榖"]
+#Text["5柺丂摴拞夛榖"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_MYSTIA);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,31 +36,31 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	EnterBoss();
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_MYSTIA, true);
 	
 	let talkID = -1;
@@ -72,39 +72,39 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
 			SetBossNameEx(cutinBoss1, -28, 8, -1, 2, objEnemy);
 			
-			SetTalkEx(cutinBoss1, "真是失误！[r]响应噪特上的呼唤过来，却是个正午！ ");
+			SetTalkEx(cutinBoss1, "幚偵岆嶼偩偭偨傢両丂僒僄僘僢僞乕偺[r]屇傃偐偗偱棃偰傒偨傜恀拫娫両");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 			wait(90);
-			SetTalkEx3(cutinBoss1, "反季的酷热！ ", -80, -168);
+			SetTalkEx3(cutinBoss1, "婫愡奜傟偺墛揤壓両", -80, -168);
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 			wait(30);
-			SetTalkEx3(cutinBoss1, "啥都看不见！ ", 160, -64);
+			SetTalkEx3(cutinBoss1, "尒偊側偄両", 160, -64);
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 
 			WaitNextTimer(150);
 		}
 		case(1)
 		{
-			SetTalkEx(cutinBoss1, "总之，我终于找到你了！[r]来吧，听听我的歌声！ ");
+			SetTalkEx(cutinBoss1, "偲偄偆傢偗偱丄傛偆傗偔尒偮偗偨傢両[r]偝偁巹偺壧傪暦偗偉両");
 			WaitNextTimer(150);
 		}
 		others
@@ -115,13 +115,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

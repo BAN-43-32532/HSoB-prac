@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["6面　道中会話"]
-#Text["6面　道中会話"]
+#Title["6柺丂摴拞夛榖"]
+#Text["6柺丂摴拞夛榖"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_HOROU);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,37 +36,37 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(15);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk_T06(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-//  会話終了（ショット禁止継続）
+//  夛榖廔椆乮僔儑僢僩嬛巭宲懕乯
 function FinishTalk_T06(fadeOut)
 {
 	if (fadeOut) { FINISH_TALK = true; }
-	// 吹き出し削除
+	// 悂偒弌偟嶍彍
 	DeleteAllFukidashi();
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_DUMMY, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
 	
@@ -79,40 +79,40 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinBoss1, true);
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
-			SetTalkEx2(cutinBoss1, "魔理沙，跟我来。 ", -92, -256);
+			SetTalkEx2(cutinBoss1, "杺棟嵐丄巹偵偮偄偰棃偄", -92, -256);
 			SetFukidashiType(cutinBoss1, FUKIDASHI_THINK);
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_WORRY);
-			SetTalkEx(cutinPlayer1, "……这声音是！？ ");
+			SetTalkEx(cutinPlayer1, "乧偦偺惡偼両丠");
 		}
 		case(2)
 		{
-			SetTalkEx2(cutinBoss1, "……你变强了呢，魔理沙。 ", -92, -256);
+			SetTalkEx2(cutinBoss1, "乧嫮偔側偭偨側丄杺棟嵐", -92, -256);
 			SetFukidashiType(cutinBoss1, FUKIDASHI_THINK);
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx(cutinPlayer1, "魅魔……大人……？ ");
+			SetTalkEx(cutinPlayer1, "枺杺乧條乧丠");
 		}
 		others
 		{

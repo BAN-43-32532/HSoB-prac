@@ -63,260 +63,260 @@ function GetMusicText(musicID)
 	case(0)	//丂僞僀僩儖
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.01 幻想乡最漫长的一日");
-		Obj_SetValue(obj, "_NAME", "No.01 ???");
+		Obj_SetValue(obj, "NAME", "侓01 尪憐嫿偺堦斣挿偄擔");
+		Obj_SetValue(obj, "_NAME", "侓01 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"标题画面的主题曲。[r]
-			能让人轻易地感觉到体感时间的变化的就是音乐吧。[r]
-			睡醒的时候，熬夜的时候，还有在缓慢的曲子后面听快速的曲子。[r]
-			顺便，在感冒的时候听到的音会变低一些");
+			"僞僀僩儖夋柺偺僥乕儅偱偡丅[r]
+			懱姶帪娫偺曄壔傪庤寉偵姶偠傜傟傞偺偼壒妝偱偡傛偹丅[r]
+			怮婲偒偲偐揙栭柧偗偲偐丄抶偄嬋偺屻偵挳偔懍偄嬋偲偐丅[r]
+			偪側傒偵晽幾傪傂偔偲挳偙偊傞壒偑庒姳掅偔側傝傑偡丅");
 	}
 	case(2)	//丂1 road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.02 沉默的春景");
-		Obj_SetValue(obj, "_NAME", "No.02 ???");
+		Obj_SetValue(obj, "NAME", "侓02 捑栙偺弔宨");
+		Obj_SetValue(obj, "_NAME", "侓02 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"1面的主题曲。[r]
-			经常听到有人说无农药栽培非常难。[r]
-			我小学的时候体验过插秧，但附近的田地里用的是插秧机，[r]
-			感受到了文明的力量……");
+			"1柺偺僥乕儅偱偡丅[r]
+			柍擾栻嵧攟偭偰偲偰傕擄偟偄偲偄偆榖偼傛偔暦偒傑偡丅[r]
+			彫妛惗偺崰偵揷怉偊懱尡傪偟偨偺偱偡偑丄椬偺揷傫傏偱[r]
+			揷怉偊婡傪巊偭偰偄偰暥柧僷儚乕傪姶偠傑偟偨乧乧丅");
 	}
 	case(3)	//丂1 boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.03 Scarlet Ranran");
-		Obj_SetValue(obj, "_NAME", "No.03 ???");
+		Obj_SetValue(obj, "NAME", "侓03 僗僇乕儗僢僩儔儞儔儞");
+		Obj_SetValue(obj, "_NAME", "侓03 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"绯神乱乱的主题曲。[r]
-			之前用红色水滴的设计做出的很酷炫的衣服，[r]
-			结果让人担心说，“你肚子出血了没事吧？”[r]
-			改成黄色，又被误认为是咖喱洒在上面了。");
+			"旉恄 棎乆偺僥乕儅偱偡丅[r]
+			愄丄峠偄悈揌偺僨僓僀儞偑僆僔儍儗側暈傪拝偰偄偨傜丄[r]
+			偍暊偐傜寣偑弌偰傞偗偳戝忎晇丠偲怱攝偝傟傑偟偨丅[r]
+			墿怓偺帪偼僇儗乕偑堨傟偰偄傞偲姩堘偄偝傟傑偟偨丅");
 	}
 	case(4)	//丂2 road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.04 末法之夜降临");
-		Obj_SetValue(obj, "_NAME", "No.04 ???");
+		Obj_SetValue(obj, "NAME", "侓04 枛朄偺栭偼棃偨傟傝");
+		Obj_SetValue(obj, "_NAME", "侓04 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"2面的主题曲。[r]
-			妖怪眼里的墓地，是很快活呢还是很热闹呢，[r]
-			经常听到那种风格做得明亮又向上的曲子。[r]
-			我不太喜欢恐怖风格的，就做成这种感觉了。");
+			"2柺偺僥乕儅偱偡丅[r]
+			梔夦偵偲偭偰偺曟抧偼妝偟偄偺偐擌傗偐側偺偐丄[r]
+			柧傞偔億僕僥傿僽側懆偊曽傪偟偨嬋傪傛偔暦偒傑偡丅[r]
+			巹偼晐偄偺偼嬯庤側偺偱偙偆偄偆僀儊乕僕偱偡丅");
 	}
 	case(5)	//丂2 boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.05 欢迎前往小幺的墓地！");
-		Obj_SetValue(obj, "_NAME", "No.05 ???");
+		Obj_SetValue(obj, "NAME", "侓05 偪偄偪偄曟応傊偛彽懸両");
+		Obj_SetValue(obj, "_NAME", "侓05 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"白袴幺的主题曲。[r]
-			要用的时候偏偏手边没有的东西，这个能毫无悬念地当选第一。[r]
-			清洁小地方什么的时候也得用到。[r]
-			还有，我喜欢章鱼烧。真好吃。");
+			"敀屟 偪偄偺僥乕儅偱偡丅[r]
+			昁梫側帪偵尷偭偰庤尦偵側偄暔慖庤尃摪乆偺堦埵偱偡丅[r]
+			嵶偐偄強傪憒彍偡傞帪偵傕擖傝梡偩偭偨傝偟傑偡丅[r]
+			偁偲丄偨偙從偒偑岲偒偱偡丅偍偄偟偄偱偡丅");
 	}
 	case(6)	//丂3 road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.06 Lotus Maze");
-		Obj_SetValue(obj, "_NAME", "No.06 ???");
+		Obj_SetValue(obj, "NAME", "侓06 儘乕僞僗儊僀僘");
+		Obj_SetValue(obj, "_NAME", "侓06 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"3面的主题曲。[r]
-			以前，我说过我觉得花有些诡异，[r]
-			如果说莲花，花托实在太恐怖了。好可怕。[r]
-			做成了和那种感觉相反，神秘又有透明感的曲子。");
+			"3柺偺僥乕儅偱偡丅[r]
+			埲慜丄壴偑偪傚偭偲晄婥枴偵姶偠傞榖傪偟傑偟偨偑[r]
+			楡偵娭偟偰偼壴戯偑嫲傠偟偡偓傑偡丅晐偄偱偡丅[r]
+			偦傟偲偼棤暊偵恄旈揑偱摟柧姶偺偁傞嬋偑偱偒傑偟偨丅");
 	}
 	case(7)	//丂3 boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.07 清高的翠之灰姑娘 ");
-		Obj_SetValue(obj, "NAME_EX", "No.07 清高的翠之[ruby rb=\"灰姑娘 \" rt=\"   Cinderella\"]");
-		Obj_SetValue(obj, "_NAME", "No.07 ???");
+		Obj_SetValue(obj, "NAME", "侓07 婥崅偒悏偺奃旐昉");
+		Obj_SetValue(obj, "NAME_EX", "侓07 婥崅偒悏偺[ruby rb=\"奃旐昉\" rt=\"僔 儞 僨 儗 儔\"]");
+		Obj_SetValue(obj, "_NAME", "侓07 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"青鹭光子的主题曲。[r]
-			被选中者的资质宛如棱镜般四散分岔。[r]
-			在我的体内所沉眠的资质乃是调和与创造。[r]
-			顺应那宿命，我奏响古老的记忆，捕风编织成曲。");
+			"惵嶋 傂偐傝巕偺僥乕儅偱偡丅[r]
+			慖偽傟偟幰偺帒幙偼僾儕僘儉偺擛偔巬暘偐傟偟傑偡丅[r]
+			巹偵柊偭偰偄偨帒幙偼挷榓偱偁傝丄憂憿偱偟偨丅[r]
+			偦偺塣柦偵廬偄屆偺婰壇傪嬁偐偣晽傪朼偄偩傕偺偱偡丅");
 		Obj_SetValue(obj, "COMMENT_EX",
-			"青鹭光子的主题曲。[r]
-			光是说中二病也有各种各样的表现类型。[r]
-			我自己当时就像突然间对音乐觉醒了一样，[r]
-			为了耍帅又是买CD又是作曲的。");
+			"惵嶋 傂偐傝巕偺僥乕儅偱偡丅[r]
+			扨偵拞擇昦偲尵偭偰傕條乆側僞僀僾偑偁傝傑偡丅[r]
+			巹帺恎偼偪傚偆偳偦偺崰偵壒妝偵栚妎傔偨傒偨偄偱丄[r]
+			僇僢僐偮偗偰CD傪攦偭偨傝嬋傪嶌偭偰偄傑偟偨丅");
 	}
 	case(8)	//丂4 road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.08 苦短之森");
-		Obj_SetValue(obj, "_NAME", "No.08 ???");
+		Obj_SetValue(obj, "NAME", "侓08 儊儊儞僩偺怷");
+		Obj_SetValue(obj, "_NAME", "侓08 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"4面的主题曲。[r]
-			俗话说藏木于林，但其实用不着那么麻烦。[r]
-			放在桌子上的东西也会突然就藏起来了。[r]
-			不知不觉就自己消失了，真是不可思议。");
+			"4柺偺僥乕儅偱偡丅[r]
+			栘傪塀偡側傜怷偺拞偲尵偆傕偺偺丄偦傫側偵柺搢側[r]
+			帠傪偟側偔偲傕婘偵抲偄偨暔傕婥偑晅偗偽塀傟偰傑偡丅[r]
+			偄偮偺娫偵偐彑庤偵徚偊偰偄傑偡丅晄巚媍偱偡偹丅");
 	}
 	case(9)	//丂4 boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.09 飞翔八十亿劫 ～ Sinful Rampage");
-		Obj_SetValue(obj, "_NAME", "No.09 ???");
+		Obj_SetValue(obj, "NAME", "侓09 旘隳敧廫壄崊 乣 Sinful Rampage");
+		Obj_SetValue(obj, "_NAME", "侓09 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"紫鸾上人（德雀坊紫鸾）的主题曲。	[r]
-			现在小鸟是标配了，[r]
-			不过以前主页、博客才是主流啊。[r]
-			有时候就会踩中不回或者接龙插楼了。");
+			"巼阛忋恖乮摽悵朧 巼阛乯偺僥乕儅偱偡丅[r]
+			崱偱偙偦捁偝傫偑僗僞儞僟乕僪側僣乕儖偲側偭偰傑偡偑丄[r]
+			偐偮偰偼儂乕儉儁乕僕傗僽儘僌偑庡棳偱偟偨偹丅[r]
+			偆偭偐傝僉儕斣摜傒摝偘傗僶僩儞庴偗朰傟偟偰傑偟偨丅");
 	}
 	case(10)	//丂5 road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.10 Far-East El Dorado");
-		Obj_SetValue(obj, "_NAME", "No.10 ???");
+		Obj_SetValue(obj, "NAME", "侓10 僼傽乕僀乕僗僩僄儖僪儔僪");
+		Obj_SetValue(obj, "_NAME", "侓10 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"5面的主题曲。[r]
-			El Dorado和Zipangu同样指的是黄金乡。[r]
-			不说那个，我第一次玩的某游戏是“金”来着，[r]
-			但我不知道怎么存档，很久以来一直都是从头打起。");
+			"5柺偺僥乕儅偱偡丅[r]
+			僄儖僪儔僪偲偼僕僷儞僌偲摨條偵墿嬥嫿傪巜偟傑偡丅[r]
+			偦傟偼偦偆偲弶傔偰梀傫偩朸僎乕儉偼嬥偩偭偨偺偱偡偑丄[r]
+			僙乕僽偺巇曽偑暘偐傜偢壗搙傕偼偠傔偐傜傗偭偰傑偟偨丅");
 	}
 	case(11)	//丂5 boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.11 烈日的暴君 ～ Violent General");
-		Obj_SetValue(obj, "_NAME", "No.11 ???");
+		Obj_SetValue(obj, "NAME", "侓11 楏擔偺朶孨 乣 Violent General");
+		Obj_SetValue(obj, "_NAME", "侓11 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"赛特大将的主题曲。[r]
-			有时候就会突然特别想吃超辣的菜。不过，[r]
-			那种超出常识范围的辣实在是太辣了，所以只吃常识范围内的超辣。[r]
-			凡事都还是有个度比较好。毕竟很疼。");
+			"僙僩戝彨偺僥乕儅偱偡丅[r]
+			帪乆柍惈偵寖恏椏棟偑怘傋偨偔側傞帪偑偁傝傑偡丅[r]
+			偨偩丄忢幆奜側恏偝偼偲偰傕恏偄偺偱忢幆揑側寖恏偱丅[r]
+			壗帠傕掱乆偵偟偰偍偔偺偑偄偄偲巚偄傑偡丅捝偄偟丅");
 	}
 	case(12)	//丂6 road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.12 我乃将远方之人带回者");
-		Obj_SetValue(obj, "_NAME", "No.12 ???");
+		Obj_SetValue(obj, "NAME", "侓12 変偼墦曽偺幰傪楢傟栠偡幰");
+		Obj_SetValue(obj, "_NAME", "侓12 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"6面的主题曲。[r]
-			一开始我想加点拟声吟唱（Scat），[r]
-			但没那个音源，于是鸟生鱼汤地放弃了。[r]
-			也想过要不要自己唱，然后一秒钟就否掉了。");
+			"6柺偺僥乕儅偱偡丅[r]
+			弶傔偼僗僉儍僢僩傪擖傟傛偆偐偲巚偭偨偺偱偡偑丄[r]
+			偦傫側壒尮帩偭偰偄傑偣傫偺偱偡偒傖偭偲掹傔傑偟偨丅[r]
+			帺暘偱壧偍偆偐偲巚偄傑偟偨偑昩偱杤偵偟傑偟偨丅");
 	}
 	case(13)	//丂6 boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.13 黄金赞歌 ～ Ibis Trismegistus");
-		Obj_SetValue(obj, "_NAME", "No.13 ???");
+		Obj_SetValue(obj, "NAME", "侓13 墿嬥嶿壧 乣 傾僀價僗僩儕僗儊僊僗僩僗");
+		Obj_SetValue(obj, "_NAME", "侓13 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"鸟澄珠乌的主题曲。[r]
-			最近葱也能美味地吃下肚了，[r]
-			但以前我很讨厌鸡串中间夹的葱，总是挑出来扔掉。[r]
-			我一般吃炸鸡皮和烤鸡腿。爱吃酱烧。");
+			"捁悷 庫塆偺僥乕儅偱偡丅[r]
+			嵟嬤偼僱僊傕旤枴偟偔怘傋傜傟傞傛偆偵側偭偨偺偱偡偑丄[r]
+			埲慜偼娫偵嫴傑傞僱僊偑嬯庤偱彍偗偰怘傋偰偄傑偟偨丅[r]
+			傛偔怘傋傞偺偼旂偐儌儌偱偡丅僞儗偺曽偑岲偒偱偡丅");
 	}
 	case(16)	//丂ed
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.14 幻想乡最短暂的一夜");
-		Obj_SetValue(obj, "_NAME", "No.14 ???");
+		Obj_SetValue(obj, "NAME", "侓14 尪憐嫿偺堦斣抁偄栭");
+		Obj_SetValue(obj, "_NAME", "侓14 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"Ending的主题曲。[r]
-			对妖怪的畏惧和信仰都渐渐稀薄了，[r]
-			对他们而言夜晚或许确实是太短了吧。[r]
-			我在被死线的妖怪狂追的时候也觉得夜晚太短。");
+			"僄儞僨傿儞僌偺僥乕儅偱偡丅[r]
+			梔夦偵懳偟偰堌傟傕怣嬄傕敄偔側偭偰偒偰偄傑偡偑丄[r]
+			偦傫側斵傜偵偲偭偰偺栭偼抁偄偺偐傕抦傟傑偣傫丅[r]
+			巹傕乊愗梔夦偵捛傢傟偰傞栭偼偲偰傕抁偔姶偠傑偡丅");
 	}
 	case(17)	//丂st
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.15 响彻朝霞的鸟之歌 ");
-		Obj_SetValue(obj, "_NAME", "No.15 ???");
+		Obj_SetValue(obj, "NAME", "侓15 挬從偗偵嬁偔捁偺壧");
+		Obj_SetValue(obj, "_NAME", "侓15 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"Staff Roll的主题曲。[r]
-			使用了不止是响彻朝霞，更是能响彻宿醉的脑子的笛子的声音，[r]
-			做成了有些民族风的曲子。[r]
-			一般休息日我都听不到鸟叫，醒过来已经过中午了。");
+			"僗僞僢僼儘乕儖偺僥乕儅偱偡丅[r]
+			挬從偗偩偗偱偼側偔擇擔悓偄偺摢偵傕傛偔嬁偒偦偆側[r]
+			揓偺壒傪巊偄丄側傫偪傖偭偰柉懓晽側嬋偵偟傑偟偨丅[r]
+			媥擔偼捁偺惡傪暦偔帠偼側偔婥偑晅偗偽偍拫夁偓偱偡丅");
 	}
 	case(14)	//丂ex road
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.16 万紫千红的百鬼夜行");
-		Obj_SetValue(obj, "_NAME", "No.16 ???");
+		Obj_SetValue(obj, "NAME", "侓16 愮巼枩峠偺昐婼栭峴");
+		Obj_SetValue(obj, "_NAME", "侓16 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"Ex面的主题曲。[r]
-			虽然是同样的景色，但只是多了颜色，就很给人一种新鲜感。[r]
-			食物也一样，三色装点的三餐，外观和营养都同等重要。[r]
-			不过要是变成彩虹色那就看起来像是有毒了。我喜欢吃马卡龙。");
+			"僄僉僗僩儔僗僥乕僕偺僥乕儅偱偡丅[r]
+			摨偠宨怓偱傕怓偑晅偔偩偗偱寢峔怴慛偵姶偠傑偡偹丅[r]
+			怘帠傕嶰怓偺嵤傝偼尒偨栚偱傕塰梴揑偵傕戝愗偱偡丅[r]
+			偱傕儗僀儞儃乕偩偲撆乆偟偄偱偡偹丅儅僇儘儞偼岲偒丅");
 	}
 	case(15)	//丂ex boss
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.17 Glass-heart Chevalier");
-		Obj_SetValue(obj, "_NAME", "No.17 ???");
+		Obj_SetValue(obj, "NAME", "侓17 僌儔僗僴乕僩僔儏僶儕僄");
+		Obj_SetValue(obj, "_NAME", "侓17 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"藤壶无名异的主题曲。[r]
-			受深渊魅惑、歌颂终焉的异端者是常见的，[r]
-			但因黄昏而思考起自己的存在理由的观测者是稀有的。[r]
-			或许只是因为这种人基本都是安安静静的，不很起眼而已。");
+			"摗氣 柍柤堎偺僥乕儅偱偡丅[r]
+			怺暎偵枺偣傜傟廔鄟傪鎼偆堎抂幰偼傛偔尒偐偗傑偡偑丄[r]
+			墿崹偵懚嵼棟桼傪巚峫偡傞娤應幰偼捒偟偄婥偑偟傑偡丅[r]
+			栟傕丄婎杮揑偵惷偐側偺偱栚棫偨側偄偩偗側偺偐傕丅");
 	}
 	case(1)	//丂僾儗僀儎乕僘僗僐傾
 	{
 		// 柤慜
-		Obj_SetValue(obj, "NAME", "No.18 Player's Score");
-		Obj_SetValue(obj, "_NAME", "No.18 ???");
+		Obj_SetValue(obj, "NAME", "侓18 僾儗僀儎乕僘僗僐傾");
+		Obj_SetValue(obj, "_NAME", "侓18 ???");
 		// 嶌嬋幰
-		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		Obj_SetValue(obj, "COMP", "嶌嬋丗Wanwan");
 		// 嶌嬋幰
 		Obj_SetValue(obj, "COMMENT",
-			"游戏结束的主题曲。[r]
-			焕然一新，合着气氛新作的曲子。[r]
-			虽然听起来有些寂寞，但情绪却会更加激动。[r]
-			因为这样才更适合接着打下一盘嘛。");
+			"僎乕儉僆乕僶乕偺僥乕儅偱偡丅[r]
+			怱婡堦揮丄暤埻婥偵崌傢偣偰怴偟偔嶌偭偰傒傑偟偨丅[r]
+			椧偟偦偆偩偗偳僥儞僔儑儞偼崅傔側姶偠偵丅[r]
+			偦偺曽偑師偵宷偘偰峴偗偦偆偱椙偄偠傖側偄偱偡偐丅");
 	}
 	
 	return(obj);

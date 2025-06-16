@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["EX　会話後半"]
-#Text["EX　会話後半"]
+#Title["EX丂夛榖屻敿"]
+#Text["EX丂夛榖屻敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,12 +22,12 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
-	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//夋憸旕昞帵
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -37,29 +37,29 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
 	
@@ -72,80 +72,80 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
-			SetTalkEx(cutinPlayer1, "卡诺匹斯罐居然坏了……[r]你也是相当厉害呢。 ");
+			SetTalkEx(cutinPlayer1, "僇僲僾僗偺氣偑夡偝傟傞側傫偰乧[r]偁傫偨拞乆傗傞偠傖側偄丅");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "然而，果然世界并没有爱着我。[r]我的命，就该是背负着罪恶孤独地活下去吗。 ");
+			SetTalkEx(cutinBoss1, "偩偑丄傗偼傝悽奅偼巹傪垽偝側偐偭偨丅巹偼[r]嵾傪攚晧偄堦恖惗偒懕偗傞廻柦側偺偐");
 		}
 		case(2)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "并不是世界不爱你。[r]单纯只是你没有爱着这个世界罢了。 ");
+			SetTalkEx(cutinPlayer1, "悽奅偑偁傫偨傪垽偝側偐偭偨傫偠傖側偄丅[r]偁傫偨偑悽奅傪垽偝側偐偭偨偩偗傛");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "或许是吧。 ");
+			SetTalkEx(cutinBoss1, "偦偆側偺偐傕抦傟側偄丅");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "但是除了这种人生，我不知道其他的活法。[r]我也不知道我还能怎么做。 ");
+			SetTalkEx(cutinBoss1, "偩偑巹偼偙偺惗偒曽埲奜傪抦傜側偄丅偱偼壗[r]傪偡傟偽椙偐偭偨偐傕暘偐傜側偄丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO1);
-			SetTalkEx(cutinBoss1, "不管我重来多少次，我只能觉得，[r]自己只会重复同样的选择。 ");
+			SetTalkEx(cutinBoss1, "巹偑壗搙惗傑傟曄傢偭偰傕丄偙偺慖戰傪偟懕[r]偗傞偺偩偲巚傢偢偵偼偄傜傟側偄");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx(cutinPlayer1, "我觉得我知道你缺少的是什么。 ");
+			SetTalkEx(cutinPlayer1, "偁傫偨偵懌傝側偄暔傪偒偭偲巹偼抦偭偰傞傛");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "就算你只是随便扯淡，[r]我也只能为之叫好，不是吗。 ");
+			SetTalkEx(cutinBoss1, "椺偊岥偐傜弌傑偐偣偱傕丄[r]嫽枴怺偄偲尵傢偞傞傪摼側偄");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "想知道答案，你需要来参加神社的宴会哦。 ");
+			SetTalkEx(cutinPlayer1, "摎偊偑抦傝偨偒傖恄幮偺墐夛偵婄傪弌偡帠偹");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "虽然完全不懂是什么意思，但我知道了。 ");
+			SetTalkEx(cutinBoss1, "慡偔堄枴晄柧偱偁傞偑彸抦偼偟偨丅");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinBoss1, I_BORO2);
-			SetTalkEx(cutinBoss1, "我的任务是什么，[r]应该是负责准备盛晚餐的器皿对吧。 ");
+			SetTalkEx(cutinBoss1, "巹偺栶栚偼壗偩丄[r]栴挘傝斢巂傪惙傝晅偗傞婍偺庤攝偐");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
-			SetTalkEx(cutinPlayer1, "还有这么一手？[r]那就拜托你准备能让来宾们称赞的漂亮盘子了哦。 ");
+			SetTalkEx(cutinPlayer1, "偦偺庤偑偁偭偨偐丅[r]偛棃昽偑婌傇傛偆偵鉟楉側偺傪棅傓傢傛");
 		}
 		others
 		{

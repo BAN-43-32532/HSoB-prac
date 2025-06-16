@@ -1,17 +1,17 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["2面　会話前半"]
-#Text["2面　会話前半"]
+#Title["2柺丂夛榖慜敿"]
+#Text["2柺丂夛榖慜敿"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk.dnh"
 
-// 各ボスのオブジェクトID
+// 奺儃僗偺僆僽僕僃僋僩ID
 let MOVE_END = false;
 
 @Event {
@@ -22,11 +22,11 @@ let MOVE_END = false;
 }
 
 @Initialize {
-	Boss_Init();	//初期設定
+	Boss_Init();	//弶婜愝掕
 	
 	objEnemy  = CreateBossTalk(BOSS_ID_CHII);
 
-	ChapterReset();	//チャプターリセット
+	ChapterReset();	//僠儍僾僞乕儕僙僢僩
 
 	Task_Main();
 }
@@ -36,30 +36,30 @@ let MOVE_END = false;
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
-	// 魔法陣リセット
+	// 杺朄恮儕僙僢僩
 	BossEffect_ResetMagicCircle();
 
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 
 	wait(120);
 
-	//会話処理
+	//夛榖張棟
 	FuncTalk();
 	
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	while(!MOVE_END) { yield; }
 	Boss_Finalize(objEnemy, false, false);
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinBoss1   = CreateTalkObject(BOSS_ID_CHII, true);
 	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
 	
@@ -72,30 +72,30 @@ function FuncTalk()
 		else { talkID++; }
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(-1)
 		{
-			// 初期設定
+			// 弶婜愝掕
 			SetImageVisible(cutinBoss1, false);
 			SetImageFoward(cutinPlayer1, true);
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
 			
-			wait(15);	// 表示しきるまでウェイト
-			talk_type = 2;	// キー入力待ちしない
+			wait(15);	// 昞帵偟偒傞傑偱僂僃僀僩
+			talk_type = 2;	// 僉乕擖椡懸偪偟側偄
 		}
 		case(0)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
-			SetTalkEx(cutinPlayer1, "付丧神还真多。[r]不过正好用作飞刀的练习。 ");
+			SetTalkEx(cutinPlayer1, "悘暘偲戲嶳偺晅憆恄丅[r]搳偘僫僀僼偺楙廗偵挌搙椙偄傢偹");
 		}
 		case(1)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx2(cutinBoss1, "真过分吆！真过分吆！ ", -16, -280);
+			SetTalkEx2(cutinBoss1, "崜偄偱偪側両丂崜偄偱偪側両", -16, -280);
 		}
 		case(2)
 		{
@@ -103,62 +103,62 @@ function FuncTalk()
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
 
 			EnterBoss();
-			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
-			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			BossScene_SetNameVisible(objScene, true);	//儃僗僱乕儉昞帵忬懺
+			SetImageVisible(cutinBoss1, true);	// 儃僗夋憸弌尰僼儔僌
 			SetBossNameEx(cutinBoss1, -32, 0, -1, 0, objEnemy);
 
-			SetTalkEx(cutinBoss1, "既然这样，小幺只好要出全力吆！ ");
+			SetTalkEx(cutinBoss1, "偙偆側偭偨傜偪乕偲杮婥傪弌偡偟偐側偄偱偪両");
 		}
 		case(3)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_CALM3);
-			SetTalkEx(cutinPlayer1, "靶子变大了，瞄准倒是更容易些。 ");
+			SetTalkEx(cutinPlayer1, "揑偑戝偒偔側偭偰慱偄傗偡偔側偭偨傛偆側");
 		}
 		case(4)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "嘻嘻嘻，[r]反过来也是一样的。 ");
+			SetTalkEx(cutinBoss1, "僠僢僠僢僠僢丄[r]偦傟偼偙偪傜傕摨偠偙偲丅");
 		}
 		case(5)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "这把变大了的脆针剑，[r]人类可是挨着便要睡觉觉了吆。 ");
+			SetTalkEx(cutinBoss1, "嫄戝偵側偭偨偙偺[ruby rb=\"惼恓寱\" rt=\"偮傑傛偆偠\"]傪摉偰傟偽[r]恖娫側傫偰堦寕偹傫偹偱偪");
 		}
 		case(6)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
-			SetTalkEx(cutinPlayer1, "虽说不管是大还是小，[r]中了弹总归是会结束的。 ");
+			SetTalkEx(cutinPlayer1, "戝偒偔偰傕彫偝偔偰傕丄[r]摉偨偭偨傜偳偺傒偪廔傢傝偱偡偗偳");
 		}
 		case(7)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "命名决斗法案（符卡规则）是这样没错。 ");
+			SetTalkEx(cutinBoss1, "[ruby rb=\"柦柤寛摤朄\" rt=\"僗儁儖僇乕僪儖乕儖\"]偱偼偦偆偱偪側丅");
 		}
 		case(8)
 		{
 			ChangeTalkTexture(cutinBoss1, I_NORMAL);
-			SetTalkEx(cutinBoss1, "可是你是强敌。 ");
+			SetTalkEx(cutinBoss1, "偟偐偟偍慜偼嫮揋丅");
 		}
 		case(9)
 		{
 			ChangeTalkTexture(cutinBoss1, I_DOYA);
-			SetTalkEx(cutinBoss1, "用这个大又强的来攻击，命中的时候[r]不小心会死的概率也会提升吆。 ");
+			SetTalkEx(cutinBoss1, "偙偺戝偒偔偰嫮偄峌寕偱丄摉偨偭偨帪[r]偆偭偐傝巰傫偱偔傟傞妋棪傪忋偘偰傗傞偱偪");
 		}
 		case(10)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_NOTICE2);
-			SetTalkEx(cutinPlayer1, "哎呀。[r]那我也来用一下吧，强大的武器。 ");
+			SetTalkEx(cutinPlayer1, "偁傜傑偁丅[r]偱偼巹傕巊偄傑偟傚偆偐丄嫮偄晲婍丅");
 		}
 		case(11)
 		{
 			ChangeTalkTexture(cutinPlayer1, I_DOYA3);
-			SetTalkEx(cutinPlayer1, "剑来，银之死神——！ ");
+			SetTalkEx(cutinPlayer1, "棃偨傟丄嬧偺巰恄乗乗両");
 			SetFukidashiType(cutinPlayer1, FUKIDASHI_ANGER);
 		}
 		case(12)
 		{
 			ChangeTalkTexture(cutinBoss1, I_WORRY);
-			SetTalkEx(cutinBoss1, "这、这是，妖剑Silver Blade！？ ");
+			SetTalkEx(cutinBoss1, "偦丄偦傟偼梔寱僔儖僶乕僽儗乕僪僅両丠");
 			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
 
 			PlayMusicWithName( 5, 30, 30 );
@@ -171,13 +171,13 @@ function FuncTalk()
 	}
 }
 
-// 登場モーション
+// 搊応儌乕僔儑儞
 task EnterBoss()
 {
 	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
 	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
 
-	// 登場モーション
+	// 搊応儌乕僔儑儞
 	SetAction(objEnemy, ACT_MOVE, 600);
 	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
 	wait(90);

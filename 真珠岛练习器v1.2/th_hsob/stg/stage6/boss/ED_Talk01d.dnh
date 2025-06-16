@@ -1,13 +1,13 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["辉夜エンディング-Good"]
-#Text["辉夜エンディング-Good"]
+#Title["婸栭僄儞僨傿儞僌-Good"]
+#Text["婸栭僄儞僨傿儞僌-Good"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk_ed.dnh"
 
@@ -28,7 +28,7 @@
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
 	TBackground();
@@ -37,7 +37,7 @@ task Task_Main()
 	//  BGM
 	PlayMusic( 16, 120, 60 );
 	
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 	TalkFlame();
 	wait(120);
@@ -45,7 +45,7 @@ task Task_Main()
 	FuncTalk();
 	wait(15);
 
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	SetForbidPlayerShot(true);
 	SetForbidPlayerSpell(true);
@@ -56,7 +56,7 @@ task Task_Main()
 	CloseStgScene();
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
 	let COL0 = [160, 160, 160];
@@ -65,7 +65,7 @@ function FuncTalk()
 	let COL3 = [192, 108, 255];
 	let COL4 = [255, 108, 108];
 	
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinDescri = CreateDescriptiveObject();
 	wait(15);
 	
@@ -77,108 +77,108 @@ function FuncTalk()
 		talkID = max(0, talkID+WaitNext());
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(0)
 		{
-			SetTalkEx(cutinDescri, "辉夜[r]「……于是，就在我以为要死了的时候，我神宝中秘藏的力量全部解放，我变成了Ultimate Kaguya……」 ", COL1);
+			SetTalkEx(cutinDescri, "婸栭[r]乽乧偱丄愨懱愨柦偲巚傢傟偨偦偺帪丄巹偺恄曮偺旈傔傜傟偨椡偑慡夝曻偝傟偰傾儖僥傿儊僢僩僇僌儎偵乧乿", COL1);
 		}
 		case(1)
 		{
-			SetTalkEx(cutinDescri, "永琳[r]「啊不好意思公主，我现在正是开发新药的关键时候……」 ", COL2);
+			SetTalkEx(cutinDescri, "塱椩[r]乽偁乕偡傒傑偣傫昉條丄崱怴栻奐敪偑偄偄強偱偡偺偱乿", COL2);
 		}
 		case(2)
 		{
-			SetTalkEx(cutinDescri, "[r]史上第一次由辉夜解决的异变，似乎是八意永琳为了促进她的成长而安排的。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]巎忋弶偺婸栭偵傛傞堎曄夝寛偼丄斵彈偺惉挿傪懀偡敧堄塱椩偵傛偭偰巇慻傑傟偨傕偺偩偭偨傜偟偄丅", COL0);
 		}
 		case(3)
 		{
-			SetTalkEx(cutinDescri, "[r]虽然永琳的想法大致都实现了，但是公主夸耀武功这事久久没个完是她小小的误算。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]塱椩偺巚榝偼奣偹払惉偝傟偨偑丄昉條偺晲桬揱帺枬偑墑乆偲懕偔偺偼彮乆岆嶼偩偭偨丅", COL0);
 		}
 		case(4)
 		{
-			SetTalkEx(cutinDescri, "永琳[r]「公主，我接到报告说，就在这个时候，您还在同时向优昙华们讲解着自己的传说啊。」 ", COL2);
+			SetTalkEx(cutinDescri, "塱椩[r]乽昉條丄崱偙偺帪傕丄摨帪偵桪撥壺偨偪偵傕晲桬揱傪斺業側偝偭偰偄傞偲偺曬崘偑偁傝傑偡偑乿", COL2);
 		}
 		case(5)
 		{
-			SetTalkEx(cutinDescri, "辉夜[r]「为了能同时讲自己的传奇，我在竹林的忍者那里学会了分身术！[r]下次天狗来取材的时候要披露一下的。」 ", COL1);
+			SetTalkEx(cutinDescri, "婸栭[r]乽摨帪偵晲桬揱傪斺業偡傞堊偵丄抾椦偺擡幰偺強偱暘恎偺弍傕妎偊偨偺傛両[r]崱搙揤嬬偺庢嵽偑棃偨傜斺業偟偰偁偘傞偺乿", COL1);
 		}
 		case(6)
 		{
-			SetTalkEx(cutinDescri, "永琳[r]「唔嗯，果然要治疗现代的顽疾——死宅病，第一就要自然地唤起自发性的动机才是。」 ", COL2);
+			SetTalkEx(cutinDescri, "塱椩[r]乽偆乕傫丄傗偼傝尰戙偺擄昦丒堷偒偙傕傝偺帯椕偵偼帺敪揑儌僠儀乕僔儑儞傪偝傝偘側偔姭婲偡傞偺偑戞堦側偺偱偡偹丅乿", COL2);
 		}
 		case(7)
 		{
-			SetTalkEx(cutinDescri, "永琳[r]「之后写篇论文寄给天狗吧，然后把记者叫来。」 ", COL2);
+			SetTalkEx(cutinDescri, "塱椩[r]乽偱偼榑暥傪偟偨偨傔傞偺偱揤嬬偵婑峞偟偰婰幰傪屇傃偮偗傑偟傚偆乿", COL2);
 		}
 		case(8)
 		{
 			TEndingImage(imgEdGood[3][1], 30);
-			SetTalkEx(cutinDescri, "[r]同一时刻，永远亭房顶上。[r]是发现辉夜是身份无比高贵的公主，为了知道她的真实身份而跟踪前来的几位。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]堦曽偦偺崰丄塱墦掄偺壆崻偺忋偱偼丅[r]婸栭偑傗傫偛偲側偒恎暘偺昉孨偲尒敳偒丄惓懱傪抦傞傋偔旜峴偟偰棃偨柺乆偺巔偁傝丅", COL0);
 		}
 		case(9)
 		{
-			SetTalkEx(cutinDescri, "乱乱[r]「嘻嘻，听到了吗上人。我们也提供更好玩儿的体验的话，门徒说不定也会增多呢。」 ", [255, 108, 108]);
+			SetTalkEx(cutinDescri, "棎乆[r]乽僸僸僢丄暦偄偨偐忋恖丅変傜傕傕偭偲妝偟偄懱尡傪梌偊傟偽栧搆傕憹偊傞偐傕抦傟偸乿", [255, 108, 108]);
 		}
 		case(10)
 		{
-			SetTalkEx(cutinDescri, "光子[r]「……我很久以前……就对上人这么说过了。」 ", [108, 108, 255]);
+			SetTalkEx(cutinDescri, "傂偐傝巕[r]乽乧巹偼慜乆偐傜乧忋恖偝傑偵偼偦偆怽偟忋偘偰偍傞乿", [108, 108, 255]);
 		}
 		case(11)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「呵呵呵，好玩不好玩并非本质。」 ", COL3);
+			SetTalkEx(cutinDescri, "巼阛[r]乽傆傆傆丄妝偟偄偐妝偟偔側偄偐偼杮幙偱偼側偄偧偄丅乿", COL3);
 		}
 		case(12)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「现代年轻人所渴望的，是与他人的联系，以及通过这个所能获得的，活着的实感——人生的意义啊。」 ", COL3);
+			SetTalkEx(cutinDescri, "巼阛[r]乽尰戙偺庒幰偑梸偟偰偄傞偺偼丄懠幰偲偺宷偑傝丅偦傟偵傛偭偰摼傜傟傞丄惗偒偰偄傞偲偄偆幚姶丄惗偒傞堄枴偺幚姶偧偄丅乿", COL3);
 		}
 		case(13)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「因此只是把大家简单凑齐了一起玩的妖土真宗也能有很大人气。给河童交了一大笔钱做了这个噪特，实在是赚到。」 ", COL3);
+			SetTalkEx(cutinDescri, "巼阛[r]乽備偊偵揔摉偵廤傑偭偰妝偟偔傗偭偰傞偩偗偺梔搚恀廆偼戝恖婥丅壨摱偵戝枃偼偨偄偰僒僄僘僢僞乕傪嶌傜偣偨峛斻偁傝偧偄丅乿", COL3);
 		}
 		case(14)
 		{
 			TEndingImage(imgEdGood[3][2], 30);
-			SetTalkEx(cutinDescri, "铃仙[r]「发现危险分子！连灰都不要给他们剩下！开火！」 ", COL4);
+			SetTalkEx(cutinDescri, "楅愬[r]乽晄怰幰傪敪尒両丂奃傕巆偡側両丂寕偰乕両乿", COL4);
 		}
 		case(15)
 		{
-			SetTalkEx(cutinDescri, "幺[r]「吆呜——！[r]自然地把敝公司的牙签放到餐桌上有什么不好——！ ", [130, 130, 220]);
+			SetTalkEx(cutinDescri, "偪偄[r]乽僠傿乕僢両[r]怘戩偵偝傝偘側偔変偑幮偺偮傑傛偆偠傪揧偊偰壗偑埆偄偱偭偪偂偂偂乕両乿", [130, 130, 220]);
 		}
 		case(16)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「看吧，比起不被任何人当一回事，还是与谁有了联系、哪怕被厌恶，对人来说都更加有活着的滋味。」 ", COL3);
+			SetTalkEx(cutinDescri, "巼阛[r]乽尒偰傒偄丄扤偐傜傕憡庤偵偝傟偸傛傝傕丄傑偩扤偐偲宷偑傝寵傢傟傞曽偑丄偦偺幰偵偲偭偰惗偒傞堄枴偲側傞丅乿", COL3);
 		}
 		case(17)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「这个用佛教术语说就是『度酓牟』吧」 ", COL3);
+			SetTalkEx(cutinDescri, "巼阛[r]乽偙傟傪暓嫵梡岅偱亀偳偊傓亁偲尵偆偧偄乿", COL3);
 		}
 		case(18)
 		{
-			SetTalkEx(cutinDescri, "珠乌[r]「好厉害！不愧是上人，知道的真多！」 ", [255, 255, 108]);
+			SetTalkEx(cutinDescri, "庫塆[r]乽偡偛乕偄両丂棳愇忋恖偝傑偼暔抦傝乕両乿", [255, 255, 108]);
 		}
 		case(19)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「这样小僧的承认欲，也就是上人欲就满足了，可喜可贺可喜可贺。」 ", COL3);
+			SetTalkEx(cutinDescri, "巼阛[r]乽偙傟偵偰愘憁偺彸擣梸媮丄偡側傢偪忋恖梸媮偑枮偨偝傟栚弌搙偟栚弌搙偟偧偄乿", COL3);
 		}
 		case(20)
 		{
-			SetTalkEx(cutinDescri, "[r]「想要被承认，不想被忘记」 ", COL0);
+			SetTalkEx(cutinDescri, "[r]乽擣傔偰梸偟偄丄朰傟傜傟偨偔側偄乿", COL0);
 		}
 		case(21)
 		{
-			SetTalkEx(cutinDescri, "[r]到现在为止已经使多少人类与妖怪败退的究极难题。她们真的有一天能够寻找到答案吗。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]崱傑偱懡偔偺恖梔偑攕傟嫀偭偰峴偭偨媶嬌擄戣丅壥偨偟偰斵彈払偑摎偊偵扝傝拝偔擔偼棃傞傕偺偩傠偆偐丅", COL0);
 		}
 		case(22)
 		{
-			SetTalkEx(cutinDescri, "[r]今天，幻想乡的居民们也在为了追求存在的意义而继续着华丽的战斗。直到永远、永远。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]崱擔傕懚嵼堄媊傪媮傔丄尪憐嫿偺廧恖払偺壺楉側傞愴偄偼懕偔丅懕偔偭偨傜懕偔丅", COL0);
 		}
 		case(23)
 		{
-			SetTalkEx(cutinDescri, "[r][r][r]Ending.04　　这道题似乎比费马大定理还要费工夫 ", COL0);
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.04丂丂僼僃儖儅乕偺嵟廔掕棟傛傝帪娫偐偐傝偦偆", COL0);
 		}
 		others
 		{

@@ -1,13 +1,13 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["霊夢エンディング-Good"]
-#Text["霊夢エンディング-Good"]
+#Title["楈柌僄儞僨傿儞僌-Good"]
+#Text["楈柌僄儞僨傿儞僌-Good"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk_ed.dnh"
 
@@ -28,7 +28,7 @@
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
 	TBackground();
@@ -37,7 +37,7 @@ task Task_Main()
 	//  BGM
 	PlayMusic( 16, 120, 60 );
 	
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 	TalkFlame();
 	wait(120);
@@ -45,7 +45,7 @@ task Task_Main()
 	FuncTalk();
 	wait(15);
 
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	SetForbidPlayerShot(true);
 	SetForbidPlayerSpell(true);
@@ -56,7 +56,7 @@ task Task_Main()
 	CloseStgScene();
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
 	let COL0 = [160, 160, 160];
@@ -64,7 +64,7 @@ function FuncTalk()
 	let COL2 = [255, 255, 108];
 	let COL3 = [108, 255, 255];
 	
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinDescri = CreateDescriptiveObject();
 	wait(15);
 	
@@ -76,136 +76,136 @@ function FuncTalk()
 		talkID = max(0, talkID+WaitNext());
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(0)
 		{
-			SetTalkEx(cutinDescri, "[r]博丽神社。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]攷楉恄幮丅", COL0);
 		}
 		case(1)
 		{
-			SetTalkEx(cutinDescri, "[r]博丽神社。[r]以前曾被改装成基督教会风格的神社，这次又被沙漠之神改成了奇怪的样子。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]攷楉恄幮丅[r]埲慜偵傕僉儕僗僩嫵夛晽偵夵抸偝傟偨恄幮偼丄傑偨傕嵒敊偺恄乆偵堎條側巔偵偝傟偰偄偨丅", COL0);
 		}
 		case(2)
 		{
-			SetTalkEx(cutinDescri, "[r]「我是托特。」「我是荷鲁斯。」[r]「我是伊西斯。」「我是欧西里斯。」[r] ", COL0);
+			SetTalkEx(cutinDescri, "[r]乽僩僩偱偡乿乽儂儖僗偱偡乿[r]乽僀僔僗偱偡乿乽僆僔儕僗偱偡乿[r]", COL0);
 		}
 		case(3)
 		{
-			SetTalkEx(cutinDescri, "[r]「我是托特。」「我是荷鲁斯。」[r]「我是伊西斯。」「我是欧西里斯。」[r]「「「「这次真是给您添麻烦了！」」」」 ", COL0);
+			SetTalkEx(cutinDescri, "[r]乽僩僩偱偡乿乽儂儖僗偱偡乿[r]乽僀僔僗偱偡乿乽僆僔儕僗偱偡乿[r]乽乽乽乽偙偺偨傃偼偛柪榝傪偍偐偗偟傑偟偨乿乿乿乿", COL0);
 		}
 		case(4)
 		{
-			SetTalkEx(cutinDescri, "灵梦[r]「你们这样才是麻烦多了！」 ", COL1);
+			SetTalkEx(cutinDescri, "楈柌[r]乽偙偭偪偺曽偑傛偭傐偳柪榝乕両乿", COL1);
 		}
 		case(5)
 		{
-			SetTalkEx(cutinDescri, "[r]艰难地把神社恢复原状，将用途不明的众多赔罪品一股脑儿丢给魔理沙，终于能喘一口气儿的时候，已经过了大半天了。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]恄幮傪恏偆偠偰尦偺宍偵栠偝偣丄梡搑晄柧偺悢乆偺偍榣傃偺昳偼慡偰杺棟嵐偵暐偄壓偘丄傛偆傗偔堦懅偮偄偨崰偵偼敿擔掱宱夁偟偰偄偨丅", COL0);
 		}
 		case(6)
 		{
-			SetTalkEx(cutinDescri, "[r]放在平时应该是庆祝解决异变的酒宴自然而然开始的时间了，但她深感疲倦，根本没有兴致。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偄偮傕側傜偽夝寛廽偄偺庰墐偑帺慠偲巒傑傞崰崌偄偩偑丄旀楯崲溵偟偰偦傫側婥偼婲偒側偄丅", COL0);
 		}
 		case(7)
 		{
-			SetTalkEx(cutinDescri, "[r]而另一边，被施术者设为效果范围外的妖怪们，简直可说是「精力」这个词的化身了。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]幚嵺丄帪娫偺榗傒偵嫮堷偵懳峈偟偰偄偨帠偱丄斵彈偨偪偼捠忢偺堎曄夝寛傛傝傕懡偔偺懱椡傪徚栒偟偰偄偨丅", COL0);
 		}
 		case(8)
 		{
-			SetTalkEx(cutinDescri, "[r]而另一边，被施术者设为效果范围外的妖怪们，简直可说是「精力」这个词的化身了。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]堦曽偱丄弍幰偵傛偭偰岠壥斖埻偐傜奜偝傟偰偄偨梔夦偨偪偼尦婥偦偺傕偺偩丅", COL0);
 		}
 		case(9)
 		{
 			TEndingImage(imgEdGood[0][1], 30);
-			SetTalkEx(cutinDescri, "朱乌[r]「我带着一个（对我来说的）好消息和一个（对你们来说的）坏消息来了！幻想乡里似乎也有我的同伴！在噪特上找到了！」 ", COL3);
+			SetTalkEx(cutinDescri, "庫塆[r]乽乮巹偵偲偭偰乯椙偄抦傜偣偲乮婱曽払偵偲偭偰乯埆偄抦傜偣傪帩偭偰棃偨傢両偙偺尪憐嫿偵傕巹偺拠娫偑嫃偨偭傐偄両丂僒僄僘僢僞乕偱尒偮偐偭偨偺傛両乿", COL3);
 		}
 		case(10)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「不也挺好吗，不用去外面世界找了。我猜再找找应该还会有的。」 ", COL2);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽椙偐偭偨側丄奜偺悽奅傑偱扵偟偵峴偐側偔偰丅懡暘偩偗偳扵偣偽傕偭偲嫃傞偧乿", COL2);
 		}
 		case(11)
 		{
-			SetTalkEx(cutinDescri, "灵梦[r]「这么说来，那个坏消息莫非是——」 ", COL1);
+			SetTalkEx(cutinDescri, "楈柌[r]乽偲偄偆帠偼丄埆偄抦傜偣偭偰傑偝偐乿", COL1);
 		}
 		case(12)
 		{
-			SetTalkEx(cutinDescri, "朱乌[r]「我查清楚了，她的书是你这个暴力巫女抢走的！为了伙伴，我要提出代理决斗！」 ", COL2);
+			SetTalkEx(cutinDescri, "庫塆[r]乽偙偺巕偺杮傪朶椡涋彈偑扗偭偨帠偼挷嵏嵪傒傛両丂拠娫偺堊偵巹偑戙棟寛摤傪怽偟崬傓両乿", COL2);
 		}
 		case(13)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「小孩吵架大人就不插嘴了。灵梦，自己的屁股自己擦。」 ", COL2);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽巕嫙偺寲壾偵恊偑岥傪弌偡偺偼栰曢偩偤丅楈柌丄帺暘偺怟偼帺暘偱怈偔傫偩偤乿", COL2);
 		}
 		case(14)
 		{
-			SetTalkEx(cutinDescri, "灵梦[r]「还要扯一次那次的事情吗！」 ", COL1);
+			SetTalkEx(cutinDescri, "楈柌[r]乽傑偩偦偺僱僞堷偭挘傞偺偐偄乿", COL1);
 		}
 		case(15)
 		{
-			SetTalkEx(cutinDescri, "朱乌[r]「虽然托特之书被抢走了，但现在我有这个！」 ", COL3);
+			SetTalkEx(cutinDescri, "庫塆[r]乽僩僩偺彂偼帩偭偰偐傟偰偟傑偭偨偗偳丄崱偺巹偵偼偙傟偑偁傞両乿", COL3);
 		}
 		case(16)
 		{
-			SetTalkEx(cutinDescri, "朱乌[r]「从某处借来的恶魔召唤的魔法书（莱梅杰通）！能使用托特之书的我一定也能用的！」 ", COL3);
+			SetTalkEx(cutinDescri, "庫塆[r]乽朸強偐傜庁傝偰棃偨埆杺彚姭偺杺朄彂乮儗儊僎僩儞乯両丂僩僩偺彂傪巊偊偨巹側傜偒偭偲巊偄偙側偣傞傢両乿", COL3);
 		}
 		case(17)
 		{
-			SetTalkEx(cutinDescri, "[r]珠乌能凭借托特之书发动超乎想象的法术，是因为托特神和珠乌同属朱鹮这一种族。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]庫塆偑僩僩偺彂偱戝偦傟偨弍傪峴巊弌棃偨偺偼丄僩僩恄偲庫塆偑摨偠庨嶋偲偄偆庬懓偩偐傜偩丅", COL0);
 		}
 		case(18)
 		{
-			SetTalkEx(cutinDescri, "[r]理所当然，除此之外只是个普通的妖怪的她，并没有使用其他著名魔导书的魔力。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]摉慠丄偦傟埲奜偼偨偩偺梔夦偱偁傞斵彈偵丄偦偺懠偺挊柤側僌儕儌儚乕儖傪峴巊偡傞杺椡偼柍偄丅", COL0);
 		}
 		case(19)
 		{
-			SetTalkEx(cutinDescri, "[r]幻想乡的天空中响起了珠乌的悲鸣，接着是因为激烈的弹幕而倒塌的神社的声音、扬起的灰尘，[r]停顿了一下，这次是灵梦的悲鸣了。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]尪憐嫿偺嬻偵庫塆偺斶柭偲丄寖偟偄抏枊偵傛偭偰恄幮偑搢夡偡傞壒偲搚墝丄抶傟偰楈柌偺斶柭偑晳偭偨丅", COL0);
 		}
 		case(20)
 		{
 			TEndingImage(imgEdGood[0][2], 30);
-			SetTalkEx(cutinDescri, "魔理沙[r]「嗨呀真是危险。没办法，那个托特还是荷鲁斯什么的还是把他们叫回来吧。」 ", COL2);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽傑偭偨偔婋側偄強偩偭偨偤丅巇曽側偄丄僩僩偩偺儂儖僗偩偺傪屇傃栠偟偰棃偰傗傞偐丅乿", COL2);
 		}
 		case(21)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「而且……呵呵呵，拿到稀有道具了呢。」 ", COL2);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽偦傟偵偟偰傕乧傆傆傆丄儗傾暔傪庤偵擖傟偰偟傑偭偨偤乿", COL2);
 		}
 		case(22)
 		{
-			SetTalkEx(cutinDescri, "[r]趁着混乱飞走的魔理沙手中，是一件好不容易才抢出来的赔罪品，regalia（王权宝器）。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偳偝偔偝偵暣傟偰旘傃嫀偭偨杺棟嵐偺庤偵偼丄恏偆偠偰帩偪弌偣偨偍榣傃偺儗僈儕傾偑堦偮丅", COL0);
 		}
 		case(23)
 		{
-			SetTalkEx(cutinDescri, "[r]不管是用途还是其中的力量都完全未知，但外来的魔法道具，对好奇心旺盛的她来说是千金难买的东西。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]梡搑傗旈傔偰偄傞椡偼慡偔偺晄柧偩偑丄奜棃偺儅僕僢僋傾僀僥儉偼丄岲婏怱偺嫮偄斵彈偵偲偭偰戝嬥偵傕戙偊偑偨偄暔偩丅", COL0);
 		}
 		case(24)
 		{
-			SetTalkEx(cutinDescri, "[r]因为不管有多少钱，魔理沙的愿望「通过魔法实现不老不死」，都是常人可望而不可即的。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偳傟偩偗偍嬥傪愊傫偱傕丄杺棟嵐偺朷傓乽杺朄偵傛傞晄榁晄巰偺幚尰乿偼丄忢恖偵偼庤偑撏偐側偄偺偩偐傜丅", COL0);
 		}
 		case(25)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「还想再多看点外面世界的东西啊。飞过结界，来吧，来吧，再多来点，哦呵呵……」 ", COL2);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽傕偭偲奜偺悽奅偺暔偑尒偨偄偤丅寢奅傪旘傃墇偊偰丄偝偁傑偨棃偄丄師傕偒偭偲棃偄丄偖傆傆偩偤乧乿", COL2);
 		}
 		case(26)
 		{
-			SetTalkEx(cutinDescri, "[r]想要保护幻想乡的灵梦，与对幻想乡外面充满兴趣的魔理沙。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]尪憐嫿傪庣傠偆偲偡傞楈柌偲丄尪憐嫿偺奜偵嫽枴傪帵偡杺棟嵐丅", COL0);
 		}
 		case(27)
 		{
-			SetTalkEx(cutinDescri, "[r]虽然彼此性格正相反，但若是外面再有侵略者到来，她们一定又会默契地一起战斗吧。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]屳偄偵惓斀懳偺婥幙偺帩偪庡偱偁傞偑丄傕偟嵞傃奜棃偺怤棯幰偑棃傟偽丄傑偨傕懅偺崌偭偨愴偄傇傝傪尒偣傞偙偲偩傠偆丅", COL0);
 		}
 		case(28)
 		{
-			SetTalkEx(cutinDescri, "[r]正相反的人也能奇妙地友好共存，幻想乡便是这样一座地上的乐园。无论是昨天，今天，还是未来。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]憡斀偡傞幰傕晄巚媍偲拠椙偔嫟懚偡傞丄尪憐嫿偼偦傫側抧忋偺妝墍偱偁傞丅嶐擔傕丄崱擔傕丄偦偟偰偙傟偐傜傕丅", COL0);
 		}
 		case(29)
 		{
-			SetTalkEx(cutinDescri, "[r]不要输啊灵梦！[r]在Extra关对那些不知廉耻的妖怪们复仇吧！ ", COL0);
+			SetTalkEx(cutinDescri, "[r]晧偗傞側楈柌両[r]抪抦傜偢側梔夦払偵僄僉僗僩儔偱暅廞偣傛両", COL0);
 		}
 		case(30)
 		{
-			SetTalkEx(cutinDescri, "[r][r][r]Ending.01　　另外千年积木最后还是没拼好 ", COL0);
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.01丂丂側偍愮擭僷僘儖偼夝偗傑偣傫偱偟偨", COL0);
 		}
 		others
 		{

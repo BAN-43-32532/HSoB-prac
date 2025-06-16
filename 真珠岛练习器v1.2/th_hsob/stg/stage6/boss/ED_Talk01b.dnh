@@ -1,13 +1,13 @@
-#東方弾幕風[Single]
+#搶曽抏枊晽[Single]
 #ScriptVersion[3]
-#Title["魔理沙エンディング-Good"]
-#Text["魔理沙エンディング-Good"]
+#Title["杺棟嵐僄儞僨傿儞僌-Good"]
+#Text["杺棟嵐僄儞僨傿儞僌-Good"]
 #Background[""]
 #System["./../../../system/System.dnh"]
 
 //---------------------------------------------------------------------
 
-// 関数取り込み
+// 娭悢庢傝崬傒
 #include"./../../../lib/lib_boss.dnh"
 #include"./../../../lib/lib_talk_ed.dnh"
 
@@ -28,7 +28,7 @@
 
 }
 
-// メインタスク
+// 儊僀儞僞僗僋
 task Task_Main()
 {
 	TBackground();
@@ -37,7 +37,7 @@ task Task_Main()
 	//  BGM
 	PlayMusic( 16, 120, 60 );
 	
-	// 会話準備
+	// 夛榖弨旛
 	StartTalk();
 	TalkFlame();
 	wait(120);
@@ -45,7 +45,7 @@ task Task_Main()
 	FuncTalk();
 	wait(15);
 
-	//次のシーンへ
+	//師偺僔乕儞傊
 	FinishTalk(true);
 	SetForbidPlayerShot(true);
 	SetForbidPlayerSpell(true);
@@ -56,7 +56,7 @@ task Task_Main()
 	CloseStgScene();
 }
 
-// 会話処理
+// 夛榖張棟
 function FuncTalk()
 {
 	let COL0 = [160, 160, 160];
@@ -64,7 +64,7 @@ function FuncTalk()
 	let COL2 = [192, 108, 255];
 	let COL3 = [108, 255, 255];
 	
-	// オブジェクト作成
+	// 僆僽僕僃僋僩嶌惉
 	let cutinDescri = CreateDescriptiveObject();
 	wait(15);
 	
@@ -76,108 +76,108 @@ function FuncTalk()
 		talkID = max(0, talkID+WaitNext());
 	}
 
-	// 会話処理単発（巻き戻しも出来るように）
+	// 夛榖張棟扨敪乮姫偒栠偟傕弌棃傞傛偆偵乯
 	function FuncTalkSingle(talkID)
 	{
 		let talk_type = 1;
 		alternative(talkID)
 		case(0)
 		{
-			SetTalkEx(cutinDescri, "[r]魔法之森。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]杺朄偺怷丅", COL0);
 		}
 		case(1)
 		{
-			SetTalkEx(cutinDescri, "[r]魔法之森。[r]三分钟热度，不对，感性丰富的魔理沙，又入了新的奇怪宗教。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]杺朄偺怷丅[r]擬偟傗偡偔椻傔傗偡偄丄傕偲偄丄姶庴惈偺嫮偄杺棟嵐偼丄傑偨傕曄側廆嫵偵擖栧偟偰偄偨丅", COL0);
 		}
 		case(2)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「那么，今日的说法就到这里。大家不要忘记做作业，也就是念佛啊。」 ", COL2);
+			SetTalkEx(cutinDescri, "巼阛[r]乽偱偼丄杮擔偺愢朄偼偙偙傑偱偧偄丅奆丄廻戣偲偟偰朰傟偢擮暓傪抳偡傛偆偵丅乿", COL2);
 		}
 		case(3)
 		{
-			SetTalkEx(cutinDescri, "众鸟[r]「是——！」 ", COL0);
+			SetTalkEx(cutinDescri, "捁偨偪[r]乽偼乣乣乣偄両乿", COL0);
 		}
 		case(4)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「上人上人，小僧有问题要问。」 ", COL1);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽偼偄忋恖丄愘憁幙栤偑偁傞偧偄乿", COL1);
 		}
 		case(5)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「问吧。另外不要学我说话，da☆ze。」 ", COL2);
+			SetTalkEx(cutinDescri, "巼阛[r]乽幙栤傪嫋壜偡傞偧偄丅偁偲巹偺岥挷傪恀帡偡傞側丄偩偤丅乿", COL2);
 		}
 		case(6)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「因为您说只要念佛就能去净土，我才试着入门了，可是到底什么时候我才能超越人类呢。」 ", COL1);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽擮暓傪彞偊傟偽忩搚偵峴偗傞偲尵偆偐傜帋偟偵擖栧偟偨偺偵丄堦懱偄偮巹偼恖娫傪挻墇偡傞傫偩丅乿", COL1);
 		}
 		case(7)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「好想赶紧能成为衣服和头发永远干净整洁，身体包括腋下都飘出花香的不老不死之身啊。」 ", COL1);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽憗偔暈傕敮傕鉟楉側傑傑偱丄恎懱傕泓傕僼儘乕儔儖側崄傝偱曪傑傟偨晄榁晄巰偵側傝偨偄偤丅乿", COL1);
 		}
 		case(8)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「似乎你对念佛有什么误解。没办法，我就特别告诉人类的你吧。[r]……你难道以为，只靠念佛就能那么简单地不老不死吗？」 ", COL2);
+			SetTalkEx(cutinDescri, "巼阛[r]乽側偵傗傜擮暓傪姩堘偄抳偟偰偍傞側丅巇曽側偄丄恖娫偺偦側偨偵偼摿暿偵嫵偊偰傗傞偧偄丅[r]乧擮暓偟偨偩偗偱捈偪偵偦傫側搒崌傛偔側傞偲巚偆偨偐丠", COL2);
 		}
 		case(9)
 		{
 			TEndingImage(imgEdGood[1][1], 30);
-			SetTalkEx(cutinDescri, "魔理沙[r]「什、什么——！？」 ", COL1);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽側丄側傫偩偭偰乕両丠乿", COL1);
 		}
 		case(10)
 		{
-			SetTalkEx(cutinDescri, "[r]说到底，念佛这一宗，跟古往今来各种宗教模型一样，是关系到死后、来世的救济的。正因为知道本质，紫鸾才从未说过那样的话。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偦傕偦傕擮暓傕丄屆崱搶惣偺懡偔偺廆嫵偺儌僨儖偵楻傟偢丄巰屻丄棃悽偱偺媬嵪偵宷偑傞傕偺偩丅杮幙傪抦偭偰偄傞偐傜偙偦丄巼阛傕偦偺傛偆側尵偄曽偼偟側偄丅", COL0);
 		}
 		case(11)
 		{
-			SetTalkEx(cutinDescri, "[r]那些无非都是像魔理沙一样在现世过着辛苦生活的众生，出于某种理由擅自误解，把范围扩大化罢了。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]壗偐偲尰悽偱偺惗偒恏偝傪書偊傞杺棟嵐偺傛偆側廜惗偑丄彑庤偵姩堘偄傪偟偰榖傪戝偒偔偟偰偄傞偵夁偓側偄丅", COL0);
 		}
 		case(12)
 		{
-			SetTalkEx(cutinDescri, "[r]而这种情况对紫鸾来说比较有利，因此她并不主动更正。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偦偟偰丄偦偺曽偑栕偐傞偐傜巼阛傕姼偊偰掶惓偟側偄丅", COL0);
 		}
 		case(13)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「就算念佛，来世也未必能往生。因为不死就不知道具体怎么样啊。」 ", COL2);
+			SetTalkEx(cutinDescri, "巼阛[r]乽擮暓傪抳偟偨偲偰丄棃悽偱墲惗偱偒傞偲傕尷傜偸偧偄丅壗偟傠巰側偹偽暘偐傜偸備偊偵側丅乿", COL2);
 		}
 		case(14)
 		{
-			SetTalkEx(cutinDescri, "魔理沙[r]「你这样也算是和尚吗！你魔鬼，你恶魔，你师傅大圣人！」 ", COL1);
+			SetTalkEx(cutinDescri, "杺棟嵐[r]乽偍慜偦傟偱傕朧庡偐丅婼丄埆杺丄偍慜偺巘彔戝惞恖丅乿", COL1);
 		}
 		case(15)
 		{
-			SetTalkEx(cutinDescri, "紫鸾[r]「但是，念佛还隐藏着其他的力量。」 ", COL2);
+			SetTalkEx(cutinDescri, "巼阛[r]乽偠傖偑丄擮暓偵塀偝傟偨椡偼傑偩偁傞偲偄偆帠偧偄丅乿", COL2);
 		}
 		case(16)
 		{
-			SetTalkEx(cutinDescri, "[r]妖怪的特性。寿命远比人类长，物理方面也很强韧，但相对的精神方面就很脆弱。", COL0);
+			SetTalkEx(cutinDescri, "[r]梔夦偺摿惈丅恖娫傛傝梱偐偵挿柦偱暔棟揑偵傕婃嫮偩偑丄斀柺偱惛恄揑側晹暘偱偼庛偝傪書偊傞丅", COL0);
 		}
 		case(17)
 		{
-			SetTalkEx(cutinDescri, "[r]想要不知不觉地克服这一弱点，最佳方法便是获得一处使人信赖的心安之处。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]偙傟傪柍堄幆偺偆偪偵崕暈偡傞堊偵偼丄壗傛傝嫮椡側怱偺嫆傝強傪庤偵擖傟傞偙偲偩丅", COL0);
 		}
 		case(18)
 		{
-			SetTalkEx(cutinDescri, "[r]就算念佛没有即刻生效的效果，光是有了来世得救的约定，获得了（虚假的）安心，妖怪们就能得到活过辛苦的现实的力量。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]擮暓偵懄帪揑側岠壥偑柍偔偲傕丄棃悽偱偺媬嵪偺栺懇偲偄偆乮塕偺乯埨怱傪梌偊傞偙偲偱丄恏偄尰悽傪惗偒偰峴偔椡偲側傞丅", COL0);
 		}
 		case(19)
 		{
-			SetTalkEx(cutinDescri, "[r]紫鸾就这样，企图通过修正后变得更加简便的念佛教义，集结起怀抱不安的妖怪们。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]巼阛偼偦偆偟偰丄僇僕儏傾儖偵夵曄偟偨擮暓偺嫵偊偵傛傝丄晄埨傪書偊傞梔夦払傪揨傔傛偆偲帋傒偰偄傞偺偩丅", COL0);
 		}
 		case(20)
 		{
 			TEndingImage(imgEdGood[1][2], 30);
-			SetTalkEx(cutinDescri, "[r]得知秘密之后的魔理沙，马上就模仿着想要获得妖怪们的信仰。[r]不用说，在噪特上被当做危险人物转发扩散，落了个被众鸟到处追打的下场。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]旈枾傪暦偄偨杺棟嵐偼丄憗懍恀帡傪偟偰梔夦払偺怣嬄傪摼傛偆偲偡傞偑丄埬偺掕僒僄僘僢僞乕偱婋尟恖暔偲偟偰奼嶶偝傟丄捁偨偪偵捛偄夞偝傟傞塇栚偵側偭偨丅", COL0);
 		}
 		case(21)
 		{
-			SetTalkEx(cutinDescri, "[r]南无阿弥陀佛。古往今来，宗教家都是被迫害的角色啊。 ", COL0);
+			SetTalkEx(cutinDescri, "[r]撿柍垻栱懮暓丄屆崱搶惣丄廆嫵幰偲偼敆奞偝傟傞暔偱偁傞丅", COL0);
 		}
 		case(22)
 		{
-			SetTalkEx(cutinDescri, "[r]活下去啊魔理沙！逃走啊魔理沙！ [r]下次打穿Extra吧！ ", COL0);
+			SetTalkEx(cutinDescri, "[r]惗偒傠杺棟嵐両丂摝偘傠杺棟嵐両[r]師偼僄僉僗僩儔傪愗傝敳偗傠両", COL0);
 		}
 		case(23)
 		{
-			SetTalkEx(cutinDescri, "[r][r][r]Ending.02　　后日谈的《弹幕魔理沙》是没有的 ", COL0);
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.02丂丂屻擔択偺抏枊儅儕僲僕儍僋偼偁傝傑偣傫", COL0);
 		}
 		others
 		{
