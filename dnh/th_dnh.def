@@ -18,4 +18,4 @@ window.title = 東方真珠島 ～ Hollow Song of Birds.
 //専用のパッケージスクリプト再生時にしか指定しない方が良いです。
 screen.width=640
 
-package.script.main = th_hsob/Main.dnh
+package.script.main = prac/Main.dnh

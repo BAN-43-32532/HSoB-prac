@@ -3,13 +3,14 @@
 #Text["äÆê¨ÇŒÅ[Ç∂ÇÂÇÒ"]
 #Player["./player/hsob/HSOB_Pl01.dnh", "./player/hsob/HSOB_Pl02.dnh", "./player/hsob/HSOB_Pl03.dnh", "./player/hsob/HSOB_Pl04.dnh"]
 
-#include "./title/Opening.dnh"
+#include "../script/th_hsob/title/Opening.dnh"
 
 @Initialize
 {
-	AddArchiveFile(GetCurrentScriptDirectory() ~ "img/img.dat");
-	AddArchiveFile(GetCurrentScriptDirectory() ~ "se/se.dat");
-	AddArchiveFile(GetCurrentScriptDirectory() ~ "music/music.dat");
+	let origDir = "../script/th_hsob/";
+	AddArchiveFile(GetCurrentScriptDirectory() ~ origDir ~ "img/img.dat");
+	AddArchiveFile(GetCurrentScriptDirectory() ~ origDir ~ "se/se.dat");
+	AddArchiveFile(GetCurrentScriptDirectory() ~ origDir ~ "music/music.dat");
 	initLoad();
 }
 
