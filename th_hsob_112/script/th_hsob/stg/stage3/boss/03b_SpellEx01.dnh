@@ -1,0 +1,341 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ひかり子ラスワ"]
+#Text["ひかり子ラスワ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Hikariko.dnh"
+
+let PHASE = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 1003;
+	let SPELL_NAME = 12;
+
+	// アイテム数
+	bossDropItem = 0;
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_HIKARIKO);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"03a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NONE);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	SetEnemyVisible(objEnemy, true);
+	ObjMove_SetPosition(objEnemy, CenX, CenY-64);
+	LWMotion(objEnemy, [96, 96, 255], -6);
+	waitObj(objEnemy, 60);
+	
+	TShot_sub();
+	TMove();
+	
+	let wt = [480, 480, 420, 360][Difficult];
+	while(eAlive)
+	{
+		let tmp_wt = max(240, trunc(wt*(1+GetBossLifeRate(objEnemy))/2));
+		RingSet(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), GetAngleToPlayer(objEnemy));
+		waitObj(objEnemy, tmp_wt-120);
+		if (!eAlive) { return; }
+		CallSound(sndPower2);
+		waitObj(objEnemy, 120);
+	}
+	
+	task TMove()
+	{
+		while(eAlive)
+		{
+			let add_x = (GetPlayerX - ObjMove_GetX(objEnemy))*0.05;
+			add_x = min(0.5, max(-0.5, add_x));
+			if (absolute(add_x) < 0.1) { add_x = 0; }
+			ObjMove_SetX(objEnemy, ObjMove_GetX(objEnemy)+add_x);
+			SetAction(objEnemy, ACT_MOVE, 30);
+			waitObj(objEnemy, 1);
+		}
+	}
+	
+	task TShot_sub()
+	{
+		let muki = 1;
+
+		waitObj(objEnemy, 120);
+		while(eAlive)
+		{
+			let sx = CenX + 96*muki;
+			let sy = MinY-32;
+			let sa = atan2(GetPlayerY-(MinY-64), GetPlayerX-sx);
+			StompShot(sx, sy, sa);
+			waitObj(objEnemy, 180);
+			muki = -muki;
+		}
+	}
+}
+
+task RingSet(x, y, angle)
+{
+	let max_r = 300;
+	let way = [6, 6, 6, 6][Difficult];
+	let speed = 2;
+	let graphic = ADD_BGW_CROSS_BLUE;
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let tmp = i/way;
+		let sr = tmp*128;
+		let sx = x + sr*cos(angle);
+		let sy = y + sr*sin(angle);
+		let r = max_r*tmp;
+		RingShot(sx, sy, speed, graphic, 90, r, 150);
+		CallSound(sndShot5);
+		wait(8);
+	}
+}
+
+task RingShot(x, y, speed, graphic, delay, r, timer)
+{
+	let way = 128;
+	let ba = rand(0, 360);
+	ascent(i in 0 .. way)
+	{
+		let sa = ba + i*360/way;
+		let sx = x + r*cos(sa);
+		let sy = y + r*sin(sa);
+		RingShotSingle(sx, sy, speed, sa, graphic, delay, timer);
+	}
+}
+task RingShotSingle(x, y, speed, angle, graphic, delay, timer)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/delay, 0, graphic, 0);
+	ObjMove_AddPatternA2(obj, delay, NO_CHANGE, NO_CHANGE, -speed/timer/2.5, 0, -speed);
+	ObjShot_SetIntersectionEnable(obj, false);
+	ObjRender_SetColor(obj, 64, 128, 255);
+	
+	ascent(t in 0 .. delay)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let tmp = GetCurve_a((t+1)/delay);
+		ObjRender_SetAlpha(obj, 255*tmp);
+		if (t > delay-15)
+		{
+			let tmp = 1-(delay-t)/15;
+			ObjRender_SetColor(obj, 64+64*tmp, 128+128*tmp, 255);
+		}
+		yield;
+	}
+	ObjRender_SetColor(obj, 128, 255, 255);
+	ObjShot_SetIntersectionEnable(obj, true);
+	wait(timer);
+	ObjShot_FadeDelete(obj);
+}
+
+task StompShot(x, y, angle)
+{
+	let obj = My_CreateShotA1(x, y, 0, angle, ADD_BGW_BALL_S_SKY, 0);
+	ObjShot_SetSpellResist(obj, true);
+	THandShot(obj);
+	
+	let speed = 1;
+	let horming_max = [10, 10, 30, 30][Difficult];
+	
+	let ct = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let sa = ObjMove_GetAngle(obj);
+		let sr = 128;
+		let to_x = ObjMove_GetX(obj) + sr*cos(sa);
+		let to_y = ObjMove_GetY(obj) + sr*sin(sa);
+		SetMotion(obj, sr, 120);
+		wait(60);
+
+		if (Obj_IsDeleted(obj)) { return; }
+		let to_a = atan2(GetPlayerY-to_y, GetPlayerX-to_x);
+		let add_a = (to_a - sa)%360;
+		if (add_a > 180) { add_a -= 360; }
+		add_a = min(horming_max, max(-horming_max, add_a));
+		
+		if (ct < 5)
+			{ SetAngle(obj, sa+add_a, 60); }
+		
+		if (CheckDispINEx(ObjMove_GetX(obj), ObjMove_GetY(obj), 0))
+			{ RingShot(ObjMove_GetX(obj), ObjMove_GetY(obj), speed, sa); }
+			
+		CallSound(sndShot2);
+		wait(60);
+		ct++;
+	}
+	
+	task SetMotion(obj, r, timer)
+	{
+		let sx = ObjMove_GetX(obj);
+		let sy = ObjMove_GetY(obj);
+		let sa = ObjMove_GetAngle(obj);
+		let to_x = ObjMove_GetX(obj)+r*cos(sa);
+		let to_y = ObjMove_GetY(obj)+r*sin(sa);
+		ascent(t in 0 .. timer)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = GetCurve_ad(GetCurve_d((t+1)/timer));
+			ObjMove_SetPosition(obj, sx*(1-tmp)+to_x*tmp, sy*(1-tmp)+to_y*tmp);
+			yield;
+		}
+	}
+	task SetAngle(obj, angle, timer)
+	{
+		let base_angle = ObjMove_GetAngle(obj);
+		let to_angle = angle;
+		let add_angle = (to_angle-base_angle)%360;
+		if (add_angle > 180) { add_angle -= 360; }
+		ascent(t in 0 .. timer)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = GetCurve_ad((t+1)/timer);
+			ObjMove_SetAngle(obj, base_angle+add_angle*tmp);
+			yield;
+		}
+	}
+	
+	task THandShot(objBase)
+	{
+		let t = 0;
+		while(!Obj_IsDeleted(objBase))
+		{
+			let ba = ObjMove_GetAngle(objBase);
+			let way_angle = 50 + (sin(t*3)-0.5)*15;
+			let ss = 5 * (1 - cos(t*3)/3);
+			ascent(i in 0 .. 5)
+			{
+				let sa = ba + (i-2)*way_angle;
+				let obj = My_CreateShotA2(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					ss, sa, -ss/15, 0, ADD_BGW_CHRYSTAL_S_SKY, 0);
+				ObjShot_SetDeleteFrame(obj, 15);
+			}
+			t++;
+			yield;
+		}
+	}
+	
+	task RingShot(x, y, speed, angle)
+	{
+		let way = 48;
+		let shot_span = [999, 16, 16, 8][Difficult];
+		
+		let g1 = [ADD_BGW_FIRE_BLUE, ADD_BGW_FIRE_BLUE, ADD_BGW_FIRE_WHITE, ADD_BGW_FIRE_WHITE][Difficult];
+		let g2 = [BGW_FIRE_PURPLE, BGW_FIRE_PURPLE, BGW_FIRE_RED, BGW_FIRE_RED][Difficult];
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + i*360/way;
+			RingShotSingle(x, y, speed, sa, g1, g2, ((i+trunc(shot_span/2))%shot_span)==0);
+		}
+	}
+	
+	task RingShotSingle(x, y, speed, angle, graphic, graphic2, shot_flg)
+	{
+		let obj = My_CreateShotA2(x, y, speed, angle, -speed/90, -speed, graphic, 0);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+		if (shot_flg)
+		{
+			wait(60);
+			if (Obj_IsDeleted(obj)) { return; }
+			let ga = atan2(GetPlayerY-y, GetPlayerX-x);
+			CreateGravityShot(ObjMove_GetX(obj), ObjMove_GetY(obj), ObjMove_GetSpeed(obj), ObjMove_GetAngle(obj), graphic2, 0, speed/180, speed, ga);
+			ObjShot_FadeDelete(obj);
+		}
+		else
+		{
+			wait(90);
+			ObjShot_FadeDelete(obj);
+		}
+	}
+}
+
+// 人魂
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 500, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.8);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, baseAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		Enemy_SetPatternA2(objFamilier, 0, iniSpeed, iniAngle, 0, 2*iniMuki, iniSpeed);
+		Enemy_SetPatternA2(objFamilier, 90, NO_CHANGE, NO_CHANGE, -iniSpeed/180/2, 1*iniMuki, iniSpeed/2);
+		Enemy_SetPatternA2(objFamilier, 90+180, NO_CHANGE, NO_CHANGE,  iniSpeed/180/2, -1*iniMuki, iniSpeed);
+		Enemy_SetPatternA2(objFamilier, 90+180*2, NO_CHANGE, NO_CHANGE, 0, 0, iniSpeed);
+		TCheckDispINOut(objFamilier, 32);
+	}
+
+	task TShot()
+	{
+		waitObj(objFamilier, 30);
+
+		let speed = 2;
+		let way = 6;
+		let count = 12;
+		let wt = 30;
+		let graphic = ADD_BGW_BALL_BS_BLUE;
+		let timer = 120;
+		
+		while(CanShotBullet(objFamilier))
+		{
+			loop(5)
+			{
+				DelShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					rand(0,0.25), rand(0,360), graphic, 30, timer);
+			}
+			CallSound(sndShot5);
+			waitObj(objFamilier, wt);
+		}
+	}
+	
+	task DelShot(x, y, speed, angle, graphic, delay, timer)
+	{
+		let obj = My_CreateShotA2(x, y, speed, angle, -speed/timer, 0, graphic, delay);
+		wait(timer);
+		DeleteBulletEffect(obj);
+	}
+}

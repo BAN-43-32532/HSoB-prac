@@ -1,0 +1,177 @@
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+//　目外郭
+task SetUdjyatWings(v_obj){
+	ObjPrim_SetPrimitiveType(v_obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(v_obj, 4);
+	ObjPrim_SetVertexPosition(v_obj, 0, -128, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 1, -128, 64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 2, 128, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 3, 128, 64, 0);
+	ObjPrim_SetVertexUVT(v_obj, 0, 0, 384);
+	ObjPrim_SetVertexUVT(v_obj, 1, 0, 512);
+	ObjPrim_SetVertexUVT(v_obj, 2, 256, 384);
+	ObjPrim_SetVertexUVT(v_obj, 3, 256, 512);
+}
+
+//　目
+task SetUdjyatEyes(v_obj){
+	ObjPrim_SetPrimitiveType(v_obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(v_obj, 4);
+	ObjPrim_SetVertexPosition(v_obj, 0, -64, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 1, -64, 64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 2, 64, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 3, 64, 64, 0);
+	ObjPrim_SetVertexUVT(v_obj, 0, 256, 384);
+	ObjPrim_SetVertexUVT(v_obj, 1, 256, 512);
+	ObjPrim_SetVertexUVT(v_obj, 2, 384, 384);
+	ObjPrim_SetVertexUVT(v_obj, 3, 384, 512);
+}
+
+//　瞳
+task SetUdjyatEyesPupil(v_obj){
+	ObjPrim_SetPrimitiveType(v_obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(v_obj, 4);
+	ObjPrim_SetVertexPosition(v_obj, 0, -64, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 1, -64, 64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 2, 64, -64, 0);
+	ObjPrim_SetVertexPosition(v_obj, 3, 64, 64, 0);
+	ObjPrim_SetVertexUVT(v_obj, 0, 384, 384);
+	ObjPrim_SetVertexUVT(v_obj, 1, 384, 512);
+	ObjPrim_SetVertexUVT(v_obj, 2, 512, 384);
+	ObjPrim_SetVertexUVT(v_obj, 3, 512, 512);
+}
+
+//　飛翔体
+task SetUdjyatFlyers(v_enm, v_objParent, v_obj, v_scaleArray, v_distArray, v_angle){
+	let dAngle	= v_angle*2;
+	let move1	= 0;
+	let moveA	= 0;
+	let flt		= 8;	//　ふよふよ感
+
+	ObjPrim_SetPrimitiveType(v_obj, PRIMITIVE_TRIANGLESTRIP);
+	ObjPrim_SetVertexCount(v_obj, 4);
+	ObjPrim_SetVertexPosition(v_obj, 0, 0, -32, 0);
+	ObjPrim_SetVertexPosition(v_obj, 1, 0, 32, 0);
+	ObjPrim_SetVertexPosition(v_obj, 2, 256, -32, 0);
+	ObjPrim_SetVertexPosition(v_obj, 3, 256, 32, 0);
+	ObjPrim_SetVertexUVT(v_obj, 0, 256, 320);
+	ObjPrim_SetVertexUVT(v_obj, 1, 256, 384);
+	ObjPrim_SetVertexUVT(v_obj, 2, 512, 320);
+	ObjPrim_SetVertexUVT(v_obj, 3, 512, 384);
+	
+	//　展開
+	while( !Obj_IsDeleted(v_objParent) && move1 < 1 && Obj_GetValueD(v_enm, "E6_OPENING", 1) ){
+		let frame = GetAreaCommonData(CAREA_STAGE, "HOROU_OPT_FR", 0);
+		move1 = 1 * sin( moveA );
+		let dist = [
+			v_distArray[0] + flt * sin( dAngle + frame*2 ),
+			v_distArray[1] + flt * sin( dAngle + frame*2 ),
+		];
+		let pos = [
+			ObjRender_GetX(v_objParent) + dist[0] * cos( move1*v_angle ),
+			ObjRender_GetY(v_objParent) + dist[1] * sin( move1*v_angle ),
+		];
+		ObjRender_SetPosition(v_obj, pos[0], pos[1], 0);
+		ObjRender_SetAngleXYZ(v_obj, 0, 0, move1*v_angle);
+		ObjRender_SetScaleXYZ(v_obj, v_scaleArray[0]*2 - move1*v_scaleArray[0], move1*(0+v_scaleArray[1]*sin(dAngle+move1*360)), 0);
+		
+		moveA += 2;
+		
+		yield;
+	}
+	ObjRender_SetAngleXYZ(v_obj, 0, 0, v_angle);
+
+	moveA = 0;
+	//　待機
+	while( !Obj_IsDeleted(v_objParent) ){
+		let frame = GetAreaCommonData(CAREA_STAGE, "HOROU_OPT_FR", 0);
+		move1 = 1 * sin( moveA );
+		let dist = [
+			v_distArray[0] + flt * sin( dAngle + frame*2 ),
+			v_distArray[1] + flt * sin( dAngle + frame*2 ),
+		];
+		let pos = [
+			ObjRender_GetX(v_objParent) + dist[0] * cos( v_angle ),
+			ObjRender_GetY(v_objParent) + dist[1] * sin( v_angle ),
+		];
+		ObjRender_SetPosition(v_obj, pos[0], pos[1], 0);
+		ObjRender_SetScaleXYZ(v_obj, v_scaleArray[0], 0+v_scaleArray[1]*sin(dAngle+move1*360), 0);
+		
+		if( move1 >= 0 ){ moveA += 2; }
+		else{ moveA = 0; }
+		
+		yield;
+	}
+	Obj_Delete( v_obj );
+}
+
+//　目挙動
+task SetEyesMoving(v_objParent, v_obj, v_distArray, v_spd, v_cdrArray, v_angle){
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	let angle = 0;
+	let flag = false;
+	let cdr = rand(v_cdrArray[0], v_cdrArray[1]);
+	
+	while( !Obj_IsDeleted(v_objParent) && !Obj_IsDeleted(v_obj) ){
+		move1 = 1 * sin( moveA );
+		let pos = [
+			ObjRender_GetX(v_objParent) + move1*v_distArray[0] * cos(angle),
+			ObjRender_GetY(v_objParent) + move1*v_distArray[1] * sin(angle),
+		];
+		ObjRender_SetPosition(v_obj, pos[0], pos[1], 0);
+		if( !flag ){
+			if( move1 < 1 ){ moveA += v_spd; }
+			else{
+				if( frame > 0 && frame > cdr ){
+					frame = 0;
+					flag = true;
+					cdr = rand(v_cdrArray[0], v_cdrArray[1]);
+				}
+				frame++;
+			}
+		}
+		else{
+			if( move1 > 0 ){ moveA += v_spd; }
+			else{
+				if( frame > 0 && frame > cdr ){
+					frame = 0;
+					moveA = 0;
+					flag = false;
+					angle = rand(v_angle[0],v_angle[1]);
+					cdr = rand(v_cdrArray[0], v_cdrArray[1]);
+				}
+				frame++;
+			}
+		}
+		yield;
+	}
+}
+
+//　目瞬き
+task SetEyesBlink(v_obj, v_scaleArray, v_spd, v_cdrArray){
+	let frame = 0;
+	let move1 = 0;
+	let moveA = 0;
+	let cdr = rand(v_cdrArray[0], v_cdrArray[1]);
+	while( !Obj_IsDeleted(v_obj) ){
+		move1 = 1 * sin( moveA );
+		let scale = [
+			v_scaleArray[0]*2 - move1*v_scaleArray[0],
+			move1*v_scaleArray[1],
+		];
+		ObjRender_SetScaleXYZ(v_obj, scale[0], scale[1], 0);
+		if( move1 < 1 ){ moveA += v_spd; }
+		else{
+			if( frame > 0 && frame > cdr ){
+				frame = 0;
+				moveA = 0;
+				cdr = rand(v_cdrArray[0], v_cdrArray[1]);
+			}
+			frame++;
+		}
+		yield;
+	}
+}

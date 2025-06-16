@@ -1,0 +1,155 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　真珠島　霊撃・朱
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+// 初期設定
+function InitOrange( v_obj, v_playerNo )
+{
+	OrangeBuffPassive( v_obj, CounterDamage, v_playerNo );
+}
+
+//　グレイズ反撃等
+task OrangeBuffPassive( v_obj, v_power, v_playerNo ){
+	let stgArea = [ MinX(), MinY(), MaxX(), MaxY() ];
+	let spd = [ PlayerSpeed[v_playerNo][0], PlayerSpeed[v_playerNo][1] ];
+	let col = PlayerCollision[v_playerNo];
+	let frame = 0;
+	let bGraze = GetGraze();
+	let v_color = GetPlayerWeapon();
+	let wide_graze = 30;	// グレイズ範囲拡大（固定値）
+	let v_horming = 240;
+	if (v_playerNo == 0) { v_horming = 320; }	// 霊夢は追跡しつこい感じ
+	
+	// メインショット削除
+	NormalShotFrame = -1;
+	
+	//　グレイズ判定拡大
+	ResetPlayerCollision( [PlayerCollision[v_playerNo][0], PlayerCollision[v_playerNo][1] + wide_graze] );
+	
+	let obj = [CreatePrimitiveObject(), CreatePrimitiveObject()];
+	let color = [ [128,64,128,255], [16,64,128,255] ];
+	let grazeRange = PlayerCollision[v_playerNo][0] + PlayerCollision[v_playerNo][1] + wide_graze;
+	PlayerBombEffect( obj[0], imgPlBomb01b, [ 0, grazeRange ], 0, 0, -1, color, BLEND_SUBTRACT, false );
+	PlayerBombEffect( obj[1], imgPlBomb01a, [ 0, grazeRange ], 0, 0, -1, color, BLEND_SUBTRACT, false );
+	
+	while( !Obj_IsDeleted(v_obj) && v_color == GetPlayerWeapon() ){
+		ascent(i in 0 .. 2) { ObjRender_SetPosition( obj[i], GetPlayerX(), GetPlayerY(), 0 ); }
+		if( frame%6 == 0 && bGraze != GetGraze() )
+		{
+			bGraze = GetGraze();
+			if ( GetPlayerState() == STATE_NORMAL && IsPermitPlayerShot() )
+			{
+				GrazeCounterEffect( 90 + rand(-64,64), 64, v_power, [255,128,64], 112, v_horming );
+			}
+		}
+		frame++;
+		yield;
+	}
+	ascent(i in 0 .. 2) { Obj_Delete( obj[i] ); }
+	
+	// もとに戻す
+	ResetPlayerCollision( col );
+	NormalShotFrame = 6;
+}
+
+//　グレイズカウンターエフェクト
+task GrazeCounterEffect( v_angle, v_disD, v_power, v_rgb_array, v_alpha, v_horming ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let gp		= [ GetPlayerX(), GetPlayerY() ];
+	let path	= imgPlParticle01a;
+	let dis		= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let frame	= 0;
+	let sca		= rand( 0.1, 0.2 );
+	let spin	= rand( 0, 360 );
+	let spinp	= rand( -4, 4 );
+	let count	= 0;
+	let anime	= 0;
+	
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetColor( obj, v_rgb_array[0], v_rgb_array[1], v_rgb_array[2] );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 128, 128 );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	//　自機からの距離
+	let pl_dis	= GetObjectDistance( GetPlayerObjectID(), obj );
+	
+	while( !Obj_IsDeleted(obj) && move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetPosition( obj, gp[0] + move1*v_disD * cos(v_angle), gp[1] + move1*v_disD * sin(v_angle), 0 );
+		ObjRender_SetAngleXYZ( obj, 0, 0, spin + spinp );
+		ObjRender_SetScaleXYZ( obj, sca*2 - move1*sca, sca*2 - move1*sca, 0 );
+		ObjRender_SetAlpha( obj, move1*v_alpha );
+		ObjSprite2D_SetSourceRect( obj, 0 + anime*128, 0, 128 + anime*128, 128 );
+		
+		spin += spinp;
+		if( move1 < 1 ){ moveA += 5; }
+		if( count > 0 && count%2 == 0 ){ anime++; }
+		count++;
+		
+		yield;
+	}
+	
+	//　反撃レーザー
+	let gpos = [ ObjRender_GetX(obj), ObjRender_GetY(obj) ];
+	let enm = GetEnemyIntersectionPosition( gpos[0], gpos[1], 1 );
+	let angle = 0;
+	let las = -1;
+	
+	if (GetPlayerState() == STATE_NORMAL && IsPermitPlayerShot())
+	{
+		// 近い敵のみ追尾
+		if( length(enm) > 0 ){
+			//if (((enm[0][0]-ObjRender_GetX(obj))^2 + (enm[0][1]-ObjRender_GetY(obj))^2)^0.5 > v_horming) { angle = 270 - (GetPlayerX-gpos[0])/3; }
+			//else { angle = GetGapAngle( gpos, enm[0] ); }
+			angle = GetGapAngle( gpos, enm[0] );
+		}
+		else{
+			angle = 270 - (GetPlayerX-gpos[0])/3;
+		}
+		
+		las = CreateLaserPL( obj, angle, 4, 512, v_power, [ "LASER01", "ORANGE" ], false, false );
+		
+		// 効果音
+		ObjSound_Play( Player_SE[1] );
+	}
+	
+	//　待機
+	loop( 30 ){
+		if( Obj_IsDeleted(obj) ){ break; }
+		
+		ObjRender_SetAngleXYZ( obj, 0, 0, spin + spinp );
+		ObjRender_SetAlpha( obj, v_alpha );
+		ObjSprite2D_SetSourceRect( obj, 0 + anime*128, 0, 128 + anime*128, 128 );
+		
+		spin += spinp;
+		if( count > 0 && count%2 == 0 ){ anime++; }
+		count++;
+		
+		yield;
+	}
+	
+	//　削除
+	while( !Obj_IsDeleted(obj) && move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetAngleXYZ( obj, 0, 0, spin + spinp );
+		ObjRender_SetScaleXYZ( obj, move1*sca, move1*sca, 0 );
+		ObjSprite2D_SetSourceRect( obj, 0 + anime*128, 0, 128 + anime*128, 128 );
+		
+		spin += spinp;
+		moveA += 5;
+		if( count > 0 && count%2 == 0 ){ anime++; }
+		count++;
+		
+		yield;
+	}
+	Obj_Delete( obj );
+	Obj_Delete( las );
+}

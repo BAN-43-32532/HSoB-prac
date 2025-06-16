@@ -1,0 +1,42 @@
+// 時間停止
+task TimeStop(time)
+{
+	SetTimeStopFlag(1);
+	
+	yield;
+	// 弾を無効化
+	let tmp_obj = GetShotIdInCircleA1(CenX, CenY, 640);
+	ascent(i in 0 .. length(tmp_obj))
+	{
+		if (Obj_IsVisible(tmp_obj[i]))
+		{
+			ObjMove_SetSpeed(tmp_obj[i], 0);
+			ObjMove_SetAcceleration(tmp_obj[i], 0);
+			ObjRender_SetBlendType(tmp_obj[i], BLEND_ADD_ARGB);
+			ObjShot_SetIntersectionEnable(tmp_obj[i], false);
+		}
+	}
+
+	let before_timer = ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMERF);
+	loop(time-1)
+	{
+		// ボスタイマー停止処理
+		let now_timer = ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID, INFO_TIMERF);
+		if (before_timer < 0) { before_timer = now_timer; }
+		if (now_timer < before_timer)
+		{
+			ObjEnemyBossScene_SetSpellTimer(GetEnemyBossSceneObjectID, before_timer);
+		}
+		yield;
+	}
+	SetTimeStopFlag(0);
+	
+	// 停止した弾消去（加速度を取得出来ないので動かし直すのはめんどい）
+	ascent(i in 0 .. length(tmp_obj))
+	{
+		if (!Obj_IsDeleted(tmp_obj[i]) && Obj_IsVisible(tmp_obj[i]))
+		{
+			Obj_Delete(tmp_obj[i]);
+		}
+	}
+}

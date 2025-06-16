@@ -1,0 +1,194 @@
+
+//----------------------------------------------------
+//リザルト読み込み
+//引数  : sIndex->スペカのindex(文字列)  isPractice->プラクティスモード中か?
+//返り値: 要素数5の配列（[0]:総数 [1]:取得数 [2]:プラクティス総数 [3]:プラクティス取得数 [4]:プラクティス解禁フラグ）
+//----------------------------------------------------
+function LoadResult(sIndex)
+{
+	if (sIndex == "") { return ([0, 0, 0, 0, 0]); }	//リザルト保存対象外
+	
+	//読み込む
+	if (!IsCommonDataAreaExists(CAREA_RESULT))
+			{ LoadCommonDataAreaA2(CAREA_RESULT, saveCommonRESULT); }
+
+	let result_all = 0;
+	let result_success = 0;
+	let result_all_prac = 0;
+	let result_success_prac = 0;
+	let result_flag = 0;
+
+	let tmp = GetAreaCommonData(CAREA_RESULT, sIndex, []);
+	if (length(tmp) > 0) { result_all = tmp[0]; }
+	if (length(tmp) > 1) { result_success = tmp[1]; }
+	if (length(tmp) > 2) { result_all_prac = tmp[2]; }
+	if (length(tmp) > 3) { result_success_prac = tmp[3]; }
+	if (length(tmp) > 4) { result_flag = tmp[4]; }
+
+	//あとしまつ
+//	ClearAreaCommonData(CAREA_RESULT);
+	
+	return ([result_all, result_success, result_all_prac, result_success_prac, result_flag]);
+}
+//ステージ用
+//返り値: 要素数2の配列（[0]:総数 [1]:取得数）
+function LoadResultStage(sIndex, isPractice)
+{
+	//ロード
+	let result_all = 0;
+	let result_success = 0;
+	if (!IsReplay())
+	{
+		//読み込む
+		if (!IsCommonDataAreaExists(CAREA_RESULT))
+				{ LoadCommonDataAreaA2(CAREA_RESULT, saveCommonRESULT); }
+		let tmp = GetAreaCommonData(CAREA_RESULT, sIndex, []);
+		if (isPractice)
+		{
+			if (length(tmp) > 2) { result_all = tmp[2]; }
+			if (length(tmp) > 3) { result_success = tmp[3]; }
+		}
+		else
+		{
+			if (length(tmp) > 0) { result_all = tmp[0]; }
+			if (length(tmp) > 1) { result_success = tmp[1]; }
+		}
+		//プレイ時の値をコモンデータに保存
+		SetAreaCommonData(CAREA_REPLAY, "S_" ~ sIndex, [result_all, result_success]);
+	}
+	else
+	{
+		//プレイ時の値を読み込む
+		let tmp = GetAreaCommonData(CAREA_REPLAY, "S_" ~ sIndex, []);
+		if (length(tmp) > 0) { result_all = tmp[0]; }
+		if (length(tmp) > 1) { result_success = tmp[1]; }
+	}
+
+	return ([result_all, result_success]);
+}
+
+//----------------------------------------------------
+//リザルト加算
+//----------------------------------------------------
+function AddResult(sIndex, isPractice, addAll, addSuccess)
+{
+	_AddResult(sIndex, isPractice, addAll, addSuccess);
+	
+	// プレイ難度以下のスペプラ解禁
+	let sDi = GetSpellCardIndex_Difficult(sIndex);
+	let sId = GetSpellCardIndex_ID(sIndex);
+	if (sDi < D_EXTRA)
+	{
+		ascent(i in 0 .. sDi)
+		{
+			AddResult(GetSpellCardIndex(GetSpellCardIDEx(sId, i)), false, 0, 0);
+		}
+	}
+}
+function _AddResult(sIndex, isPractice, addAll, addSuccess)
+{
+	if (IsReplay()) { return (false); }	//リプレイ中！
+	else if (sIndex == "") { return (false); }	//リザルト保存対象外
+	
+	//読み込む
+	if (!IsCommonDataAreaExists(CAREA_RESULT))
+	{
+		LoadCommonDataAreaA2(CAREA_RESULT, saveCommonRESULT);
+		if (!IsCommonDataAreaExists(CAREA_RESULT)) { CreateCommonDataArea(CAREA_RESULT); }
+	}
+	let result_all = 0;
+	let result_success = 0;
+	let result_all_prac = 0;
+	let result_success_prac = 0;
+	let result_flag = 0;
+
+	let tmp = GetAreaCommonData(CAREA_RESULT, sIndex, []);
+	// [0]:総数 [1]:取得数 [2]:プラクティス総数 [3]:プラクティス取得数 [4]:プラクティス解禁フラグ
+	if (length(tmp) > 0) { result_all = tmp[0]; }
+	if (length(tmp) > 1) { result_success = tmp[1]; }
+	if (length(tmp) > 2) { result_all_prac = tmp[2]; }
+	if (length(tmp) > 3) { result_success_prac = tmp[3]; }
+	if (length(tmp) > 4) { result_flag = tmp[4]; }
+
+	//加算
+	if (addAll)
+	{
+		if (!isPractice) { result_all++; }
+		else { result_all_prac++; }
+	}
+	if (addSuccess)
+	{
+		if (!isPractice) { result_success++; }
+		else { result_success_prac++; }
+	}
+	//攻略済みならフラグをONに
+	result_flag = 1;
+	if (addSuccess > 0)
+	{
+		// 取得成功したらOverDriveフラグオン
+		if (GetSpellCardIndex_Difficult(sIndex) == D_HARD ||
+			GetSpellCardIndex_Difficult(sIndex) == D_LUNA)
+		{
+			_AddResult( GetSpellCardIndex( GetSpellCardIDEx(GetSpellCardIndex_ID(sIndex), D_DRIVE) ),
+				false, 0, 0);
+		}
+	}
+	//メニューのスペプラフラグをONに
+	CDM_SetSpellPracticeFlag();
+	
+	//コモンデータに保存
+	let tmp_save = [result_all, result_success, result_all_prac, result_success_prac, result_flag];
+	SetAreaCommonData(CAREA_RESULT, sIndex, tmp_save);
+	//ファイルに保存
+	let save_success = SaveCommonDataAreaA2(CAREA_RESULT, saveCommonRESULT);
+	//あとしまつ
+//	ClearAreaCommonData(CAREA_RESULT);
+	return (save_success);
+}
+
+//----------------------------------------------------
+//リザルトリセット
+//----------------------------------------------------
+function ResetAllResult()
+{
+	if (IsReplay) { return(-1); }	//リプレイ中！
+
+	//おーるでりーと
+	if (IsCommonDataAreaExists(CAREA_RESULT)) { ClearAreaCommonData(CAREA_RESULT); }
+	CreateCommonDataArea(CAREA_RESULT);
+	
+	//ファイルに保存
+	let save_success = SaveCommonDataAreaA2(CAREA_RESULT, saveCommonRESULT);
+	//あとしまつ
+//	ClearAreaCommonData(CAREA_RESULT);
+	
+	return(1);
+}
+
+//スペカindexを返す
+function GetSpellCardIndex(spell_index)
+{
+	if (spell_index <= 0) { return(""); }
+	else { return (vtos("03d", spell_index)); }
+}
+
+// 再分解
+function GetSpellCardIndex_Difficult(spell_index)
+{
+	return(atoi(spell_index)%10);
+}
+function GetSpellCardIndex_ID(spell_index)
+{
+	return(trunc(atoi(spell_index)/10));
+}
+// スペカIDを計算
+function GetSpellCardID(id)
+{
+	if (Difficult() == D_EXTRA) { return(GetSpellCardIDEx( id, DifficultEx() )); }
+	else { return(GetSpellCardIDEx( id, Difficult() )); }
+}
+function GetSpellCardIDEx(id, tmpDifficult)
+{
+	// 周回でスペカ記録共通にする
+	return( id*10 + tmpDifficult );
+}

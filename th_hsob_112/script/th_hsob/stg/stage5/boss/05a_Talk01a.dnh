@@ -1,0 +1,129 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　道中会話"]
+#Text["5面　道中会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MYSTIA);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	EnterBoss();
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MYSTIA, true);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNextTimer(1)); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinBoss1, true);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetBossNameEx(cutinBoss1, -28, 8, -1, 2, objEnemy);
+			
+			SetTalkEx(cutinBoss1, "実に誤算だったわ！　サエズッターの[r]呼びかけで来てみたら真昼間！");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+			wait(90);
+			SetTalkEx3(cutinBoss1, "季節外れの炎天下！", -80, -168);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+			wait(30);
+			SetTalkEx3(cutinBoss1, "見えない！", 160, -64);
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);
+
+			WaitNextTimer(150);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinBoss1, "というわけで、ようやく見つけたわ！[r]さあ私の歌を聞けぇ！");
+			WaitNextTimer(150);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

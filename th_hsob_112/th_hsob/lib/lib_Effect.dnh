@@ -1,7 +1,0 @@
-#include "./effect/lib_EffectLib.dnh"
-#include "./effect/lib_ZakoEffect.dnh"
-#include "./effect/lib_Con.dnh"
-#include "./effect/lib_Spark.dnh"
-#include "./effect/lib_DistortionField.dnh"
-#include "./effect/lib_Dissolve.dnh"
-#include "./effect/lib_Paint.dnh"

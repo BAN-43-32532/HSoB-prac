@@ -1,0 +1,169 @@
+//----------------------------------------------------
+//　歪みエフェクト
+//----------------------------------------------------
+//　歪みシェーダ
+task TShaderDistortion(){
+
+	if (IsDrawEffect() < 2) { return; }
+
+	//　出現まで待機
+	let objEnm = GetEnemyBossObjectID();
+	while( length(objEnm) <= 0 ){
+		objEnm = GetEnemyBossObjectID();
+		yield;
+	}
+	
+	//　事前準備
+	let RT = "RT_DistortionTexture";
+	CreateRenderTarget( RT );
+	RenderToTextureA1( RT, 20, 29, true );
+	
+	//　反映用2Dスプライトの用意
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjRender_SetPosition( obj, 320, 240, 0 );
+	ObjPrim_SetTexture( obj, RT );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjPrim_SetPrimitiveType( obj, PRIMITIVE_TRIANGLESTRIP );
+	ObjPrim_SetVertexCount( obj, 4 );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 640, 480 );
+	ObjSprite2D_SetDestCenter( obj );
+	Obj_SetRenderPriorityI( obj, 30 );
+	
+	//　シェーダ反映
+	let objShader	= ObjShader_Create();
+	ObjShader_SetShaderF( objShader, hlslDist );
+	ObjShader_SetTechnique( objShader, "tcDistortion" );
+	ObjShader_SetShaderO( obj, objShader );
+	
+	let frame	= 0;
+	let count	= 0;
+	let seed	= 0;
+	let pos		= [ 0, 0 ];
+	let move1	= 0;
+	let moveA	= 0;
+	while( !Obj_IsDeleted(objEnm[0]) ){
+		RenderToTextureA1( RT, 20, 29, true );
+		
+		pos = [ ObjMove_GetX(objEnm[0]), ObjMove_GetY(objEnm[0]) ];
+		
+		if( count > 1 ){
+			count = 0;
+			seed++;
+		}
+		move1 = 1 * sin( moveA );
+		
+		ObjShader_SetTexture( objShader, "g_Texture", RT );
+		ObjShader_SetFloat( objShader, "m_frame", frame );
+		ObjShader_SetFloat( objShader, "m_count", count );
+		ObjShader_SetFloat( objShader, "m_seed", seed );
+		ObjShader_SetFloat( objShader, "m_alpha", move1 );
+		ObjShader_SetFloat( objShader, "m_x", pos[0] );
+		ObjShader_SetFloat( objShader, "m_y", pos[1] );
+		
+		frame++;
+		count += 0.02;
+		if( move1 < 1 ){ moveA += 2; }
+		
+		yield;
+	}
+	while( move1 > 0 ){
+		RenderToTextureA1( RT, 20, 29, true );
+		
+		if( count > 1 ){
+			count = 0;
+			seed++;
+		}
+		move1 = 1 * sin( moveA );
+		
+		ObjShader_SetTexture( objShader, "g_Texture", RT );
+		ObjShader_SetFloat( objShader, "m_frame", frame );
+		ObjShader_SetFloat( objShader, "m_count", count );
+		ObjShader_SetFloat( objShader, "m_seed", seed );
+		ObjShader_SetFloat( objShader, "m_alpha", move1 );
+		
+		frame++;
+		count += 0.02;
+		moveA += 2;
+		
+		yield;
+	}
+	Obj_Delete( obj );
+	Obj_Delete( objShader );
+}
+
+
+
+
+/*　一時
+//　ポストエフェクト
+task TShaderMain(){
+	if(!GetAreaCommonData("OptionArea", "POST_EFFECT", false)){return;}
+	//　事前準備
+	let RT_Effect = "RT_EffectTexture";
+	let RT_Bullet = "RT_BulletTexture";
+	CreateRenderTarget( RT_Effect );
+	CreateRenderTarget( RT_Bullet );
+	RenderToTextureA1( RT_Effect, 30, 39, true );
+	RenderToTextureA1( RT_Bullet, 50, 59, true );
+	
+	//　反映用2Dスプライトの用意
+	let obj = [ ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D) ];
+	ascent( let i in 0..length(obj) ){
+		ObjPrim_SetTexture( obj[i], RT_Bullet );
+		ObjRender_SetBlendType( obj[i], BLEND_ADD_ARGB );
+		ObjPrim_SetPrimitiveType( obj[i], PRIMITIVE_TRIANGLESTRIP );
+		ObjPrim_SetVertexCount( obj[i], 4 );
+		ObjSprite2D_SetSourceRect( obj[i], 0, 0, 640, 480 );
+		ObjSprite2D_SetDestRect( obj[i], 0, 0, 640, 480 );
+	}
+	Obj_SetRenderPriorityI( obj[0], 39 );
+	Obj_SetRenderPriorityI( obj[1], 59 );
+	
+	//　シェーダ反映
+	let shdpath		= GetCurrentScriptDirectory() ~ "./../fx/HLSL_SoftBlur.fx";
+	let objShader	= [ ObjShader_Create(), ObjShader_Create() ];
+	//　0:エフェクトブラー
+	ObjShader_SetShaderF( objShader[0], shdpath );
+	ObjShader_SetTechnique( objShader[0], "tcSoftBlur" );
+	ObjShader_SetShaderO( obj[0], objShader[0] );
+	//　1:弾幕ブラー
+	ObjShader_SetShaderF( objShader[1], shdpath );
+	ObjShader_SetTechnique( objShader[1], "tcSoftBlur" );
+	ObjShader_SetShaderO( obj[1], objShader[1] );
+	
+	let frame		= 0;
+	let count		= 0;
+	let seed		= 0;
+	loop{
+		RenderToTextureA1( RT_Effect, 30, 39, true );
+		RenderToTextureA1( RT_Bullet, 50, 59, true );
+		
+		if( count > 1 ){
+			count = 0;
+			seed++;
+		}
+		
+		ObjShader_SetTexture( objShader[0], "g_Texture", RT_Effect );
+		ObjShader_SetTexture( objShader[1], "g_Texture", RT_Bullet );
+		ascent( i in 0..length(objShader) ){
+			ObjShader_SetFloat( objShader[i], "m_seed", seed );
+			ObjShader_SetFloat( objShader[i], "m_frame", frame );
+			ObjShader_SetFloat( objShader[i], "m_count", count );
+			ObjShader_SetFloat( objShader[i], "m_alpha", 1 );
+		}
+		ObjShader_SetFloat( objShader[0], "m_param", 0.015 );
+		ObjShader_SetFloat( objShader[1], "m_param", 0.0125 );
+		
+		frame++;
+		count += 0.01;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+	ascent( i in 0..length(objShader) ){
+		Obj_Delete( objShader[i] );
+	}
+}
+*/

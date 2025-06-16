@@ -1,0 +1,520 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["みすねべラスワ"]
+#Text["みすねべラスワ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+
+let objEnemy2;
+let ENEMY_ANGLE = 90;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 1005;
+	let SPELL_NAME = 3;
+
+	// アイテム数
+	bossDropItem = 0;
+	
+	//初期設定
+	Boss_Init();
+
+	objEnemy2 = CreateBossEx(BOSS_ID_NEBET);	//ボスセット
+	objEnemy = CreateBoss(BOSS_ID_MYSTIA);	//ボスセット
+//	SetBossIntersection(objEnemy2, 0, 0);
+
+	// 当たり判定共有
+//	TIntersectionEx(objEnemy, objEnemy2);
+	BossLifeLink(objEnemy2, objEnemy);
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.75, CUTMOTION_NONE);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+// ラスワ用ウェイト
+function waitObjEx1(n)
+{
+	loop(n)
+	{
+		while(IsTimeStopObj(objEnemy) || IsTimeStopObj(objEnemy2)) { yield; }
+		yield;
+	}
+}
+
+// メインタスク
+task Task_Main
+{
+	SetEnemyVisible(objEnemy2, true);
+	SetEnemyVisible(objEnemy, true);
+	SetBossPosition(90);
+	LWMotion(objEnemy2, [132, 108, 32], 0);
+	LWMotion(objEnemy, [128, 72, 128], -8);
+	
+	TMove();
+	
+	let pat = rand_int(0, 1);
+	while(eAlive)
+	{
+		let ct = [5, 3, 1, 1, 1];
+		ascent(i in 0 .. length(ct)*2)
+		{
+			if (!eAlive) { return; }
+			let tmp_ct = ct[trunc(i/2)];
+			if ((pat+i)%2 == 0)
+			{
+				ShotA(tmp_ct);
+			}
+			else
+			{
+				ShotB(tmp_ct);
+			}
+			if (tmp_ct > 1) { waitObjEx1(60); }
+		}
+		SetEnemyVisible(objEnemy, true);
+		SetEnemyVisible(objEnemy2, true);
+		waitObjEx1(180);
+	}
+	
+	function ShotA(count)
+	{
+		let objBoss = objEnemy;
+		let muki = rand_dir();
+		let bird_way = [6, 8, 8, 8][Difficult];
+		let bird_wt = [120, 120, 90, 90][Difficult];
+		
+		BossCharge(objBoss);
+		SetAction(objBoss, ACT_SHOT2, 120+bird_wt*count);
+		waitObj(objBoss, 120);
+		if (!eAlive) { return; }
+		SetEnemyVisible(objEnemy, true);
+		SetEnemyVisible(objEnemy2, false);
+		ascent(i in 0 .. count)
+		{
+			if (!eAlive) { return; }
+			BirdWay(bird_way);
+			_ShotA(bird_wt, muki);
+			if (i < count-1) { waitObj(objBoss, bird_wt); }
+			muki = -muki;
+		}
+		
+		task _ShotA(timer, muki)
+		{
+			let speed = [3, 4, 4.5, 5][Difficult];
+			let way = [3, 4, 3, 3][Difficult];
+			let way2 = [3, 3, 3, 3][Difficult];
+			let wt = [15, 10, 7, 5][Difficult];
+			let graphic = BGW_NOTE_GREEN;
+			let offset_angle = 90;
+
+			let base_angle = 0;
+			local
+			{
+				// 初期角度は自機狙い
+				let sx = ObjMove_GetX(objBoss);
+				let sy = ObjMove_GetY(objBoss);
+				let to_angle = ENEMY_ANGLE+offset_angle;
+				let opos = Rotate2D_XY(GetPlayerX-sx, GetPlayerY-sy, -to_angle);
+				base_angle = atan2(opos[1], opos[0]*2);
+			}
+			
+			let t = 0;
+			let st = 0;
+			while(eAlive && t < timer)
+			{
+				let sx = ObjMove_GetX(objBoss);
+				let sy = ObjMove_GetY(objBoss);
+				let ss = speed;
+				let rotate_angle = ENEMY_ANGLE+offset_angle;
+				ascent(i in 0 .. way2)
+				{
+					let sa = base_angle + st*70/way*muki + (i-(way2-1)/2)*2;
+					CreateEllipseShot(sx, sy, ss, rotate_angle, graphic, 5, way, sa, 0.5);
+				}
+				CallSound(sndShot5);
+				t += wt;
+				st++;
+				waitObj(objBoss, wt);
+			}
+		}
+	}
+	task BirdWay(way)
+	{
+		let timer = 180;
+		let oi = rand(0, 1);
+		ascent(i in 0 .. way)
+		{
+			SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 1, -90, (i+oi)/way, timer);
+		}
+	}
+
+	
+	function ShotB(count)
+	{
+		let objBoss = objEnemy2;
+		let muki = rand_dir();
+		let bird_way = [4, 5, 5, 5][Difficult];
+		let bird_wt = [120, 120, 90, 90][Difficult];
+		let bird_wt2 = bird_wt;
+		
+		BossCharge(objBoss);
+		SetAction(objBoss, ACT_SHOT1, 120+bird_wt*count);
+		waitObj(objBoss, 120);
+		if (!eAlive) { return; }
+		SetEnemyVisible(objEnemy2, true);
+		SetEnemyVisible(objEnemy, false);
+		ascent(i in 0 .. count)
+		{
+			if (!eAlive) { return; }
+			_ShotA(1, muki);
+			_ShotA2(bird_way, bird_wt2, bird_wt);
+			if (i < count-1) { waitObj(objBoss, bird_wt); }
+			muki = -muki;
+		}
+		
+		task _ShotA(timer, muki)
+		{
+			let speed = [3, 4, 4.5, 5][Difficult];
+			let way = [12, 10, 10, 10][Difficult];
+			let way2 = [5, 5, 5, 5][Difficult];
+			let way3 = [1, 2, 2, 2][Difficult];
+			let wt = 10;
+			let graphic = BGW_NOTE_SKY;
+			let offset_angle = -90;
+
+			let base_angle = 0;
+			local
+			{
+				// 初期角度は自機狙い
+				let sx = ObjMove_GetX(objBoss);
+				let sy = ObjMove_GetY(objBoss);
+				let to_angle = ENEMY_ANGLE+offset_angle;
+				let opos = Rotate2D_XY(GetPlayerX-sx, GetPlayerY-sy, -to_angle);
+				base_angle = atan2(opos[1], opos[0]*2);
+			}
+			
+			let t = 0;
+			let st = 0;
+			while(eAlive && t < timer)
+			{
+				let sx = ObjMove_GetX(objBoss);
+				let sy = ObjMove_GetY(objBoss);
+				let rotate_angle = ENEMY_ANGLE+offset_angle;
+				ascent(i in 0 .. way2)
+				{
+					ascent(j in 0 .. way3)
+					{
+						let ss = speed * (1-j*0.25);
+						let sa = base_angle + st*70/way*muki + (i-(way2-1)/2)*2 + j*180/way;
+						CreateEllipseShot(sx, sy, ss, rotate_angle, graphic, 5, way, sa, 0.5);
+					}
+				}
+				CallSound(sndShot5);
+				t += wt;
+				st++;
+				waitObj(objBoss, wt);
+			}
+		}
+		
+		task _ShotA2(way, wt, timer)
+		{
+			let t = 0;
+			let st = 0;
+			while(eAlive && t < timer)
+			{
+				ButterflyWay(way);
+				t += wt;
+				st++;
+				waitObj(objBoss, wt);
+			}
+		}
+	}
+
+	task ButterflyWay(way)
+	{
+		let timer = 180;
+		let oi = rand(0, 1);
+		ascent(i in 0 .. way)
+		{
+			SetFamilier02(ObjMove_GetX(objEnemy2), ObjMove_GetY(objEnemy2), 1, 90, (i+oi)/way, timer);
+		}
+	}
+}
+
+
+task CreateEllipseShot(x, y, speed, angle, graphic, delay, way, angle_base, speed_rate)
+{
+	ascent(i in 0 .. way)
+	{
+		let va = angle_base + i*360/way;
+		let vx = cos(va)*speed*speed_rate;
+		let vy = sin(va)*speed;
+		let pos = Rotate2D_XY(vx, vy, angle);
+		let obj = My_CreateShotB2(x, y, pos[0]*2, pos[1]*2, -pos[0]/20, -pos[1]/20, pos[0]/8, pos[1]/8, graphic, delay);
+		ObjMove_AddPatternB2(obj, 60, NO_CHANGE, NO_CHANGE, pos[0]/180, pos[1]/180, pos[0], pos[1]);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI-1);
+	}
+}
+
+
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_PURPLE;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 1, eSize);
+	SetEnemyVisible(objFamilier, false);
+	TAct();
+	DrawBirdOption2(objFamilier, eColor, iniAngle, 1, 1.00, true);
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let ea = -90+iniValue*180;
+		let max_r = 224;
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < iniTimer)
+		{
+			let er = cos(t/iniTimer*180);
+			let vr = sin(t/iniTimer*180);
+			let vx = er * max_r + vr/2*cos(ea) * max_r;
+			let vy = vr*sin(ea) * max_r;
+			let pos = Rotate2D_XY(vx, vy, ENEMY_ANGLE+iniAngle);
+			ObjMove_SetPosition(objFamilier, CenX+pos[0], CenY+pos[1]);
+			er += iniSpeed;
+			t++;
+			waitObj(objFamilier, 1);
+		}
+		EraseEnemy(objFamilier);
+	}
+	
+	task TShot()
+	{
+		let ea = -90+iniValue*180;
+		let speed = 0.75;
+		let graphic = BGW_SCALE_PURPLE;
+		let way = 1;
+		let way_angle = 5;
+		let angle_offset = [45, 30, 30, 30][Difficult];
+		let wt = 4;
+		
+		let st = 0;
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t > 30 && t < iniTimer-30)
+			{
+				let tmp = t/iniTimer;
+				let ss = speed * (2-tmp);
+				let sa = ENEMY_ANGLE+iniAngle+180 - sin(ea)*angle_offset;
+				CreateShotWay(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphic, 15, way, way_angle, 0);
+				CallSound(sndShot2);
+			}
+			st++;
+			t += wt;
+			waitObj(objFamilier, wt);
+		}
+	}
+}
+
+task SetFamilier02(iniX, iniY, iniSpeed, iniAngle, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_PURPLE;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 1, eSize);
+	SetEnemyVisible(objFamilier, false);
+	TAct();
+	DrawButterfly(objFamilier);
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let ea = -90+iniValue*180;
+		let max_r = 224;
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < iniTimer)
+		{
+			let er = cos(t/iniTimer*180);
+			let vr = sin(t/iniTimer*180);
+			let vx = er * max_r + vr/2*cos(ea) * max_r;
+			let vy = vr*sin(ea) * max_r;
+			let pos = Rotate2D_XY(vx, vy, ENEMY_ANGLE+iniAngle);
+			ObjMove_SetPosition(objFamilier, CenX+pos[0], CenY+pos[1]);
+			er += iniSpeed;
+			t++;
+			waitObj(objFamilier, 1);
+		}
+		EraseEnemy(objFamilier);
+	}
+	
+	task TShot()
+	{
+		let ea = -90+iniValue*180;
+		let speed = 0.75;
+		let graphic = BGW_SCALE_YELLOW;
+		let way = 2;
+		let way_angle = [10, 15, 15, 15][Difficult];
+		let angle_offset = [45, 30, 30, 30][Difficult];
+		let wt = 4;
+		
+		let st = 0;
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t > 30 && t < iniTimer-30)
+			{
+				let tmp = t/iniTimer;
+				let ss = speed * (2-tmp);
+				let sa = ENEMY_ANGLE+iniAngle+180 - sin(ea)*angle_offset;
+				CreateShotWay(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphic, 15, way, way_angle, 0);
+				CallSound(sndShot2);
+			}
+			st++;
+			t += wt;
+			waitObj(objFamilier, wt);
+		}
+	}
+
+	task DrawButterfly(objFamilier)
+	{
+		let time1 = 30;
+		let beforeX = ObjMove_GetX(objFamilier);
+		let beforeY = ObjMove_GetY(objFamilier);
+		let objS = [
+			My_CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, 0, ADD_BGW_BUTTERFLY_PURPLE, 0),
+			My_CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, 0, BGW_LIGHT_S_YELLOW, time1)
+		];
+		ascent(i in 0 .. length(objS)){
+			ObjShot_SetSpellResist(objS[i], true);
+			ObjShot_SetAutoDelete(objS[i], false);
+			ObjShot_SetIntersectionEnable(objS[i], false);
+		}
+		ObjRender_SetScaleY(objS[0], 1.5);
+		let count = 0;
+		loop(time1 + 1){
+			let sx = ObjMove_GetX(objFamilier);
+			let sy = ObjMove_GetY(objFamilier);
+			let sa = atan2(beforeY-sy,beforeX-sx);
+			ascent(i in 0 .. 2)
+			{
+				ObjMove_SetPosition(objS[i], sx, sy);
+				ObjMove_SetAngle(objS[i], sa);
+			}
+			ObjRender_SetScaleX(objS[0], 1.5*sin(count*3));
+			beforeX = ObjMove_GetX(objFamilier);
+			beforeY = ObjMove_GetY(objFamilier);
+			count++;
+			waitObj(objFamilier, 1);
+		}
+		while(CanShotBullet(objFamilier))
+		{
+			let sx = ObjMove_GetX(objFamilier);
+			let sy = ObjMove_GetY(objFamilier);
+			let sa = atan2(sy-beforeY,sx-beforeX);
+			ascent(i in 0 .. 2)
+			{
+				ObjMove_SetPosition(objS[i], sx, sy);
+				ObjMove_SetAngle(objS[i], sa);
+			}
+			ObjRender_SetScaleX(objS[0], 1.5*sin(count*3));
+			beforeX = ObjMove_GetX(objFamilier);
+			beforeY = ObjMove_GetY(objFamilier);
+			count++;
+			waitObj(objFamilier, 1);
+		}
+		descent(t in 0 .. 30){
+			ascent(i in 0 .. length(objS)){
+				ObjRender_SetAlpha(objS[i], 255*t/30);
+			}
+			wait(1);
+		}
+		descent(i in 0 .. length(objS)){
+			Obj_Delete(objS[i]);
+		}
+	}
+}
+
+task SetBossPosition(angle)
+{
+	let objE = [objEnemy, objEnemy2];
+	
+	ascent(i in 0 .. length(objE))
+	{
+		let er = 192;
+		let ea = angle + (i-0.5)*180;
+		let ex = CenX + er*cos(ea);
+		let ey = CenY + er*sin(ea);
+		ObjMove_SetPosition(objE[i], ex, ey);
+	}
+}
+
+task TMove()
+{
+	let add_rate = 0;
+	
+	while(eAlive)
+	{
+		let oa = (CenX-GetPlayerX)/(GetClipWidth/2)*105;
+		if (oa < -45) { oa = -45 + (oa+45)/2; }
+		if (oa > 45) { oa = 45 + (oa-45)/2; }
+		let to_angle = 90 + oa;
+		if (IsTimeStopObj(objEnemy) || IsTimeStopObj(objEnemy)) { add_rate = 0; }
+		else if (absolute(ENEMY_ANGLE-to_angle) < 0.02) { add_rate = max(0, add_rate-1/30); }
+		else{ add_rate = min(1, add_rate+1/180); }
+		ENEMY_ANGLE = ENEMY_ANGLE + (to_angle-ENEMY_ANGLE)*(add_rate*0.025);
+		SetBossPosition(ENEMY_ANGLE);
+		yield;
+	}
+}
+
+task BossLifeLink(obj, obj2)
+{
+	while(!Obj_IsDeleted(obj) && eAlive)
+	{
+		let eLife = min(ObjEnemy_GetInfo(obj, INFO_LIFE), ObjEnemy_GetInfo(obj2, INFO_LIFE));
+		ObjEnemy_SetLife(obj, eLife);
+		ObjEnemy_SetLife(obj2, eLife);
+		yield;
+	}
+}

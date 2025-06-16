@@ -1,0 +1,261 @@
+//システムロード用
+#include "./../../lib/lib_SystemAll.dnh"
+#include "./../../lib/lib_File.dnh"
+
+//ファイル
+let SCRIPT_PLAYERS = [
+		plDir ~ "hsob/HSOB_Pl01.dnh",
+		plDir ~ "hsob/HSOB_Pl02.dnh",
+		plDir ~ "hsob/HSOB_Pl03.dnh",
+		plDir ~ "hsob/HSOB_Pl04.dnh"];
+
+let MAIN_STAGE_SCRIPT = stageDir ~ "stage.dnh";
+
+
+/*--------タイトル用画像--------*/
+let imgTitleDir = GetCurrentScriptDirectory() ~ "../../img/title/";
+
+// NowLoading
+let imgTtLoad		= imgTitleDir ~ "load.png";
+let imgTtLoadEff	= imgTitleDir ~ "load_eff.png";
+let imgTtLoadBack	= imgTitleDir ~ "load_back.png";
+// タイトル
+let imgTtBaseBG		= imgTitleDir ~ "title00_d.png";
+let imgTtBaseBG2	= imgTitleDir ~ "title00_e.png";
+let imgTtBaseBG_scl	= imgTitleDir ~ "title00_f.png";
+let imgTtSubBG		= imgTitleDir ~ "et03.png";
+let imgTtTitle		= imgTitleDir ~ "title00a.png";
+let imgTtTitle2		= imgTitleDir ~ "title00b.png";
+let imgTtTitle3		= imgTitleDir ~ "title00b2.png";
+let imgTtTitle4		= imgTitleDir ~ "title00b3.png";
+let imgTtSubWindow	= imgTitleDir ~ "subwindow.png";
+// プレイヤーセレクト関係
+let imgTtTextPlayers	= [
+	imgTitleDir ~ "player01.png",
+	imgTitleDir ~ "player02.png",
+	imgTitleDir ~ "player03.png",
+	imgTitleDir ~ "player04.png"];
+let imgTtWpIcon		= imgTitleDir ~ "pl_wpicon.png";
+let imgTtWeapons	= [
+	imgTitleDir ~ "pl_weapon01.png",
+	imgTitleDir ~ "pl_weapon02.png",
+	imgTitleDir ~ "pl_weapon03.png",
+	imgTitleDir ~ "pl_weapon04.png",
+	imgTitleDir ~ "pl_weapon05.png",
+	imgTitleDir ~ "pl_weapon06.png",
+	imgTitleDir ~ "pl_weapon07.png",
+	imgTitleDir ~ "pl_weapon08.png",
+	imgTitleDir ~ "pl_weapon09.png",
+	imgTitleDir ~ "pl_weapon10.png"];
+let imgTtWeaponsEx	= [
+	imgTitleDir ~ "pl_weapon01Ex.png",
+	imgTitleDir ~ "pl_weapon02Ex.png",
+	imgTitleDir ~ "pl_weapon03Ex.png",
+	imgTitleDir ~ "pl_weapon04Ex.png",
+	imgTitleDir ~ "pl_weapon05Ex.png",
+	imgTitleDir ~ "pl_weapon06Ex.png",
+	imgTitleDir ~ "pl_weapon07Ex.png",
+	imgTitleDir ~ "pl_weapon08.png",
+	imgTitleDir ~ "pl_weapon09.png",
+	imgTitleDir ~ "pl_weapon10.png"];
+let imgTtPicPlayers	= [
+	[imgTitleDir ~ "plPic01.png", imgTitleDir ~ "plPic01b.png"],
+	[imgTitleDir ~ "plPic02.png", imgTitleDir ~ "plPic02b.png"],
+	[imgTitleDir ~ "plPic03.png", imgTitleDir ~ "plPic03b.png"],
+	[imgTitleDir ~ "plPic04.png", imgTitleDir ~ "plPic04b.png"]];
+let imgTtPicPlayersEx	= [
+	[imgTitleDir ~ "plPic01Ex.png", imgTitleDir ~ "plPic01bEx.png"],
+	[imgTitleDir ~ "plPic02Ex.png", imgTitleDir ~ "plPic02bEx.png"],
+	[imgTitleDir ~ "plPic03Ex.png", imgTitleDir ~ "plPic03bEx.png"],
+	[imgTitleDir ~ "plPic04Ex.png", imgTitleDir ~ "plPic04bEx.png"]];
+// その他セレクト
+let imgTtSelectFaceTxt	= imgTitleDir ~ "sl01.png";
+let imgTtSelectTitle	= imgTitleDir ~ "sl0t.png";
+let imgTtSelectRank	= imgTitleDir ~ "rank_select00.png";
+let imgTtSelectRankEx	= imgTitleDir ~ "rank_select01.png";	//Ex以降用?
+let imgTtSelectStage1	= imgTitleDir ~ "sl0s_a.png";
+let imgTtSelectStage2	= imgTitleDir ~ "sl0s_b.png";
+let imgTtSelectOption	= imgTitleDir ~ "option_select.png";
+let imgTtSelectMode	= imgTitleDir ~ "mode_select.png";
+let imgTtSelectPData	= imgTitleDir ~ "playerdata.png";
+let imgTtMiniNumber	= imgTitleDir ~ "mini_number.png";
+let imgTtSpellRank	= imgTitleDir ~ "difficult_prac.png";
+let imgTtPracticeSelect	= imgTitleDir ~ "practice_select.png";
+
+// マニュアル用
+let imgTtManual00	= imgTitleDir ~ "manual0.png";
+let imgTtManual01	= imgTitleDir ~ "manual1.png";
+let imgTtManual02	= imgTitleDir ~ "manual2.png";
+let imgTtManual03a	= imgTitleDir ~ "manual3a.png";
+let imgTtManual03b	= imgTitleDir ~ "manual3b.png";
+let imgTtManual03c	= imgTitleDir ~ "manual3c.png";
+let imgTtManual03d	= imgTitleDir ~ "manual3d.png";
+let imgTtManual04a	= imgTitleDir ~ "manual4a.png";
+let imgTtManual04b	= imgTitleDir ~ "manual4b.png";
+let imgTtManual05	= imgTitleDir ~ "manual5.png";
+let imgTtManual06	= imgTitleDir ~ "manual6.png";
+let imgTtManual07	= imgTitleDir ~ "manual7.png";
+
+let imgTtExtra01	= imgTitleDir ~ "ex_story.png";
+let imgTtExtra02	= imgTitleDir ~ "ex_story2.png";
+
+// その他
+let imgTtClearLogo	= imgTitleDir ~ "clearlogo.png";
+let imgTtPage		= imgTitleDir ~ "page.png";
+
+//----------------------------------------------------
+// 初期化
+//----------------------------------------------------
+sub initTitle
+{
+	SetAutoDeleteObject(true);	//オブジェクトの自動削除ON
+}
+//----------------------------------------------------
+// iniファイル読み込みマン
+// InitializeCommonDataの後に実行しよう
+//----------------------------------------------------
+sub LoadIniFile
+{
+	// iniファイルを取り込むマン
+	// #include "./../../../../../launcher.ini"
+	
+	// SetAreaCommonData(CAREA_CONFIG, "IsUseShader", [0, 1][IsUseShader]);
+	// SetAreaCommonData(CAREA_CONFIG, "LaunchWindowSizeX", LaunchWindowSizeX);
+	// SetAreaCommonData(CAREA_CONFIG, "LaunchWindowSizeY", LaunchWindowSizeY);
+}
+
+
+//----------------------------------------------------
+//　少女祈祷中...
+//----------------------------------------------------
+function LoadingDefault(x, y)
+{
+	let objParent = ObjText_Create();	// このオブジェクトを消したら表示が消える
+	_LoadingDefault(objParent, x, y);
+	return(objParent);
+}
+task LoadingDefaultTimer(x, y, timer)
+{
+	let objLoading = LoadingDefault(x, y);
+	wait(timer);
+	Obj_Delete(objLoading);
+}
+task _LoadingDefault(objParent, x, y)
+{
+	let ID		= [ObjPrim_Create(OBJ_SPRITE_2D),
+					ObjPrim_Create(OBJ_SPRITE_2D)];
+	let csd		= GetCurrentScriptDirectory();
+	let i		= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let alpha1	= 0;
+	let alphaA	= 0;
+	let cc		= 0;
+	
+	loop( length(ID) ){
+		ObjRender_SetPosition(ID[i], x, y, 0 );
+		ObjPrim_SetTexture(ID[i], imgTtLoadEff );
+		Obj_SetRenderPriorityI(ID[i], 100 );
+		ObjRender_SetBlendType(ID[i], BLEND_ALPHA);
+		ObjRender_SetAlpha(ID[i], alpha1*255 );
+		ObjSprite2D_SetSourceRect(ID[i], 0, 0+i*64, 256, 64+i*64 );
+		ObjSprite2D_SetDestCenter(ID[i]);
+		i++;
+	}
+	ObjRender_SetScaleXYZ(ID[0], 0.8, 0.8, 0 );
+	ObjRender_SetScaleXYZ(ID[1], 0.6, 0.6, 0 );
+	i = 0;
+	
+	while( !Obj_IsDeleted(objParent) ){
+		alpha1 = 1 * sin( alphaA );
+		move1 = 1 * sin( moveA );
+		
+		if( i%1 == 0 ){
+			//　なんか出す時はココに
+			CreateStar(ID[0], [x+randEffect(-80,80), y+randEffect(32,48)], 0, -0.5, randEffect(-0.05,0), -99, [i*2,160,255], 128, 45, 99 );
+		}
+		
+		ObjRender_SetPosition(ID[1], ObjRender_GetX(ID[0])+100-move1*70, ObjRender_GetY(ID[0])+24, 0 );
+		
+		ObjRender_SetColor(ID[0], 200+55*sin(cc), 200+55*sin(cc), 200+55*sin(cc) );
+		ObjRender_SetAlpha(ID[0], alpha1*255 );
+		ObjRender_SetColor(ID[1], 225+30*sin(cc), 225+30*sin(cc), 225+30*sin(cc) );
+		ObjRender_SetAlpha(ID[1], alpha1*255 );
+		
+		cc += 5;
+		if( alpha1 < 1 ){ alphaA += 5; }
+		if( move1 < 1 ){ moveA += 5; }
+		i++;
+		yield;
+	}
+	alpha1 = 0;
+	alphaA = 0;
+	while( alpha1 < 1 ){
+		alpha1 = 1 * sin( alphaA );
+		
+		ObjRender_SetColor(ID[0], 200+55*sin(cc), 200+55*sin(cc), 200+55*sin(cc) );
+		ObjRender_SetAlpha(ID[0], 255 - alpha1*255 );
+		ObjRender_SetColor(ID[1], 225+30*sin(cc), 225+30*sin(cc), 225+30*sin(cc) );
+		ObjRender_SetAlpha(ID[1], 255 - alpha1*255 );
+		
+		cc += 5;
+		if( alpha1 < 1 ){ alphaA += 5; }
+		i++;
+		yield;
+	}
+	Obj_Delete(ID[0]);
+	Obj_Delete(ID[1]);
+
+	//　おほしさま
+	task CreateStar(CallID, pos, angle, speed, acc, mx, rgb_h, alpha, kill, lay)
+	{
+		let ID		= ObjPrim_Create(OBJ_SPRITE_2D);
+		let dis		= 0;
+		let move1	= 0;
+		let moveA	= 0;
+		let frame	= 0;
+		let sca		= randEffect(0.1,1)^2;
+		
+		ObjPrim_SetTexture(ID, imgEffectParticle);
+		ObjRender_SetBlendType(ID, BLEND_ADD_ARGB );
+		Obj_SetRenderPriorityI(ID, lay);
+		ObjSprite2D_SetSourceRect(ID, 128, 0, 192, 64);
+		ObjSprite2D_SetDestCenter(ID);
+		ObjRender_SetColorHSV(ID, rgb_h[0], rgb_h[1], rgb_h[2]);
+		ObjRender_SetScaleXYZ(ID, sca, sca, 0 );
+		ObjRender_SetPosition(ID, pos[0], pos[1], 0);
+		ObjRender_SetAngleZ(ID, 0 );
+		
+		while( !Obj_IsDeleted(CallID) && !Obj_IsDeleted(ID) && frame < kill )
+		{
+			move1 = 1 * sin( moveA );
+			
+			ObjRender_SetPosition(ID, pos[0], pos[1] + dis, 0 );
+			ObjRender_SetAlpha(ID, move1*alpha*(1+sin(frame*45)/2) );
+			
+			frame++;
+			dis += speed;
+			if( speed > mx ){ speed += acc; }
+			if( move1 < 1 ){ moveA += 2; }
+			yield;
+		}
+		alpha = move1*alpha;
+		move1 = 0;
+		moveA = 0;
+		while( !Obj_IsDeleted(ID) && move1 < 1 )
+		{
+			ObjRender_SetPosition(ID, pos[0], pos[1] + dis, 0 );
+			ObjRender_SetAlpha(ID, alpha*(1+sin(frame*45)/2) );
+			ObjRender_SetScaleXYZ(ID, sca*(1-move1), sca*(1-move1), 0 );
+
+			frame++;
+			dis += speed;
+			if( speed > mx ){ speed += acc; }
+			if( move1 < 1 ){ moveA += 5; }
+			move1 = 1 * sin( moveA );
+			yield;
+		}
+		Obj_Delete(ID);
+	}
+
+}

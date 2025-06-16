@@ -1,0 +1,108 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　イベントの一括管理
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+
+function PlayerEvent()
+{
+	alternative( GetEventType )
+	case( EV_REQUEST_SPELL ){
+		Event_RequestSpell();
+	}
+	case( EV_GRAZE ){
+		Event_Graze();
+	}
+	case( EV_HIT ){
+		Event_Hit();
+	}
+	case( EV_PLAYER_REBIRTH ){
+		Event_PlayerRebirth();
+	}
+	case( EV_PLAYER_SHOOTDOWN ){
+		// 被弾時イベント
+		NotifyEventAll(ev_ShootdownPlayer, 0);
+		// フラグセット
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SHOOT_DOWN_LW", 
+			ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID(), INFO_IS_LAST_SPELL));
+	}
+	case( ev_ResetClip ){
+		Event_ResetClip(GetEventArgument(0));
+	}
+}
+
+task Event_RequestSpell(){
+	if (GetAreaCommonData(CAREA_SYSTEM, "PLAYER_BARRIER", 0) > 0)
+	{
+		// バリア割り
+		SetScriptResult( true );
+		BarrierBomb();
+	}
+	else if( GetPlayerSpell() >= 1 ){
+		if (GetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false ))
+		{
+			// Zボム起動中は発動不可
+			SetScriptResult( false );
+		}
+		else
+		{
+			SetScriptResult( true );
+			PlayerBomb();
+			// 喰らいボム再設定＆受付短縮（決めボム出来たら減少量は少ないよ）
+			if (GetPlayerState() == STATE_HIT) { ResetPlayerRebirthFrame( -1 ); }
+			else { ResetPlayerRebirthFrame( -0.5 ); }
+			// タスク実行後にボムを減らす
+			SetPlayerSpell( GetPlayerSpell()-1 );
+		}
+	}
+	else{
+		SetScriptResult( false );
+	}
+}
+
+
+task Event_Graze(){
+	AddScore( 10 );
+	GrazeEffect( randEffect(0,360), randEffect(32,64), 0, 0.1, 16, [255,192,128], 192 );
+	ObjSound_Play( PlayerEnviron_SE[1] );
+}
+
+
+task Event_Hit(){
+	if (GetAreaCommonData(CAREA_SYSTEM, "PLAYER_BARRIER", 0) > 0)
+	{
+		// バリア
+		CallSpell();
+	}
+	else
+	{
+		//　被弾エフェクト
+		PlayerHitEffect();
+		//　弾消し
+		ShotDelete( 512 );
+		ObjSound_Play( PlayerEnviron_SE[0] );
+	}
+}
+
+
+task Event_PlayerRebirth(){
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SHOOT_DOWN", 1);	// フラグセット
+	ResetPlayerInvincibility( PlayerInvincibilityFrame[PlayerNumber] );
+//	SetPlayerRebirthFrame( PlayerRebirthFrame[PlayerNumber] );
+	
+	// ラスワ中に被弾したならtrue
+	if (!GetAreaCommonData(CAREA_SYSTEM, "PLAYER_SHOOT_DOWN_LW", false))
+	{
+		SetPlayerSpell( max(GetPlayerSpell(), PlayerRebirthSpell) );
+		ResetPlayerRebirthFrame( 1 );	// 喰らいボム再設定＆受付延長
+	}
+	//  初期位置に戻る
+	InitPlayerPosition(true);
+}
+
+task Event_ResetClip(pos)
+{
+	SetPlayerClip(pos[0]+6, pos[1]+16, pos[2]-6, pos[3]-16 );
+}
+

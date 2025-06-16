@@ -1,0 +1,344 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["スペカ3"]
+#Text["スペカ3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(400);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 93;
+	let SPELL_NAME = 2;
+	
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 400; }
+	else			{ bossDropItem = 150; }
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	//防御率再計算
+	SetMumeiDefence2();
+
+	//初期設定
+	Boss_Init();
+
+	InitMumei();
+
+	objEnemy = CreateBoss(BOSS_ID_MUMEI);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"07b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+	
+	// バーリアーｗｗｗｗｗ
+	TBombBarrierEx(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (MumeiEffect_GetContinue() > 1)
+	{
+		standBy(objEnemy, CenX, CenY-80, 240);
+		SetMumeiEffect(objEnemy, false);
+		waitObj(objEnemy, 60);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, CenY-80, 240+90);
+		SetMumeiEffect(objEnemy, false);
+		SetMumeiEffect_v2(objEnemy, false, 60);
+		waitObj(objEnemy, 60);
+		SetAction(objEnemy, ACT_SHOT2, 120);
+		waitObj(objEnemy, 90);
+	}
+
+	CallSpellCard(true);	//スペカ起動
+	
+	let wt = [300, 360, 300][DifficultEx()];
+	
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		SetAction(objEnemy, ACT_SHOT1, 390);
+		waitObj(objEnemy, 90);
+		if (!eAlive) { return; }
+		TFallFlower();
+		waitObj(objEnemy, 300);
+		if (!eAlive) { return; }
+		TuboLaser(CenX+144, MinY+128, 1.33, 90, 90, 120);
+		TuboLaser(CenX-144, MinY+128, 1.33, 90, -90, 120);
+		CallSound(sndBoon);
+		SetAction(objEnemy, ACT_SHOT2, 120);
+		waitObj(objEnemy, 30);
+		if (!eAlive) { return; }
+		TuboLaser(CenX+96, MinY+32, 1.33, 90, 90, 60);
+		TuboLaser(CenX-96, MinY+32, 1.33, 90, -90, 60);
+		CallSoundDelay(sndPower1, 60, objEnemy);
+		waitObj(objEnemy, wt);
+	}
+}
+
+task TFallFlower()
+{
+	ascent(i in 0 .. 5)
+	{
+		FlowerDish(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 2, i*72+90);
+	}
+	wait(240);
+	CallSound(sndPower2);
+	
+	let timer = [27, 27, 27][DifficultEx()];
+	let count = [4, 2, 4][DifficultEx()];
+	let wt = [3, 3, 3][DifficultEx()];
+	
+	let t = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		let tmp = t/timer;
+		loop(count)
+		{
+			let sx = rand(MinX, MaxX);
+			let sy = MinY-32;
+			let ss = 4 - tmp * 3.75;
+			let ss2 = 3;
+			let sa = 90 + rand(-30,30);
+			let sg = [BGB_RICE_S_WHITE, BGW_RICE_S_PURPLE, BGW_RICE_S_RED][trunc(tmp*2+(t%2)*0.5+0.5)];
+			let objS = FlowerShot(sx, sy, ss, sa, sg, 15);
+			ObjMove_AddPatternA2(objS, 0, NO_CHANGE, NO_CHANGE, -ss/240, 0, 0);
+			ObjMove_AddPatternA2(objS, 360, NO_CHANGE, NO_CHANGE, ss2/300, 0, ss2);
+		}
+		t++;
+		wait(wt);
+	}
+}
+
+task TuboLaser(x, y, speed, angle, tubo_offset, eLife)
+{
+	let vs = 0;
+	let va = angle;
+	let laser_speed = [32, 32, 32][DifficultEx()];
+	let laser_timer = [1200, 300, 1200][DifficultEx()];
+	
+	let tubo_angle = atan2(GetPlayerY-y, GetPlayerX-x) + tubo_offset;
+	let horming_power = 1/30;
+	
+	let objS = PorcelainEnemy(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), PORCELAIN_POT, 32, 60, eLife, 0.8);
+	ObjMove_SetAngle(objS, tubo_angle);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	ascent(i in 0 .. length(objImgAll)) { Obj_SetRenderPriorityI(objImgAll[i], GetShotRenderPriorityI()-1); }
+	
+	ascent(i in 0 .. 60)
+	{
+		if (Obj_IsDeleted(objS)) { return; }
+		let tmp = GetCurve_d((i+1)/60);
+		ObjMove_SetPosition(objS, ObjMove_GetX(objEnemy)*(1-tmp)+x*tmp, ObjMove_GetY(objEnemy)*(1-tmp)+y*tmp);
+		tubo_angle = GetTuboHormingAngle(ObjMove_GetX(objS), ObjMove_GetY(objS), tubo_angle, horming_power/2);
+		ObjMove_SetAngle(objS, tubo_angle);
+		waitObj(objS, 1);
+	}
+	if (Obj_IsDeleted(objS)) { return; }
+	
+	// 予告レーザー
+	let lr = 54;
+	let lc = EFF_WHITE;
+	let objL = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objL, GetShotRenderPriorityI());
+	ObjPrim_SetTexture(objL, imgEffectBullet);
+	ObjRender_SetBlendType(objL, BLEND_ADD_ARGB);
+	ObjSprite2D_SetSourceRect(objL, 1+32*lc, 66, 31+32*lc, 94);
+	ObjSprite2D_SetDestRect(objL, -6, 0, 6, 640);
+	
+	let st = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(objS) && t < laser_timer)
+	{
+		let ex = ObjMove_GetX(objS) + vs*cos(va);
+		let ey = ObjMove_GetY(objS) + vs*sin(va);
+		tubo_angle = GetTuboHormingAngle(ex, ey, tubo_angle, horming_power);
+		ObjMove_SetPosition(objS, ex, ey);
+		ObjMove_SetAngle(objS, tubo_angle);
+		
+		// 予告レーザー
+		ObjRender_SetPosition(objL, ex+lr*cos(tubo_angle), ey+lr*sin(tubo_angle), 0);
+		ObjRender_SetAngleZ(objL, tubo_angle-90);
+		ObjRender_SetAlpha(objL, min(255, t*10));
+		ObjRender_SetScaleX(objL, (sin(t*90)+1.5)/2.5);
+		
+		// 本レーザー
+		if (t > 120 && t%2 == 0)
+		{
+			if (st%3 == 0) { CallSound(sndLaser2); }
+			let ss = min(1, 0.25+st/30) * 24;
+		//	let objSs = My_CreateLooseLaserA1(ex+lr*cos(tubo_angle), ey+lr*sin(tubo_angle),
+		//		32, tubo_angle+rand(-2,2), 600, 16+(st%3)*4, BGW_SCALE_YELLOW, 0);
+			let objSs = My_CreateLooseLaserA1(ex+lr*cos(tubo_angle), ey+lr*sin(tubo_angle),
+				0, tubo_angle+rand(-0.5,0.5), 600, 16+(st%3)*4, BGW_SCALE_YELLOW, 0);
+			ObjMove_AddPatternA2(objSs, 0, 0, NO_CHANGE, ss/30, 0, laser_speed);
+			ObjRender_SetColor(objSs, 255, 128, 98);
+			st++;
+		}
+		
+		// えへくと
+		if (t < 120 && t%3 == 0)
+		{
+			_EffectConcentrationP_offset(objS, lr, 0.75, 30, EFF_WHITE);
+		}
+		
+		if (t > 120) { vs = min(speed, vs+speed/240); }
+		t++;
+		waitObj(objS, 1);
+	}
+	DelLaser();
+	while(!Obj_IsDeleted(objS))
+	{
+		let ex = ObjMove_GetX(objS) + vs*cos(va);
+		let ey = ObjMove_GetY(objS) + vs*sin(va);
+		tubo_angle = GetTuboHormingAngle(ex, ey, tubo_angle, horming_power);
+		ObjMove_SetPosition(objS, ex, ey);
+		ObjMove_SetAngle(objS, tubo_angle);
+		
+		// 予告レーザー
+		ObjRender_SetPosition(objL, ex+lr*cos(tubo_angle), ey+lr*sin(tubo_angle), 0);
+		ObjRender_SetAngleZ(objL, tubo_angle-90);
+		ObjRender_SetAlpha(objL, min(255, t*10));
+		ObjRender_SetScaleX(objL, (sin(t*90)+1.5)/2.5);
+		
+		if (t > 120) { vs = min(speed, vs+speed/240); }
+		t++;
+		waitObj(objS, 1);
+	}
+	Obj_Delete(objS);
+	
+	task DelLaser()
+	{
+		descent(i in 0 .. 15)
+		{
+			ObjRender_SetAlpha(objL, 255*i/15);
+			yield;
+		}
+		Obj_Delete(objL);
+	}
+
+	function GetTuboHormingAngle(x, y, angle, horming_power)
+	{
+		let to_angle = atan2(GetPlayerY-y, GetPlayerX-x);
+		let tmp = (angle-to_angle)%360;
+		if (tmp > 180) { tmp -= 360; }
+		tmp *= horming_power;
+		return(angle-tmp);
+	}
+}
+task FlowerDish(x, y, speed, angle)
+{
+	let vr = 0;
+	let va = angle;
+	let vy = 0;
+	
+	let objS = PorcelainEnemy(x, y, PORCELAIN_DISH_W, 32, 30, 999999, 0.8);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objS) && t < 300)
+	{
+		if (t < 60)
+		{
+			let tmp = GetCurve_d((t+1)/60);
+			vr = tmp*128;
+		}
+		else if (t < 180)
+		{
+			let tmp = GetCurve_ad((t+1-60)/120);
+			let tmp2 = GetCurve_a((t+1-60)/120);
+			vr = 128 + tmp*64;
+			vy = tmp*48;
+			va += speed*tmp2;
+		}
+		else
+		{
+			let tmp = (t+1-180)/30;
+			vy -= tmp;
+			va += speed;
+		}
+		let ex = x + vr*cos(va);
+		let ey = y + vr*sin(va)/3 + vy;
+		let priI = [GetShotRenderPriorityI()-1, priorityBoss-1][sin(va) < 0];
+		ObjMove_SetPosition(objS, ex, ey);
+		ObjMove_SetPosition(objS, ex, ey);
+		ascent(i in 0 .. length(objImgAll)) { Obj_SetRenderPriorityI(objImgAll[i], priI); }
+		
+		// ショット部分
+		if (t > 90 && t%4 == 0)
+		{
+			let objSS = FlowerShotRandomColor(ex, ey, 0, 0, 15);
+			ObjMove_AddPatternB2(objSS, 0, rand(-2,2), rand(0,1), 0, -0.05, 0, -99);
+			CallSound(sndShot5);
+		}
+		
+		t++;
+		waitObj(objS, 1);
+	}
+	Obj_Delete(objS);
+}
+
+
+function FlowerShotRandomColor(x, y, speed, angle, delay)
+{
+	let graphic = [BGB_RICE_S_WHITE, BGW_RICE_S_PURPLE, BGW_RICE_S_RED][rand_int(0,2)];
+	return(FlowerShot(x, y, speed, angle, graphic, delay));
+}
+function FlowerShot(x, y, speed, angle, graphic, delay)
+{
+	let add_angle = rand(-2,2);
+	let ba = rand(0, 360);
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	Obj_SetValue(obj, "FL_SHOT", 1);
+	Obj_SetVisible(obj, false);
+	ascent(i in 0 .. 5) { _FlowerShot(obj, ba+i*72, graphic, delay, 6, add_angle); }
+	return(obj);
+	
+	task _FlowerShot(parent, angle, graphic, delay, r, add_angle)
+	{
+		let obj = My_CreateShotA1(ObjMove_GetX(parent), ObjMove_GetY(parent), 0, angle, graphic, delay);
+		ObjShot_SetSpellResist(obj, true);
+		
+		while(!Obj_IsDeleted(obj))
+		{
+			if (Obj_IsDeleted(parent))
+			{
+				DeleteBulletEffect(obj);
+				break;
+			}
+			ObjMove_SetPosition(obj, ObjMove_GetX(parent)+r*cos(angle), ObjMove_GetY(parent)+r*sin(angle));
+			ObjMove_SetAngle(obj, angle);
+			angle += add_angle;
+			yield;
+		}
+	}
+}

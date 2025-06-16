@@ -1,0 +1,334 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["通常6"]
+#Text["通常6"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2700);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 150; }
+	else			{ bossDropItem = 50; }
+
+	//防御率再計算
+	SetMumeiDefence();
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MUMEI);	//ボスセット
+
+	InitMumei();
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 6, CHAPTER_BOSS);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	SetMumeiEffect(objEnemy, true);
+	standBy(objEnemy, CenX, 160, 60);
+	waitObj(objEnemy, 60);
+
+	BossChargeFire(objEnemy);
+	waitObj(objEnemy, 90);
+	Shot1();
+	
+	task Shot1()
+	{
+		let wt = 180;
+		let D = -1;
+		
+		let count = 0;
+		while(eAlive)
+		{
+			SetAction(objEnemy, ACT_SHOT2, 120);
+			loop(1)
+			{
+				if (!eAlive) { return; }
+				CallSound(sndBoon);
+				let st = 0;
+				let bx = min(MaxX-96, max(MinX+96, ObjMove_GetX(objEnemy)));
+				let by = min(MaxY-96, max(MinY+96, ObjMove_GetY(objEnemy)));
+				ascent(i in 0 .. 2)
+				{
+					loop(2)
+					{
+						let ex = bx + (i*80+60)*D;
+						let ey = by + i*60 - 120;
+						let oa = i*30*D;
+						let delay = 90 + st*8;
+						DishShot(ex, ey, oa, delay);
+						D = -D;
+						st++;
+					}
+				}
+				if (!eAlive) { return; }
+			}
+			waitObj(objEnemy, 8*6);
+			loop(1)
+			{
+				if (!eAlive) { return; }
+				CallSound(sndBoon);
+				let st = 0;
+				let bx = min(MaxX-96, max(MinX+96, ObjMove_GetX(objEnemy)));
+				let by = min(MaxY-96, max(MinY+96, ObjMove_GetY(objEnemy)));
+				ascent(i in 0 .. 2)
+				{
+					loop(2)
+					{
+						let ex = bx + (i*72+48)*D;
+						let ey = by - i*40 + 80;
+						let oa = i*30*D;
+						let delay = 90 + st*8;
+						DishShot(ex, ey, oa, delay);
+						D = -D;
+						st++;
+					}
+				}
+				if (!eAlive) { return; }
+			}
+			waitObj(objEnemy, wt);
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 160, 64);
+			CallSound(sndPower3);
+			waitObj(objEnemy, 60);
+			wt = 60 + (wt-60)*0.5;
+			D = -D;
+			count++;
+		}
+	}
+}
+
+// お皿単品
+task DishShot(x, y, tubo_offset, laser_delay)
+{
+	let eSize = 22;
+	let eLife = 120;
+	let objS = PorcelainEnemy(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), PORCELAIN_POT, eSize, 60, eLife, 0.8);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	let objE = Obj_GetValueD(objS, "E_OBJ", -1);
+	TMain();
+	
+	task TMain()
+	{
+		TMove();
+	}
+	task TMove()
+	{
+	//	let tubo_offset = 0;
+		let tubo_angle = atan2(GetPlayerY-y, GetPlayerX-x) + tubo_offset;
+		let horming_power = 1/30;
+		let horming_timer = laser_delay;
+		let horming_dec = [0, 2, 0][DifficultEx()];
+		let horming_wait = 240;
+		
+		ascent(i in 0 .. 60)
+		{
+			if (Obj_IsDeleted(objS)) { return; }
+			let tmp = GetCurve_d((i+1)/60);
+			ObjMove_SetPosition(objS, ObjMove_GetX(objEnemy)*(1-tmp)+x*tmp, ObjMove_GetY(objEnemy)*(1-tmp)+y*tmp);
+			tubo_angle = GetTuboHormingAngle(ObjMove_GetX(objS), ObjMove_GetY(objS), tubo_angle, horming_power/2);
+			ObjMove_SetAngle(objS, tubo_angle);
+			waitObj(objS, 1);
+		}
+		if (Obj_IsDeleted(objS) || !CheckDispIN(objS, 48)) { Obj_Delete(objS); return; }
+		// レーザー氏
+		TLaser(horming_timer-75, 75);
+		
+		let t = 0;
+		while(!Obj_IsDeleted(objS) && t < horming_timer)
+		{
+			let ex = ObjMove_GetX(objS);
+			let ey = ObjMove_GetY(objS);
+			let hp = horming_power * max(0, min(1, (1-t/horming_timer)*4-horming_dec));
+			tubo_angle = GetTuboHormingAngle(ex, ey, tubo_angle, hp);
+			ObjMove_SetAngle(objS, tubo_angle);
+			t++;
+			waitObj(objS, 1);
+		}
+		
+		if (Obj_IsDeleted(objS)) { return; }
+		ObjMove_AddPatternA2(objS, 0, -6, NO_CHANGE, 4/60, 0, -2);
+		
+		let flg = CheckDispIN(objS, -16);
+		while(!Obj_IsDeleted(objS))
+		{
+			let new_flg = CheckDispIN(objS, -16);
+			if (!new_flg && flg)
+			{
+				// 自壊
+				TUchikaeshi(ObjMove_GetX(objS), ObjMove_GetY(objS), ObjMove_GetAngle(objS));
+				CallSound(sndFreeze);
+				EraseEnemy(objE);
+				break;
+			}
+			t++;
+			flg = new_flg;
+			waitObj(objS, 1);
+		}
+	}
+	// レーザー
+	task TLaser(delay, timer)
+	{
+		wait(delay);
+		if (!eAlive || Obj_IsDeleted(objS)) { return; }
+		CallSound(sndBulletBreak);
+		
+		let lr = 40;
+		let lc = EFF_WHITE;
+		let objL = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objL, GetShotRenderPriorityI()-1);
+		ObjPrim_SetTexture(objL, imgEffectBullet);
+		ObjRender_SetBlendType(objL, BLEND_ADD_ARGB);
+		ObjSprite2D_SetSourceRect(objL, 1+32*lc, 66, 31+32*lc, 94);
+		ObjSprite2D_SetDestRect(objL, -6, 0, 6, 800);
+		
+		let t = 0;
+		while(!Obj_IsDeleted(objL) && !Obj_IsDeleted(objS) && t < timer)
+		{
+			let ex = ObjMove_GetX(objS);
+			let ey = ObjMove_GetY(objS);
+			let ea = ObjMove_GetAngle(objS);
+			ObjRender_SetPosition(objL, ex+lr*cos(ea), ey+lr*sin(ea), 0);
+			ObjRender_SetAngleZ(objL, ea-90);
+			ObjRender_SetAlpha(objL, min(255, t*10)*0.66);
+			ObjRender_SetScaleX(objL, (sin(t*90)+1.5)/2.5);
+			// えへくと
+			if (t%3 == 0)
+			{
+				_EffectConcentrationP_offset(objS, lr, 0.75, 30, EFF_WHITE);
+			}
+			t++;
+			yield;
+		}
+		if (eAlive && t >= timer && !Obj_IsDeleted(objS))
+		{
+			// レーザー発射！
+			let ea = ObjMove_GetAngle(objS);
+			let ex = ObjMove_GetX(objS)+lr*cos(ea);
+			let ey = ObjMove_GetY(objS)+lr*sin(ea);
+			EXPLODE_LASER(ex, ey, ea);
+			CallSound(sndShot7);
+		}
+		if (!Obj_IsDeleted(objL)) { DelLaser(); }
+		
+		task DelLaser()
+		{
+			descent(i in 0 .. 15)
+			{
+				ObjRender_SetAlpha(objL, 255*i/15);
+				yield;
+			}
+			Obj_Delete(objL);
+		}
+	}
+	task EXPLODE_LASER(x, y, angle)
+	{
+		if (eAlive)
+		{
+			let speed = [1.5, 1.5, 1.5][DifficultEx()];
+			let sway = [3, 0, 3][DifficultEx()];
+			// ショットも発射
+			ascent(i in 0 .. 2)
+			{
+				let muki = [1, -1][i];
+				let a1 = angle + 5*muki;
+				let a2 = angle + 15*muki;
+				let s1 = speed;
+				let s2 = speed*0.75;
+				let pos1 = [s1*cos(a1), s1*sin(a1)];
+				let pos2 = [s2*cos(a2), s2*sin(a2)];
+				ascent(j in 0 .. sway)
+				{
+					let tmp = j/(sway-1);
+					let vx = pos1[0]*(1-tmp) + pos2[0]*tmp;
+					let vy = pos1[1]*(1-tmp) + pos2[1]*tmp;
+					vx += rand(-0.1, 0.1);
+					vy += rand(-0.1, 0.1);
+					let objS = My_CreateShotB2(x, y, vx*5, vy*5, -vx/5, -vy/5, vx, vy, ADD_BGW_FIRE_RED, 15);
+				}
+			}
+		}
+		ascent(t in 0 .. 10)
+		{
+			if (!eAlive) { return; }
+			
+			let tmp = t/9;
+			let sx = x;
+			let sy = y;
+			let ss = 24;
+			let sa = angle;
+			let graphic = BGW_BALL_M_RED;
+			let lw = 32 - 24*tmp;
+			
+			let objL = My_CreateLooseLaserA1(sx, sy, ss, sa, 240, lw, graphic, 0);
+			ObjLaser_SetIntersectionWidth(objL, lw*0.66);
+			ObjLaser_SetInvalidLength(objL, 120, 180);
+			
+			let objEffect = CreateLooseLaserA1(sx, sy, ss, sa, 240, lw*4, graphic, 0);
+			ObjShot_SetIntersectionEnable(objEffect, false);
+			ObjRender_SetColor(objEffect, 32, 0, 0);
+			ObjShot_SetItemChange(objEffect, false);
+			
+			yield;
+		}
+	}
+	task TUchikaeshi(x, y, angle)
+	{
+		if (eAlive)
+		{
+			let speed = [3, 2, 3][DifficultEx()];
+			let sway = [7, 4, 7][DifficultEx()];
+			// ショットも発射
+			ascent(i in 0 .. 4)
+			{
+				let pos1 = [speed*cos(angle+i*90), speed*sin(angle+i*90)];
+				let pos2 = [speed*cos(angle+(i+1)*90), speed*sin(angle+(i+1)*90)];
+				ascent(j in 0 .. sway)
+				{
+					let tmp = j/(sway-1);
+					let vx = pos1[0]*(1-tmp) + pos2[0]*tmp;
+					let vy = pos1[1]*(1-tmp) + pos2[1]*tmp;
+					let objS = My_CreateShotB2(x, y, vx, vy, -vx/30, -vy/30, vx/8, vy/8, BGW_CHRYSTAL_M_WHITE, 15);
+					ObjMove_AddPatternB2(objS, 45, NO_CHANGE, NO_CHANGE, vx/360, vy/360, vx, vy);
+					Obj_SetRenderPriorityI(objS, GetShotRenderPriorityI+1);
+				//	Obj_SetRenderPriorityI(objS, GetShotRenderPriorityI-1);
+				}
+			}
+		}
+	}
+
+	function GetTuboHormingAngle(x, y, angle, horming_power)
+	{
+		let to_angle = atan2(GetPlayerY-y, GetPlayerX-x);
+		let tmp = (angle-to_angle)%360;
+		if (tmp > 180) { tmp -= 360; }
+		tmp *= horming_power;
+		return(angle-tmp);
+	}
+}

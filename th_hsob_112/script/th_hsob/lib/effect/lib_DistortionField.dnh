@@ -1,0 +1,75 @@
+//　歪みフィールド
+task SetDistortionField( pos, spd, angle, long, scale, rgba, layer, blend ){
+	if( !CfgIsUseShader() ){ return; }
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let _rect	= [ 512, 512 ];
+	let ac		= randEffect( 32, 64 );
+	let def		= randEffect( 0, 360 );
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+	ObjPrim_SetTexture( obj, imgEffectSpark3 );
+	ObjRender_SetBlendType( obj, blend );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, _rect[0], _rect[1] );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+	
+	let sLayer	= [ 0, 99 ];
+	
+	let rt	= CreateRenderTexture( "rtTest", sLayer[0], sLayer[1], true );
+	let shd	= CreateShaderObject( obj, 8 );
+	ObjShader_SetVector( shd, "m_rtSize", 1024, 512, 0, 0 );
+	ObjShader_SetVector( shd, "m_texSize", _rect[0], _rect[1], 0, 0 );
+	
+	while( !Obj_IsDeleted(obj) && move1 < 1 || frame < long ){
+		let angc = ac * sin( def+frame*(spd*4) );
+		let spos = [
+			ObjRender_GetX(obj) + spd * cos( angle + angc ),
+			ObjRender_GetY(obj) + spd * sin( angle + angc ),
+		];
+		move1 = 1 * sin( moveA );
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, move1*scale[0], move1*scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetVector( shd, "m_pos", spos[0], spos[1], 0, 0 );
+		ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), (rgba[3]*(1/255)) );
+		ObjShader_SetVector( shd, "m_scale", move1*scale[0], move1*scale[1], 0, 0 );
+		ObjShader_SetTexture( shd, "g_Texture", rt );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 2; }
+		yield;
+	}
+	while( move1 > 0 ){
+		let angc = ac * sin( def+frame*(spd*4) );
+		let spos = [
+			ObjRender_GetX(obj) + spd * cos( angle + angc ),
+			ObjRender_GetY(obj) + spd * sin( angle + angc ),
+		];
+		move1 = 1 * sin( moveA );
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, move1*scale[0], move1*scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetVector( shd, "m_pos", spos[0], spos[1], 0, 0 );
+		ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), (rgba[3]*(1/255)) );
+		ObjShader_SetVector( shd, "m_scale", move1*scale[0], move1*scale[1], 0, 0 );
+		ObjShader_SetTexture( shd, "g_Texture", rt );
+		
+		frame++;
+		moveA += 5;
+		yield;
+	}
+	Obj_Delete( shd );
+	Obj_Delete( obj );
+}

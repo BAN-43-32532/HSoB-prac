@@ -1,0 +1,278 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　禁呪返し
+//　「マリオネットセーバー咲夜」
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+
+//　マリオネットセーバー
+task Player03ZBomb(){
+//	let objManage	= GetSpellManageObject();
+	let spell		= ObjSpell_Create();
+	let se			= ObjSound_Create();
+	let allEnm		= GetAllEnemyID();
+	let frame		= 0;
+	let bombTm		= 60 * 3.5;	// 480F
+	let lpmax		= [ length(allEnm), 3 ];
+	let waitTime	= 2;
+	let callTime	= waitTime * ( lpmax[0] * lpmax[1] );	// 320F
+	let pang = GetPlayerAngle();
+
+	//　無敵
+	ResetPlayerInvincibility( bombTm + 240 );
+	// Zボム開始通知
+	SetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", true );
+	// カットイン
+	if (!IsRainbow())
+	{
+		SetAreaCommonData(CAREA_SYSTEM, "PACKAGE_CUTIN", true );
+		SetAreaCommonData(CAREA_SYSTEM, "PACKAGE_CUTIN_ID", 2 );
+	}
+	// 効果音
+	ObjSound_Play( PlayerEnviron_SE[8] );
+	
+	// 1f待機
+	yield;
+	
+	ZBombArea( bombTm+60 );
+	
+	ObjSound_Play( PlayerEnviron_SE[4] );
+	ObjSound_Play( PlayerEnviron_SE[9] );
+	
+	//　ダメージはここね
+	ObjSpell_SetDamage( spell, 4 );
+	ObjSpell_Regist( spell );
+	
+	// えへくと
+	task TEffect()
+	{
+		let way = 12;
+		ascent(i in 0 .. way)
+		{
+			if (!IsPermitPlayerSpell()) { return; }
+			Player03ZBomb_Knife( spell, 120, 270+i*360/way+i*2*5-30*2, 2, i, true, 180+(way-i-1)*5+2, i/way*360 );
+			waitEx(2);
+			if (!IsPermitPlayerSpell()) { return; }
+			Player03ZBomb_Knife( spell, 160, 90+i*360/way-i*2*5+30*2, -2, i, true, 180+(way-i-1)*5, i/way*360 );
+			waitEx(3);
+		}
+	}
+	TEffect();
+	
+	while( IsPermitPlayerSpell() && frame < bombTm ){
+
+		// 霊撃位置を記録
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_POS", [CenX, CenY]);
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_SIZE", 384);
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_LV", GetZSpellLevel());
+		
+		//　ダメージ
+		if (frame < 60) { ObjSpell_SetDamage( spell, GetZSpellDamage()*0.5 ); }
+		else { ObjSpell_SetDamage( spell, GetZSpellDamage()*5 ); }
+		
+		// アイテム化
+		DeleteShotAll_ToZItem(CenX, CenY, 384);
+		
+		// 攻撃範囲
+		if (frame < 60) { ObjSpell_SetIntersectionCircle( spell, GetPlayerX, GetPlayerY, 224 ); }
+//		else {  }
+
+		// 効果音用フラグ
+		Obj_SetValue(spell, "SOUND_FLAG", Obj_GetValueD(spell, "SOUND_FLAG", 0)-1);
+
+		frame++;
+		yield;
+	}
+	// 初期化
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_SIZE", 0);
+	SetAreaCommonData(CAREA_SYSTEM, "PLAYER_SPELL_LV", 0);
+
+	Set2DCameraFocusX( GetStgFrameWidth()/2 );
+	Set2DCameraFocusY( GetStgFrameHeight()/2 );
+	DeleteShotInCircle( TYPE_SHOT, TYPE_ITEM, GetPlayerX(), GetPlayerY(), 512 );
+	ObjSound_Play( PlayerEnviron_SE[3] );
+//	Obj_Delete( objManage );
+	Obj_Delete( spell );
+	Obj_Delete( se );
+	
+	// Zボム終了通知
+	SetAreaCommonData(CAREA_SYSTEM, "ZBOMB_ACTIVE", false );
+}
+
+// 追尾するかんじなナイフ
+task Player03ZBomb_Knife( objSpell, v_r, v_angle, v_adda, v_count, v_sound, v_time, v_colorh )
+{
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let path	= imgPlZbomb3a;
+	let ang		= v_angle;
+	let flgHorming	= false;
+	let baseX	= 0;
+	let baseY	= 0;
+	let baseR	= 0;
+	let baseA	= 0;
+	let flgDisabled	= false;
+	
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 31 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjRender_SetAngleZ( obj, ang );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 128, 192 );
+	ObjSprite2D_SetDestCenter( obj );
+//	ObjRender_SetScaleXYZ( obj, 0.5, 0.5, 1 );
+
+	if (IsDrawEffect() > 1) {
+		ascent(i in 0 .. 3) { SetShadow( obj, [v_colorh,160,192-i*64], 1.5-i*0.2, 1+i*2 ); }
+	} else if (IsDrawEffect() > 0) {
+		SetShadow( obj, [v_colorh,160,255], 1.5, 2 );
+	} else {
+		/* なし */
+	}
+	
+	ascent(t in 0 .. v_time)
+	{
+		if (!IsPermitPlayerSpell()) { flgDisabled = true; break; }
+		
+		if (t < 15) { baseR = GetCurve((t+1)/15) * v_r; }
+		baseX = GetPlayerX + baseR * cos(ang);
+		baseY = GetPlayerY + baseR * sin(ang);
+		baseA = ang;
+		baseA = baseA % 360;
+		if (baseA > 180) { baseA -= 360; }
+
+		if (!flgHorming)
+		{
+			ObjRender_SetPosition( obj, baseX, baseY, 0 );
+			ObjRender_SetAngleZ( obj, baseA+90 );
+		}
+
+//		if (t >= 60 && t < v_time-30 && t == 60 || t == 120)
+		if (t == 60 || t == 120)
+		{
+//			if (v_sound) { ObjSound_Play( PlayerEnviron_SE[7] ); }
+			SetHorming(60);
+		}
+		ang += v_adda;
+		yield;
+	}
+	descent(t in 0 .. 30)
+	{
+		let tmp = GetCurve((t+1)/30);
+		if (!flgDisabled)
+		{
+			baseR = (tmp*0.75+0.25) * v_r;
+			baseX = GetPlayerX + baseR * cos(ang);
+			baseY = GetPlayerY + baseR * sin(ang);
+			baseA = ang;
+			ObjRender_SetPosition( obj, baseX, baseY, 0 );
+			ObjRender_SetAngleZ( obj, baseA+90 );
+		}
+		ObjRender_SetAlpha( obj, tmp*255 );
+		ang += v_adda;
+		yield;
+	}
+	Obj_Delete( obj );
+
+	task SetHorming(time)
+	{
+		let posE = GetEnemyIntersectionPosition( baseX, baseY, 1 );
+		let toR = 300;
+		let toX = baseX + 300*cos(baseA);
+		let toY = baseY + 300*sin(baseA);
+		let toA = baseA;
+		if (length(posE) > 0)
+		{
+			toA = atan2(posE[0][1]-baseY, posE[0][0]-baseX);
+			toR = max(300, ((posE[0][0]-baseX)^2+(posE[0][1]-baseY)^2)^0.5+64);
+			toX = baseX + toR*cos(toA);
+			toY = baseY + toR*sin(toA);
+		}
+		else
+		{
+			toA = atan2(MinY-baseY, CenX-baseX);
+			toR = max(300, ((CenX-baseX)^2+(MinY-baseY)^2)^0.5+64);
+			toX = baseX + toR*cos(toA);
+			toY = baseY + toR*sin(toA);
+		}
+		
+		toA = toA % 360;
+		if (toA > 180) { toA -= 360; }
+
+		flgHorming = true;
+		// 効果音
+		if (v_sound) { ObjSound_Play( PlayerEnviron_SE[7] ); }
+		// ホーミング時のみダメージ判定を付ける
+		ObjSpell_SetIntersectionCircle( objSpell, CenX, CenY, 384 );
+		
+		ascent(t in 0 .. time)
+		{
+			let posA = 1;
+			if (t < time/4) { posA = GetCurve_ad((t+1)/time*4); }
+			if (t > time/4*3) { posA = GetCurve_ad((time-t)/time*4); }
+			
+			let posR = 0;
+			if (t < time/2) { posR = GetCurve_ad((t+1)/time*2); }
+			else { posR = GetCurve_ad((time-t)/time*2); }
+			
+			let addA = toA - baseA;
+			addA = addA % 360;
+			if (addA > 180) { addA -= 360; }
+
+			ObjRender_SetPosition( obj, baseX*(1-posR)+toX*posR, baseY*(1-posR)+toY*posR, 0 );
+			ObjRender_SetAngleZ( obj, baseA+addA*posA+90 );
+			yield;
+		}
+		
+		flgHorming = false;
+	}
+	
+	task SetShadow(b_obj, color_hsv, scale, delay)
+	{
+		yield;
+		
+		let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+		let path	= imgPlZbomb3a;
+		ObjPrim_SetTexture( obj, path );
+		Obj_SetRenderPriorityI( obj, 32 );
+		ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+		ObjSprite2D_SetSourceRect( obj, 128, 0, 256, 192 );
+		ObjSprite2D_SetDestCenter( obj );
+		ObjRender_SetScaleXYZ( obj, scale, scale, 1 );
+		ObjRender_SetColorHSV( obj, color_hsv[0], color_hsv[1], color_hsv[2] );
+		
+		let px = [ObjRender_GetX(b_obj)];
+		let py = [ObjRender_GetY(b_obj)];
+		let pa = [ObjRender_GetAngleZ(b_obj)];
+
+		let t = 0;
+		while(length(px) > 0)
+		{
+			ObjRender_SetPosition( obj, px[0], py[0], 0 );
+			ObjRender_SetAngleZ( obj, pa[0] );
+			if (t < 15) { ObjRender_SetAlpha(obj, (t+1)/15*255); }
+			
+			if (!Obj_IsDeleted(b_obj))
+			{
+				px = px ~ [ObjRender_GetX(b_obj)];
+				py = py ~ [ObjRender_GetY(b_obj)];
+				pa = pa ~ [ObjRender_GetAngleZ(b_obj)];
+			}
+			if (length(px) > delay || Obj_IsDeleted(b_obj))
+			{
+				px = erase(px, 0);
+				py = erase(py, 0);
+				pa = erase(pa, 0);
+			}
+			ObjRender_SetColorHSV( obj, color_hsv[0]+t, color_hsv[1], color_hsv[2] );
+			t++;
+			yield;
+		}
+		descent(t in 0 .. 15)
+		{
+			ObjRender_SetAlpha(obj, t/15*255);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+

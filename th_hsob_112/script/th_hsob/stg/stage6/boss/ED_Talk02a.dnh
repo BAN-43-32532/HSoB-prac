@@ -1,0 +1,138 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["霊夢エンディング-Bad"]
+#Text["霊夢エンディング-Bad"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdBad[0][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 108, 108];
+	let COL2 = [108, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]博麗神社。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]博麗神社。[r]恐るべき砂漠の神々の力により、敗北した霊夢は目の前が真っ暗になった。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "[r]目を開けると、真っ白な停止世界と、見慣れた神社が再び広がっていた。", COL0);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「巫女も避けの誤り、ですね。さあ、パターンを覚えているうちにもう一度倒して来て下さい」", COL2);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「禁呪塔が直ってる…もしかして、出発前まで時間を戻したの？」", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「メイドの時間操作術も色々ありますわ。今度こそ確実に勝って下さいね。", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「記憶を保ったまま時間を戻してやり直すという事は、戻した時間の分だけ余計に年を取っているのと同義ですから", COL2);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「私の寿命一年削っていいから、あいつらと紅魔館（あんたら）まとめて潰れないかな」", COL1);
+		}
+		case(8)
+		{
+			TEndingImage(imgEdBad[0][1], 30);
+			SetTalkEx(cutinDescri, "[r]「一周目」とは違う道を通り、禁呪塔を目指す霊夢。[r]しかし何事もなく同じボス達が再び立ち塞がる。", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]たとえ時間が戻っても、狒々や爪楊枝たちと出会う運命は変えられないのだ。", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]さあ行け霊夢！[r]必殺の禁呪返しは勿体ぶるな！", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.05　　ゲームの都合とも言うよね", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

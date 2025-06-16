@@ -1,0 +1,253 @@
+// リプレイ選択画面
+function SceneReplaySelect(selectedDedault)
+{
+	// ロード
+	LoadReplayList();
+	let listValidReplayIndex = GetValidReplayIndices();
+	
+	let selectMax = length(listValidReplayIndex);
+	let countItemPerPage = 16;
+	let pageMax = max(0, trunc((selectMax - 1) / countItemPerPage));
+	let pathReplay = "";
+	
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", 0);
+	
+	//メニュー配置
+	local
+	{
+		TItemBaseReplay(objParent);
+		// タイトル
+		MenuPartsFace(objParent, 4);
+	}
+	wait(10);
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+		
+		alternative (downKey)
+		case (VK_UP)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", -1, selectMax);
+		}
+		case (VK_DOWN)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", 1, selectMax);
+		}
+		case (VK_LEFT)
+		{
+			CallSoundPackage(sndTtSelect);
+			let tmp_value = Obj_GetValueD(objParent, "VALUE", 0);
+			
+			if (tmp_value <= 0) { tmp_value = selectMax-1; }
+			else { tmp_value = max(0, tmp_value-countItemPerPage); }
+			Obj_SetValue(objParent, "VALUE", tmp_value);
+		}
+		case (VK_RIGHT)
+		{
+			CallSoundPackage(sndTtSelect);
+			let tmp_value = Obj_GetValueD(objParent, "VALUE", 0);
+			
+			if (tmp_value >= selectMax-1) { tmp_value = 0; }
+			else { tmp_value = min(selectMax-1, tmp_value+countItemPerPage); }
+			Obj_SetValue(objParent, "VALUE", tmp_value);
+		}
+		case (VK_OK)
+		{
+			MenuEnter(objParent);
+			let idx = listValidReplayIndex[Obj_GetValueD(objParent, "VALUE", 0)];
+			pathReplay	= GetReplayInfo(idx, REPLAY_FILE_PATH );
+			break;
+		}
+		case (VK_CANCEL)
+		{
+			CallSoundPackage(sndTtCancel);
+			break;
+		}
+		wait(2);	//適当に固定ディレイ
+	}
+	Obj_Delete(objParent);
+	return(pathReplay);
+	
+	// メニュー選択時モーション
+	function MenuEnter(parent)
+	{
+		CallSoundPackage(sndTtDecide);
+		Obj_SetValue(parent, "FLASH", 1);
+		wait(15);
+	}
+	// ベースの奴
+	task TItemBaseReplay(parent)
+	{
+		let base_ix = 48;
+		let base_iy = 140;
+		let offset_y = 18;
+		
+		let before_page = -99999;
+		let selected_page = -1;
+		let selected_index = -1;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			selected_page = trunc(selected_index/countItemPerPage);
+			if (before_page != selected_page)
+			{
+				// 再設置
+				let mx = GetScreenWidth/2;
+				let my = 240;
+				ascent(i in 0 .. countItemPerPage)
+				{
+					let mx = base_ix;
+					let my = base_iy + offset_y*i;
+					let midx = i + selected_page*countItemPerPage;
+					if (midx >= selectMax) { break; }
+					TMenuItemReplay(objParent, midx, mx, my);
+				}
+				before_page = selected_page;
+
+			}
+			yield;
+		}
+	}
+	// メニューパーツ
+	task TMenuItemReplay(parent, index, base_x, base_y)
+	{
+		let text = "";
+		let text2 = "";
+		
+		let indexReplay = listValidReplayIndex[index];
+		let rpy_comment = SplitString( GetReplayInfo(indexReplay, REPLAY_COMMENT), "/" );
+		if (IsValidReplayIndex(indexReplay))
+		{
+			text = rtos("00", indexReplay) ~ " ";
+			text = text ~ vtos("-8s", GetReplayInfo(indexReplay, REPLAY_USER_NAME)) ~ " ";
+			text = text ~ vtos("12.0f", GetReplayInfo(indexReplay, REPLAY_TOTAL_SCORE)) ~ "    ";
+			text = text ~ vtos("-8s", GetPlayerName(GetReplayInfo(indexReplay, REPLAY_PLAYER_NAME))) ~ " ";
+			text = text ~ vtos("-9s", rpy_comment[5]);
+			text2 = text2 ~ GetReplayInfo(indexReplay, REPLAY_DATE_TIME) ~ "   ";
+			text2 = text2 ~ vtos("03.2f", GetReplayInfo(indexReplay, REPLAY_FPS_AVERAGE)) ~ "fps ";
+		}
+		
+		let objText = CreateAsciiText(text);
+		ObjRender_SetPosition(objText, base_x, base_y, 0);
+		ObjRender_SetScaleXYZ(objText, 0.6, 0.6, 1);
+		let objText2 = CreateAsciiText(text2);
+		ObjRender_SetPosition(objText2, base_x+240, base_y+16, 0);
+		ObjRender_SetScaleXYZ(objText2, 0.6, 0.6, 1);
+		ObjRender_SetAlpha(objText2, 0);
+		let objWeapon = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		Obj_SetRenderPriorityI(objWeapon, 80);
+		ObjPrim_SetPrimitiveType(objWeapon, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetTexture(objWeapon, imgSystemAsciiEquip);
+		ObjPrim_SetVertexCount(objWeapon, 6);
+		ObjRender_SetPosition(objWeapon, base_x, base_y, 0);
+		ObjRender_SetScaleXYZ(objWeapon, 0.6, 0.6, 1);
+		local
+		{
+			let equip = atoi(rpy_comment[2]);
+			let pos = [ 0+32*equip, 0, 32+32*equip, 32];
+			AddImg_Triangle01(objWeapon, 0,
+					pos[0], pos[1], pos[2], pos[3],		//切り取り範囲
+					524 + 0, -2 + 0, 524 + 32, -2 + 32);	//貼り付け範囲
+		}
+
+		let t = 0;
+		let before_page = trunc(index/countItemPerPage);
+		let before_index = -99999;
+		let selected_index = -1;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			
+			let selected_page = trunc(selected_index/countItemPerPage);
+			// ページ変更
+			if (selected_page != before_page) { break; }
+			
+			if (selected_index != before_index)
+			{
+				let timer = 5;
+				if (before_index == -99999) { timer = 0; }
+				let offset_by = [0, 16][before_index < index];
+				let offset_ny = [0, 16][selected_index < index];
+				let alpha_b = [0, 255][before_index == index];
+				let alpha_n = [0, 255][selected_index == index];
+				ascent(t in 0 .. timer)
+				{
+					let tmp = t/(timer-1);
+					let by = base_y + offset_by*(1-tmp) + offset_ny*tmp;
+					ObjRender_SetY(objText, by);
+					ObjRender_SetY(objWeapon, by);
+					ObjRender_SetY(objText2, by+16);
+					ObjRender_SetAlpha(objText2, alpha_b*(1-tmp)+alpha_n*tmp);
+					yield;
+				}
+				ObjRender_SetY(objText, base_y+offset_ny);
+				ObjRender_SetY(objWeapon, base_y+offset_ny);
+				ObjRender_SetY(objText2, base_y+offset_ny+16);
+				ObjRender_SetAlpha(objText2, alpha_n);
+				before_index = selected_index;
+			}
+
+			// 選択決定
+			if (Obj_GetValueD(parent, "FLASH", 0))
+			{
+				if (selected_index == index) {
+					descent(t in 0 .. 20)
+					{
+						let alpha = 255 - ((trunc(t/3)+1)%2)*128;
+						ObjRender_SetAlpha(objText, alpha);
+						ObjRender_SetAlpha(objWeapon, alpha);
+						ObjRender_SetAlpha(objText2, alpha);
+						yield;
+					}
+				} else {
+					descent(t in 0 .. 20)
+					{
+						let alpha = 255*((t+1)/20);
+						ObjRender_SetAlpha(objText, alpha);
+						ObjRender_SetAlpha(objWeapon, alpha);
+					//	ObjRender_SetAlpha(objText2, alpha);
+						yield;
+					}
+				}
+				break;
+			}
+			
+			// 明滅
+			if (selected_index == index) {
+				let tmp_c = 255 - (sin(t*10)+0.75)*32;
+				ObjRender_SetColor(objText, tmp_c, tmp_c, tmp_c);
+				ObjRender_SetColor(objWeapon, tmp_c, tmp_c, tmp_c);
+				ObjRender_SetColor(objText2, tmp_c, tmp_c, tmp_c);
+			} else {
+				ObjRender_SetColor(objText, 128, 128, 128);
+				ObjRender_SetColor(objWeapon, 128, 128, 128);
+				ObjRender_SetColor(objText2, 128, 128, 128);
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objText);
+		Obj_Delete(objText2);
+		Obj_Delete(objWeapon);
+	}
+
+	function GetPlayerName(text)
+	{
+		alternative(text)
+		case("HSOB_PL01")  { return("Reimu"); }
+		case("HSOB_PL02") { return("Marisa"); }
+		case("HSOB_PL03") { return("Sakuya"); }
+		case("HSOB_PL04") { return("Kaguya"); }
+		others { return("???"); }
+	}
+}
+
+
+

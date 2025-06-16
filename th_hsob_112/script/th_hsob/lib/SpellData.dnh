@@ -1,0 +1,644 @@
+// スペカのデータ
+// Exスペカは難易度にDifficultExが入る
+
+// スペカのリストを返す
+function GetSpellCardList(idStage, idDifficult)
+{
+	let spell = [];
+	alternative(idStage)
+	case(0)
+	{
+		// ステージ1
+		if (idDifficult <= D_NORM) { spell = [ 2, 3, 1001 ]; }
+		else { spell = [ 1, 2, 3, 1001 ]; }
+		if ( DEBUG_MODE ) { spell = spell ~ [10001, 10002, 10003]; }
+	}
+	case(1)
+	{
+		// ステージ2
+		spell = [ 11, 12, 13, 1002 ];
+		if ( DEBUG_MODE ) { spell = spell ~ [10011, 10012]; }
+	}
+	case(2)
+	{
+		// ステージ3
+		if (idDifficult <= D_NORM) { spell = [ 22, 23, 24, 25, 1003 ]; }
+		else { spell = [ 21, 22, 23, 24, 25, 1003 ]; }
+		if ( DEBUG_MODE ) { spell = spell ~ [10021, 10022, 10023, 10024]; }
+	}
+	case(3)
+	{
+		// ステージ4
+		spell = [ 31, 32, 33, 34, 35, 1004 ];
+		if ( DEBUG_MODE ) { spell = spell ~ [10031, 10032, 10033]; }
+	}
+	case(4)
+	{
+		// ステージ5
+		spell = [ 41, 51, 1005, 61, 62, 63, 64, 65, 1006 ];
+		if ( DEBUG_MODE ) { spell = spell ~ [10041, 10051, 10061, 10062, 10063, 10064]; }
+	}
+	case(5)
+	{
+		// ステージ6
+		spell = [ 71, 72, 73, 74, 75, 76, 77, 1007 ];
+		if ( DEBUG_MODE ) { spell = spell ~ [10071, 10072, 10073, 10074, 10075]; }
+	}
+	case(6)
+	{
+		// ステージEx
+		spell = [ 81, 82, 83, 85, 84, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 1008, 1009 ];
+//		if (idDifficult != D_EX_EASY) { spell = spell ~ [ 1008, 1009 ]; }
+		if ( DEBUG_MODE ) { spell = spell ~ [10081, 10082, 10083, 10084, 10085, 10086, 10087, 10088]; }
+	}
+	return(spell);
+}
+
+// スペカ名を返す
+function GetSpellCardName(id, diff)
+{
+	alternative(id)
+	/* 乱々 */
+	case(1)
+	{
+		return("猿符「笑う門には弾来たる」");
+	}
+	case(2)
+	{
+		alternative(diff)
+		case(0, 1) { return("潜航「紅の風雲」"); }
+		case(2)    { return("潜紅「スカーレットサルマリン」"); }
+		case(3)    { return("緋神「サルヴァトーレ紅臨」"); }
+	}
+	case(3)
+	{
+		alternative(diff)
+		case(0, 1) { return("獣爪「サルーインスラッシュ」"); }
+		case(2)    { return("硬爪「オブシダンスラッシュ」"); }
+		case(3)    { return("魔爪「べリルカラースラッシュ」"); }
+	}
+	case(1001)
+	{
+		return("「新約・猿蟹合戦大絵巻」");
+	}
+	/* ちい */
+	case(11)
+	{
+		alternative(diff)
+		case(0, 1) { return("楊枝「アサルトピック」"); }
+		case(2)    { return("盗品「パスウェイジョンニードル」"); }
+		case(3)    { return("二刀「金の針銀の針」"); }
+	}
+	case(12)
+	{
+		alternative(diff)
+		case(0, 1) { return("自雷「ホーミングイズマイン」"); }
+		case(2)    { return("自雷「ミリオンミニオンズ」"); }
+		case(3)    { return("自雷「無限転生チーレム無双」"); }
+	}
+	case(13)
+	{
+		alternative(diff)
+		case(0, 1) { return("「ちい様とつまようじと割り箸工場」"); }
+		case(2, 3)    { return("「環境に優しすぎるレーザー割り箸」"); }
+	}
+	case(1002)
+	{
+		return("「奥義・ネンネコロリ剣舞」");
+	}
+	/* ひかり子 */
+	case(21)
+	{
+		return("鬼火「沼を飛ぶピュリファイア」");
+	}
+	case(22)
+	{
+		alternative(diff)
+		case(0, 1) { return("瀑符「ナイアガラベンヌ」"); }
+		case(2)    { return("流星「スターリットベンヌ」"); }
+		case(3)    { return("電脳「ツイートアピアランス」"); }
+	}
+	case(23)
+	{
+		alternative(diff)
+		case(0, 1) { return("解呪「プリンセスキッス」"); }
+		case(2)    { return("背信「ジューダスキッス」"); }
+		case(3)    { return("配信「人間にキスしてみた」"); }
+	}
+	case(24)
+	{
+		alternative(diff)
+		case(0, 1) { return("礫符「ハイウェイフライヤー」"); }
+		case(2)    { return("騒符「ウェイウェイフライヤー」"); }
+		case(3)    { return("暴符「ルナウェイフライヤー」"); }
+	}
+	case(25)
+	{
+		alternative(diff)
+		case(0, 1) { return("「池沼の人工太陽」"); }
+		case(2, 3) { return("「プライモーディアルサン」"); }
+	}
+	case(1003)
+	{
+		return("「真・大蝦蟇の池の主」");
+	}
+	/* 上人 */
+	case(31)
+	{
+		alternative(diff)
+		case(0, 1) { return("「南無不可思議如来光」"); }
+		case(2, 3) { return("「帰命尽十方無碍如来光」"); }
+	}
+	case(32)
+	{
+		alternative(diff)
+		case(0, 1) { return("翔来「鳥の仏法僧」"); }
+		case(2)    { return("梟符「真の仏法僧」"); }
+		case(3)    { return("紫鸞「姿も心も完璧に仏法僧」"); }
+	}
+	case(33)
+	{
+		alternative(diff)
+		case(0, 1) { return("無断転サエ「幻想風靡」"); }
+		case(2)    { return("無断転サエ「無双風神」"); }
+		case(3)    { return("無断転早苗「モーゼの奇跡」"); }
+	}
+	case(34)
+	{
+		alternative(diff)
+		case(0, 1) { return("無断転サエ「片翼の白鷺」"); }
+		case(2)    { return("無断改変「両翼の白鷺にしてみた」"); }
+		case(3)    { return("無断魔改造「六枚羽の魔王」"); }
+	}
+	case(35)
+	{
+		alternative(diff)
+		case(0, 1) { return("禁詞「バルス」"); }
+		case(2, 3) { return("禍符「幻想郷春のバルス祭り」"); }
+	}
+	case(1004)
+	{
+		return("「絶対他力絶対本願」");
+	}
+	/* ミスティア */
+	case(41)
+	{
+		alternative(diff)
+		case(0, 1) { return("気合「真昼の夜雀」"); }
+		case(2) { return("気合「デイライトコーラス」"); }
+		case(3) { return("渾身「煌く烈日の歌姫」"); }
+	}
+	case(1005)
+	{
+		return("「鳥蝶超伎楽」");
+	}
+	/* ネベトテフェト */
+	case(51)
+	{
+		alternative(diff)
+		case(0, 1) { return("冥蝶「ダークテラースケールス」"); }
+		case(2, 3) { return("冥主「ダークテラーミストレス」"); }
+	}
+	/* セト */
+	case(61)
+	{
+		alternative(diff)
+		case(0, 1) { return("分離「四肢奮迅」"); }
+		case(2)    { return("分離「口八丁手足八丁」"); }
+		case(3)    { return("援軍「困った時のバステトの手」"); }
+	}
+	case(62)
+	{
+		alternative(diff)
+		case(0, 1) { return("農園「レタスファーマーセト」"); }
+		case(2)    { return("不惑「萵苣は始終にして惑わず」"); }
+		case(3)    { return("鉄心「大地を巡り爆ぜる血脈」"); }
+	}
+	case(63)
+	{
+		alternative(diff)
+		case(0, 1) { return("神器「物理と魔法を司る宝杖」"); }
+		case(2)    { return("宝杖「碑文の杖ウアス＆アンク」"); }
+		case(3)    { return("魔宝杖「真名入りウアス＆アンク」"); }
+	}
+	case(64)
+	{
+		alternative(diff)
+		case(0, 1) { return("鵺符「弾幕アメミット」"); }
+		case(2)    { return("鵺符「アーマード・アーマーン」"); }
+		case(3)    { return("異神「バアルのような俺」"); }
+	}
+	case(65)
+	{
+		alternative(diff)
+		case(0, 1) { return("「ゴッドオベリスククラッシャー」"); }
+		case(2, 3) { return("「エメラルドタブレットクラッシャー」"); }
+	}
+	case(1006)
+	{
+		return("「神の眼よ！敵を燃やし尽くせ！」");
+	}
+	/* 珠羽 */
+	case(71)
+	{
+		alternative(diff)
+		case(0, 1) { return("橙符「砂漠色の熱風」"); }
+		case(2)    { return("悠久「時を刻む古代の風」"); }
+		case(3)    { return("現代「パーティキュレートマター2.5」"); }
+	}
+	case(72)
+	{
+		alternative(diff)
+		case(0, 1) { return("赤符「朱塗りの矢羽はお前を選んだ！」"); }
+		case(2)    { return("光翼「ゾーン・オブ・フェザーズ」"); }
+		case(3)    { return("全力「ホロウアローズストライク」"); }
+	}
+	case(73)
+	{
+		alternative(diff)
+		case(0, 1) { return("紫符「佐渡の紫水晶礫」"); }
+		case(2)    { return("幻想「世界遺産・佐渡金銀弾」"); }
+		case(3)    { return("解放「賢者の石礫」"); }
+	}
+	case(74)
+	{
+		alternative(diff)
+		case(0, 1) { return("藍符「ミイラフェアリー」"); }
+		case(2)    { return("超妖精「インディゴ・チルドレン」"); }
+		case(3)    { return("超妖精「レインボー・チルドレン」"); }
+	}
+	case(75)
+	{
+		alternative(diff)
+		case(0, 1) { return("青符「錬金水剣ラストアゾート」"); }
+		case(2)    { return("宝具「錬金銀剣ハイパーハルペー」"); }
+		case(3)    { return("神宝剣「スガリブレードNo.63」"); }
+	}
+	case(76)
+	{
+		alternative(diff)
+		case(0, 1) { return("緑符「仲間を呼ぶ翠玉のタブレット」"); }
+		case(2, 3) { return("禁忌「生命錬金-ホロウフレンズ-」"); }
+	}
+	case(77)
+	{
+		alternative(diff)
+		case(0, 1) { return("「黄金の島に響け朱鷺の歌」"); }
+		case(2, 3) { return("「ソング・オブ・ニッポニア」"); }
+	}
+	case(1007)
+	{
+		return("「オーバー・ザ・レインボー」");
+	}
+	/* Ex中ボス */
+	case(81)
+	{
+		return("「レッドマジックモンキー」");
+	}
+	case(82)
+	{
+		return("「七人のちいちい侍」");
+	}
+	case(83)
+	{
+		return("「フライングファイアスフィア」");
+	}
+	case(84)
+	{
+		return("「阿弥陀如来の薬」");
+	}
+	case(85)
+	{
+		return("「完全なる墨染の翼 -烏羽玉-」");
+	}
+	/* ﾑﾒｲｻﾝ */
+	case(91)
+	{
+		return("桐壺「青磁の白龍（ブルーセイジホワイトドラゴン）」");
+	}
+	case(92)
+	{
+		return("帚木「覆水盆に返らず」");
+	}
+	case(93)
+	{
+		return("花宴「フラワーカノンベース」");
+	}
+	case(94)
+	{
+		return("絵合「その辺で拾った聖者の硝子」");
+	}
+	case(95)
+	{
+		return("松風「陶製榴弾（パイナップルボマー）」");
+	}
+	case(96)
+	{
+		return("篝火「ヤマタイックマニューバー」");
+	}
+	case(97)
+	{
+		return("野分「青磁偃月刀（セラミック・ブレード）」");
+	}
+	case(98)
+	{
+		return("夕霧「黄昏偃月旋風刃（サンセット・ブラスト）」");
+	}
+	case(99)
+	{
+		return("宿木「再臨！セト大将リターンズ」");
+	}
+	case(100)
+	{
+		return("夢浮橋「陶磁器大戦 ～ 関羽vs曹操」");
+	}
+	case(1008)
+	{
+		return("「最初で最後の無名異の弾幕」");
+	}
+	case(1009)
+	{
+		return("「いつまでも続くみんなの弾幕」");
+	}
+	/* 通常弾幕 */
+	case(10001) { return("通常弾幕1（道中）"); }
+	case(10002) { return("通常弾幕1"); }
+	case(10003) { return("通常弾幕2"); }
+	case(10011) { return("通常弾幕1"); }
+	case(10012) { return("通常弾幕2"); }
+	case(10021) { return("通常弾幕1（道中）"); }
+	case(10022) { return("通常弾幕1"); }
+	case(10023) { return("通常弾幕2"); }
+	case(10024) { return("通常弾幕3"); }
+	case(10031) { return("通常弾幕1"); }
+	case(10032) { return("通常弾幕2"); }
+	case(10033) { return("通常弾幕3"); }
+	case(10041) { return("通常弾幕1（ミスティア）"); }
+	case(10051) { return("通常弾幕1（ネベト）"); }
+	case(10061) { return("通常弾幕1（セト）"); }
+	case(10062) { return("通常弾幕2（セト）"); }
+	case(10063) { return("通常弾幕3（セト）"); }
+	case(10064) { return("通常弾幕4（セト）"); }
+	case(10071) { return("通常弾幕1"); }
+	case(10072) { return("通常弾幕2"); }
+	case(10073) { return("通常弾幕3"); }
+	case(10074) { return("通常弾幕4"); }
+	case(10075) { return("通常弾幕5"); }
+	case(10081) { return("通常弾幕1"); }
+	case(10082) { return("通常弾幕2"); }
+	case(10083) { return("通常弾幕3"); }
+	case(10084) { return("通常弾幕4"); }
+	case(10085) { return("通常弾幕5"); }
+	case(10086) { return("通常弾幕6"); }
+	case(10087) { return("通常弾幕7"); }
+	case(10088) { return("通常弾幕8"); }
+	
+	return("謎のスペルカード");
+}
+
+// ボス名を返す
+function GetBossName(id, is_secret)
+{
+	let name = "松岡修造";
+	if (id <= 10 || id == 1001 || id == 81)
+	{
+		name = "緋神乱々";
+		if (is_secret && id == 1) { name = "？？？？"; }
+	}
+	else if (id <= 20 || id == 1002 || id == 82)
+	{
+		name = "白袴ちい";
+	}
+	else if (id <= 30 || id == 1003 || id == 83)
+	{
+		name = "青鷺ひかり子";
+		if (is_secret && id == 21) { name = "？？？？"; }
+	}
+	else if (id <= 40 || id == 1004 || id == 84)
+	{
+		name = "紫鸞上人";
+		if (is_secret) { name = "？？？？"; }
+	}
+	else if (id <= 50 || id == 1005)
+	{
+		name = "ミスティア・ローレライ";
+		if (is_secret) { name = "？？？？"; }
+	}
+	else if (id <= 60)
+	{
+		name = "ネベトテフェト";
+		if (is_secret) { name = "？？？？"; }
+	}
+	else if (id <= 70 || id == 1006)
+	{
+		name = "セト大将";
+		if (is_secret) { name = "？？？？"; }
+	}
+	else if (id <= 80 || id == 1007 || id == 85)
+	{
+		name = "鳥澄珠羽";
+		if (is_secret) { name = "？？？？"; }
+	}
+	else if (id <= 100 || id == 1008 || id == 1009)
+	{
+		name = "藤壺無名異";
+		if (is_secret) { name = "？？？？"; }
+	}
+	return(name);
+}
+
+
+// パスを返す
+function GetSpellCardPath(idSpell, idDifficult)
+{
+	let dirStg = GetCurrentScriptDirectory() ~ "../stg/";
+	
+	alternative(idSpell)
+	/* 1面 */
+	case(1) { return(dirStg ~ "stage1/boss/01a_Spell01.dnh"); }
+	case(2) { return(dirStg ~ "stage1/boss/01b_Spell01.dnh"); }
+	case(3) { return(dirStg ~ "stage1/boss/01b_Spell02.dnh"); }
+	case(1001) { return(dirStg ~ "stage1/boss/01b_SpellEx01P.dnh"); }
+	/* 2面 */
+	case(11) { return(dirStg ~ "stage2/boss/02b_Spell01.dnh"); }
+	case(12) { return(dirStg ~ "stage2/boss/02b_Spell02.dnh"); }
+	case(13) { return(dirStg ~ "stage2/boss/02b_Spell03.dnh"); }
+	case(1002) { return(dirStg ~ "stage2/boss/02b_SpellEx01P.dnh"); }
+	/* 3面 */
+	case(21) { return(dirStg ~ "stage3/boss/03a_Spell01.dnh"); }
+	case(22) { return(dirStg ~ "stage3/boss/03b_Spell01.dnh"); }
+	case(23) { return(dirStg ~ "stage3/boss/03b_Spell02.dnh"); }
+	case(24) { return(dirStg ~ "stage3/boss/03b_Spell03.dnh"); }
+	case(25) { return(dirStg ~ "stage3/boss/03b_Spell04.dnh"); }
+	case(1003) { return(dirStg ~ "stage3/boss/03b_SpellEx01P.dnh"); }
+	/* 4面 */
+	case(31) { return(dirStg ~ "stage4/boss/04a_Spell01.dnh"); }
+	case(32) { return(dirStg ~ "stage4/boss/04b_Spell01.dnh"); }
+	case(33) { return(dirStg ~ "stage4/boss/04b_Spell02.dnh"); }
+	case(34) { return(dirStg ~ "stage4/boss/04b_Spell03.dnh"); }
+	case(35) { return(dirStg ~ "stage4/boss/04b_Spell04.dnh"); }
+	case(1004) { return(dirStg ~ "stage4/boss/04b_SpellEx01P.dnh"); }
+	/* 5面 */
+	case(41) { return(dirStg ~ "stage5/boss/05a_Spell01.dnh"); }
+	case(51) { return(dirStg ~ "stage5/boss/05b_Spell01.dnh"); }
+	case(1005) { return(dirStg ~ "stage5/boss/05b_SpellEx01P.dnh"); }
+	case(61) { return(dirStg ~ "stage5/boss/05c_Spell01.dnh"); }
+	case(62) { return(dirStg ~ "stage5/boss/05c_Spell02.dnh"); }
+	case(63) { return(dirStg ~ "stage5/boss/05c_Spell03.dnh"); }
+	case(64) { return(dirStg ~ "stage5/boss/05c_Spell04.dnh"); }
+	case(65) { return(dirStg ~ "stage5/boss/05c_Spell05.dnh"); }
+	case(1006) { return(dirStg ~ "stage5/boss/05c_SpellEx01P.dnh"); }
+	/* 6面 */
+	case(71) { return(dirStg ~ "stage6/boss/06b_Spell01.dnh"); }
+	case(72) { return(dirStg ~ "stage6/boss/06b_Spell02.dnh"); }
+	case(73) { return(dirStg ~ "stage6/boss/06b_Spell03.dnh"); }
+	case(74) { return(dirStg ~ "stage6/boss/06b_Spell04.dnh"); }
+	case(75) { return(dirStg ~ "stage6/boss/06b_Spell05.dnh"); }
+	case(76) { return(dirStg ~ "stage6/boss/06b_Spell06.dnh"); }
+	case(77) { return(dirStg ~ "stage6/boss/06b_Spell07.dnh"); }
+	case(1007) { return(dirStg ~ "stage6/boss/06b_SpellEx01P.dnh"); }
+	/* Ex */
+	case(81) { return(dirStg ~ "stage7/boss/07a_Spell01.dnh"); }
+	case(82) { return(dirStg ~ "stage7/boss/07a_Spell02.dnh"); }
+	case(83) { return(dirStg ~ "stage7/boss/07a_Spell03.dnh"); }
+	case(84) { return(dirStg ~ "stage7/boss/07a_Spell04.dnh"); }
+	case(85) { return(dirStg ~ "stage7/boss/07a_Spell05.dnh"); }
+	case(91) { return(dirStg ~ "stage7/boss/07b_Spell01.dnh"); }
+	case(92) { return(dirStg ~ "stage7/boss/07b_Spell02.dnh"); }
+	case(93) { return(dirStg ~ "stage7/boss/07b_Spell03.dnh"); }
+	case(94) { return(dirStg ~ "stage7/boss/07b_Spell04.dnh"); }
+	case(95) { return(dirStg ~ "stage7/boss/07b_Spell05.dnh"); }
+	case(96) { return(dirStg ~ "stage7/boss/07b_Spell06.dnh"); }
+	case(97) { return(dirStg ~ "stage7/boss/07b_Spell07.dnh"); }
+	case(98) { return(dirStg ~ "stage7/boss/07b_Spell08.dnh"); }
+	case(99) { return(dirStg ~ "stage7/boss/07b_Spell09.dnh"); }
+	case(100) { return(dirStg ~ "stage7/boss/07b_Spell10.dnh"); }
+	case(1008) { return(dirStg ~ "stage7/boss/07b_SpellEx01P.dnh"); }
+	case(1009) { return(dirStg ~ "stage7/boss/07b_SpellEx02P.dnh"); }
+
+	/* 通常弾幕 */
+	case(10001) { return(dirStg ~ "stage1/boss/01a_Attack01.dnh"); }
+	case(10002) { return(dirStg ~ "stage1/boss/01b_Attack01.dnh"); }
+	case(10003) { return(dirStg ~ "stage1/boss/01b_Attack02.dnh"); }
+	case(10011) { return(dirStg ~ "stage2/boss/02b_Attack01.dnh"); }
+	case(10012) { return(dirStg ~ "stage2/boss/02b_Attack02.dnh"); }
+	case(10021) { return(dirStg ~ "stage3/boss/03a_Attack01.dnh"); }
+	case(10022) { return(dirStg ~ "stage3/boss/03b_Attack01.dnh"); }
+	case(10023) { return(dirStg ~ "stage3/boss/03b_Attack02.dnh"); }
+	case(10024) { return(dirStg ~ "stage3/boss/03b_Attack03.dnh"); }
+	case(10031) { return(dirStg ~ "stage4/boss/04b_Attack01.dnh"); }
+	case(10032) { return(dirStg ~ "stage4/boss/04b_Attack02.dnh"); }
+	case(10033) { return(dirStg ~ "stage4/boss/04b_Attack03.dnh"); }
+	case(10041) { return(dirStg ~ "stage5/boss/05a_Attack01.dnh"); }
+	case(10051) { return(dirStg ~ "stage5/boss/05b_Attack01.dnh"); }
+	case(10061) { return(dirStg ~ "stage5/boss/05c_Attack01.dnh"); }
+	case(10062) { return(dirStg ~ "stage5/boss/05c_Attack02.dnh"); }
+	case(10063) { return(dirStg ~ "stage5/boss/05c_Attack03.dnh"); }
+	case(10064) { return(dirStg ~ "stage5/boss/05c_Attack04.dnh"); }
+	case(10071) { return(dirStg ~ "stage6/boss/06b_Attack01.dnh"); }
+	case(10072) { return(dirStg ~ "stage6/boss/06b_Attack02.dnh"); }
+	case(10073) { return(dirStg ~ "stage6/boss/06b_Attack03.dnh"); }
+	case(10074) { return(dirStg ~ "stage6/boss/06b_Attack04.dnh"); }
+	case(10075) { return(dirStg ~ "stage6/boss/06b_Attack05.dnh"); }
+	case(10081) { return(dirStg ~ "stage7/boss/07b_Attack01.dnh"); }
+	case(10082) { return(dirStg ~ "stage7/boss/07b_Attack02.dnh"); }
+	case(10083) { return(dirStg ~ "stage7/boss/07b_Attack03.dnh"); }
+	case(10084) { return(dirStg ~ "stage7/boss/07b_Attack04.dnh"); }
+	case(10085) { return(dirStg ~ "stage7/boss/07b_Attack05.dnh"); }
+	case(10086) { return(dirStg ~ "stage7/boss/07b_Attack06.dnh"); }
+	case(10087) { return(dirStg ~ "stage7/boss/07b_Attack07.dnh"); }
+	case(10088) { return(dirStg ~ "stage7/boss/07b_Attack08.dnh"); }
+
+	return("");
+}
+
+// 背景スクリプトパスを返す
+function GetSpellCardBackGround(idSpell, idDifficult)
+{
+	let dirStg = GetCurrentScriptDirectory() ~ "../stg/";
+	
+	if (idSpell <= 10 || idSpell == 1001)
+		{ return(dirStg ~ "stage1/BackgroundWorld01.dnh"); }
+	else if (idSpell <= 20 || idSpell == 1002)
+		{ return(dirStg ~ "stage2/BackgroundWorld02.dnh"); }
+	else if (idSpell <= 30 || idSpell == 1003)
+		{ return(dirStg ~ "stage3/BackgroundWorld03.dnh"); }
+	else if (idSpell <= 40 || idSpell == 1004)
+		{ return(dirStg ~ "stage4/BackgroundWorld04.dnh"); }
+	else if (idSpell <= 50)
+		{ return(dirStg ~ "stage5/BackgroundWorld05.dnh"); }
+	else if (idSpell <= 70 || idSpell == 1005 || idSpell == 1006)
+		{ return(dirStg ~ "stage5/BackgroundWorld05b.dnh"); }
+	else if (idSpell <= 80 || idSpell == 1007)
+		{ return(dirStg ~ "stage6/BackgroundWorld06b.dnh"); }
+	else if (idSpell == 81)
+		{ return(dirStg ~ "stage7/BackgroundWorld07a.dnh"); }
+	else if (idSpell == 82)
+		{ return(dirStg ~ "stage7/BackgroundWorld07b.dnh"); }
+	else if (idSpell == 83)
+		{ return(dirStg ~ "stage7/BackgroundWorld07c.dnh"); }
+	else if (idSpell == 84)
+		{ return(dirStg ~ "stage7/BackgroundWorld07e.dnh"); }
+	else if (idSpell == 85)
+		{ return(dirStg ~ "stage7/BackgroundWorld07d.dnh"); }
+	else if (idSpell <= 100 || idSpell == 1008 || idSpell == 1009)
+		{ return(dirStg ~ "stage7/BackgroundWorld07f.dnh"); }
+
+	return("");
+}
+
+// 曲IDを返す
+function GetSpellCardMusic(idSpell, idDifficult)
+{
+	// 1面
+	if (idSpell <= 1) { return(2); }
+	else if (idSpell <= 10 || idSpell == 1001) { return(3); }
+	// 2面
+	else if (idSpell <= 20 || idSpell == 1002) { return(5); }
+	// 3面
+	else if (idSpell <= 21) { return(6); }
+	else if (idSpell <= 30 || idSpell == 1003) { return(7); }
+	// 4面
+	else if (idSpell <= 31) { return(8); }
+	else if (idSpell <= 40 || idSpell == 1004) { return(9); }
+	// 5面
+	else if (idSpell <= 60 || idSpell == 1005) { return(10); }
+	else if (idSpell <= 70 || idSpell == 1006) { return(11); }
+	// 6面
+	else if (idSpell <= 80 || idSpell == 1007) { return(13); }
+	// Ex
+	else if (idSpell <= 90) { return(14); }
+	else if (idSpell <= 100 || idSpell == 1008 || idSpell == 1009) { return(15); }
+
+	// 通常
+	else if (idSpell >= 10000 && idSpell < 10010) { return(3); }
+	else if (idSpell >= 10010 && idSpell < 10020) { return(5); }
+	else if (idSpell >= 10020 && idSpell < 10030) { return(7); }
+	else if (idSpell >= 10030 && idSpell < 10040) { return(9); }
+	else if (idSpell >= 10040 && idSpell < 10050) { return(10); }
+	else if (idSpell >= 10050 && idSpell < 10060) { return(10); }
+	else if (idSpell >= 10060 && idSpell < 10070) { return(11); }
+	else if (idSpell >= 10070 && idSpell < 10080) { return(13); }
+	else if (idSpell >= 10080 && idSpell < 10090) { return(15); }
+
+	return(-1);
+}
+
+// スペカのスコア倍率を返す
+function GetSpellCardScoreRate(id)
+{
+	let rate = 1;
+	if (id <= 10) 		{ rate = 1.00; }	/* Stage1 */
+	else if (id <= 20) 	{ rate = 1.35; }	/* Stage2 */
+	else if (id <= 30) 	{ rate = 1.50; }	/* Stage3 */
+	else if (id <= 40) 	{ rate = 1.65; }	/* Stage4 */
+	else if (id <= 50) 	{ rate = 1.80; }	/*        */
+	else if (id <= 60) 	{ rate = 1.80; }	/*        */
+	else if (id <= 70) 	{ rate = 1.80; }	/* Stage5 */
+	else if (id <= 80) 	{ rate = 2.00; }	/* Stage6 */
+	else if (id <= 200) 	{ rate = 2.00; if (!IsRainbow) { rate /= 5; } }	/* Extra  */
+	else if (id == 1008 || id == 1009) 	{ rate = 3.00; if (!IsRainbow) { rate /= 5; } }	/* ExtraLW  */
+	else if (id >= 1000) 	{ rate = 2.50; }	/* LW */
+	return(rate);
+}
+

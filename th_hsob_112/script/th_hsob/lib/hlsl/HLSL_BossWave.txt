@@ -1,0 +1,169 @@
+
+//================================================================
+//大域設定値
+//Texture
+sampler sampler0_ : register(s0);
+
+//--------------------------------
+//ゆがみ生成用パラメータ
+static const float RENDER_WIDTH = 1024; //レンダリングテクスチャの幅
+static const float RENDER_HEIGHT = 1024; //レンダリングテクスチャの高さ
+static const float RENDER_LEFT = 32.9f/1024.0f;		//左座標+1
+static const float RENDER_TOP = 16.9f/512.0f;		//上座標+1
+static const float RENDER_RIGHT = 415.1f/1024.0f;	//右座標-1
+static const float RENDER_BOTTOM = 463.1f/512.0f;	//下座標-1
+
+
+float frame_;		//フレーム数
+float waveRadius_;	//エフェクトの半径
+float2 enemyPos_;	//敵の位置
+float2 enemyPos2_;	//敵の位置２体目
+//float4 waveColor_;	//エフェクトのカラー
+
+
+//================================================================
+//--------------------------------
+//ピクセルシェーダ入力値
+struct PS_INPUT
+{
+	float4 diffuse : COLOR0;  //ディフューズ色
+	float2 texCoord : TEXCOORD0; //テクスチャ座標
+	float2 vPos : VPOS; //描画先座標
+};
+
+//--------------------------------
+//ピクセルシェーダ出力値
+struct PS_OUTPUT
+{
+    float4 color : COLOR0; //出力色
+};
+
+
+//================================================================
+// シェーダ
+//--------------------------------
+//ピクセルシェーダ
+PS_OUTPUT PsWave( PS_INPUT In ) : COLOR0
+{
+	PS_OUTPUT Out;
+
+	//--------------------------------
+	//画面範囲外は計算しない
+	if (RENDER_LEFT > In.texCoord.x || RENDER_RIGHT < In.texCoord.x || RENDER_TOP > In.texCoord.y || RENDER_BOTTOM < In.texCoord.y)
+	{
+		//テクスチャの色
+		float4 colorTexture = tex2D(sampler0_, In.diffuse);
+
+		//頂点ディフーズ色
+		float4 colorDiffuse = In.diffuse;
+
+		//合成
+		float4 color = colorTexture * colorDiffuse;
+
+		Out.color = color;
+	}
+	//--------------------------------
+	else
+	{
+		// ２体対応、GORIOSHI!!!
+		float biasX = 0.0f;
+		float biasY = 0.0f;
+		float powerRatio = 0.0f;
+		float powerRatio2 = 0.0f;
+
+		if (all(enemyPos_))
+		{
+			//ゆらぎを計算
+			float dist2 = pow(In.vPos.x-enemyPos_.x ,2) + pow(In.vPos.y-enemyPos_.y ,2);
+			float dist = sqrt(dist2);
+			float sinTheta = (In.vPos.y - enemyPos_.y) / dist;
+			float cosTheta = (In.vPos.x - enemyPos_.x) / dist;
+
+			//歪み作成用のsinに使用する角度パラメータ
+			float angle = In.vPos.y - enemyPos_.y + In.vPos.x - enemyPos_.x + frame_;
+			angle = radians(angle);
+
+			//該当ピクセルの歪みの半径を計算
+			//エフェクト半径の1/16を最大の歪み幅とする
+			float waveRadius = waveRadius_ + waveRadius_/16 * (-1 + sin(angle));
+
+			//中心から距離が離れるほど影響を小さくする
+			powerRatio = (waveRadius - dist) / waveRadius / 2;
+			if (powerRatio < 0) {powerRatio = 0;}
+
+			//色情報を取得する位置のバイアス値
+			float biasRadius = waveRadius * powerRatio;
+			biasX += biasRadius * cosTheta;
+			biasY += biasRadius * sinTheta;
+		}
+		if (all(enemyPos2_))
+		{
+			//ゆらぎを計算
+			float dist2 = pow(In.vPos.x-enemyPos2_.x ,2) + pow(In.vPos.y-enemyPos2_.y ,2);
+			float dist = sqrt(dist2);
+			float sinTheta = (In.vPos.y - enemyPos2_.y) / dist;
+			float cosTheta = (In.vPos.x - enemyPos2_.x) / dist;
+
+			//歪み作成用のsinに使用する角度パラメータ
+			float angle = In.vPos.y - enemyPos2_.y + In.vPos.x - enemyPos2_.x + frame_;
+			angle = radians(angle);
+
+			//該当ピクセルの歪みの半径を計算
+			//エフェクト半径の1/16を最大の歪み幅とする
+			float waveRadius = waveRadius_ + waveRadius_/16 * (-1 + sin(angle));
+
+			//中心から距離が離れるほど影響を小さくする
+			powerRatio2 = (waveRadius - dist) / waveRadius;
+			if (powerRatio2 < 0) {powerRatio2 = 0;}
+
+			//色情報を取得する位置のバイアス値
+			float biasRadius = waveRadius * powerRatio2;
+			biasX += biasRadius * cosTheta;
+			biasY += biasRadius * sinTheta;
+		}
+
+		//テクスチャの色情報を取得する位置
+		//画面範囲外を取得しそうな場合は画面内に補正
+		float2 texUV;
+		texUV.x = min(RENDER_RIGHT,  max(RENDER_LEFT,
+				-biasX / RENDER_WIDTH  + In.texCoord.x));
+		texUV.y = min(RENDER_BOTTOM, max(RENDER_TOP,
+				 -biasY / RENDER_HEIGHT + In.texCoord.y));
+
+		//--------------------------------
+		//テクスチャの色
+		float4 colorTexture = tex2D(sampler0_, texUV);
+
+		//頂点ディフーズ色
+		float4 colorDiffuse = In.diffuse;
+
+		//合成
+		float4 color = colorTexture * colorDiffuse;
+
+		//色を変化させる→廃止
+//		powerRatio = max(powerRatio, powerRatio2);
+//		powerRatio = min(1.0f, powerRatio*2.0f);
+//		if (powerRatio > 0)
+//		{
+//			color.rgb *= (1.0f - (1.0f - waveColor_.rgb) * powerRatio);
+//			color.rgb += waveColor_.rgb * powerRatio * 0.125f;
+//		}
+
+		Out.color = color;
+	}
+
+	return Out;
+}
+
+
+//================================================================
+//--------------------------------
+//technique
+technique TecWave
+{
+	pass P0
+	{
+		PixelShader = compile ps_3_0 PsWave();
+	}
+}
+

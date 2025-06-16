@@ -1,0 +1,291 @@
+#include "../lib/MusicData.dnh"
+
+
+// みゅーじっく
+function SceneMusicRoom()
+{
+	let imgValue = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 14, 15, 1];
+	let selectMax = length(imgValue);
+	let selectMax_Col = min(selectMax, 7);
+	let selectMax_Row = ceil(selectMax/selectMax_Col);
+	
+	//選択記憶
+	let selectedDefault = LoadMenuMemory("Menu_Music", 0);
+
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", selectedDefault);
+
+	//メニュー配置
+	local
+	{
+		let mx = 64;
+		let my = 138;
+		ascent(i in 0 .. selectMax)
+		{
+			let tmp_row = trunc(i/selectMax_Col);
+			let tmp_col = i%selectMax_Col;
+			TMenuItemMusicRoom(objParent, i, mx, my+26*tmp_col, imgValue[i], tmp_row);
+		}
+		// タイトル
+		MenuPartsFace(objParent, 6);
+	}
+	wait(10);
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_MenuEx(30, 6, [VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+		
+		alternative (downKey)
+		case (VK_UP)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueMusicRoom(objParent, "VALUE", -1, selectMax);
+		}
+		case (VK_DOWN)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueMusicRoom(objParent, "VALUE", 1, selectMax);
+		}
+		case (VK_LEFT)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueMusicRoom(objParent, "VALUE", -selectMax_Col, selectMax);
+		}
+		case (VK_RIGHT)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValueMusicRoom(objParent, "VALUE", selectMax_Col, selectMax);
+		}
+		case (VK_OK)
+		{
+			if (GetIgnoreMenuIndex(objParent, Obj_GetValueD(objParent, "VALUE", -1)))
+			{
+				CallSoundPackage(sndTtCancel);
+			}
+			else
+			{
+				let tmp_value = imgValue[Obj_GetValueD(objParent, "VALUE", 0)];
+				// BGM変更
+				PlayMusic(tmp_value, 60, 0);
+				MenuEnter(objParent);
+			}
+		}
+		case (VK_CANCEL)
+		{
+			// BGM流しなおし
+			PlayMusic(0, 60, 30);
+			CallSoundPackage(sndTtCancel);
+			break;
+		}
+		wait(2);	//適当に固定ディレイ
+	}
+	
+	//選択記憶
+	SetMenuMemory("Menu_Music", Obj_GetValueD(objParent, "VALUE", 0));
+
+	Obj_Delete(objParent);
+	
+	// メニュー選択時モーション
+	function MenuEnter(parent)
+	{
+//		CallSoundPackage(sndTtDecide);
+		Obj_SetValue(parent, "FLASH", 1);
+		wait(18);
+		Obj_SetValue(parent, "FLASH", 0);
+	}
+	// メニューパーツ
+	task TMenuItemMusicRoom(parent, index, base_x, base_y, img_index, select_row)
+	{
+		let baseColor = 255;
+		// 曲データロード
+		let objData = GetMusicText(img_index);
+		//解禁フラグ
+		let flg = CDM_GetMusicFlag(img_index);
+
+		if (!flg)
+		{
+			Obj_SetValue(objData, "NAME", Obj_GetValueD(objData, "_NAME", ""));
+			Obj_SetValue(objData, "COMP", "");
+			Obj_SetValue(objData, "COMMENT", "");
+			baseColor = 64;
+			SetIgnoreMenuIndex(parent, index);
+		}
+		
+		let objText = CreateMRoomText(base_x, base_y, Obj_GetValueD(objData, "NAME", ""), -1);
+		ObjRender_SetScaleX(objText[0], 0);
+		ObjRender_SetScaleX(objText[1], 0);
+		
+		
+		let t = 0;
+		let before_row = -1;
+		let before_index = -99999;
+		let selected_index = -1;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			let now_index = index-selected_index;
+			if (before_index != now_index)
+			{
+				let now_row = select_row - trunc(selected_index/selectMax_Col);
+				let timer = 5;
+				if (before_index == -99999) { before_index = now_index; timer = 1; }
+				
+				if (selected_index == index)
+				{
+					// 解説文
+					TMenuItemMusicRoom_Text(parent, index, objData);
+				}
+				ascent(t in 0 .. timer)
+				{
+					let tmp_index = (timer-t-1)/timer*before_index + (t+1)/timer*now_index;
+					let tmp_row = (timer-t-1)/timer*before_row + (t+1)/timer*now_row;
+					let alpha = 255*max(0, 1-absolute(tmp_row));
+					let col = max(0, (1-absolute(tmp_index)*1));
+					if (timer > 5) { alpha *= (t+1)/timer; }
+					ascent(i in 0 .. 2)
+					{
+						ObjRender_SetX(objText[i], base_x + tmp_row*128);
+					}
+					ObjRender_SetAlpha(objText[0], alpha);
+					ObjRender_SetAlpha(objText[1], alpha*col);
+					yield;
+				}
+				before_row = now_row;
+				before_index = now_index;
+			}
+			// 選択決定
+			if (selected_index == index && Obj_GetValueD(parent, "FLASH", 0)) {
+				let tmp_c = baseColor - (trunc(t/3)%2)*220;
+				ObjRender_SetColor(objText[1], tmp_c, tmp_c, tmp_c);
+			} else {
+				ObjRender_SetColor(objText[1], baseColor, baseColor, baseColor);
+			}
+			// 開幕アニメ
+			if (t < 10)
+			{
+				ascent(i in 0 .. 2)
+				{
+					ObjRender_SetScaleX(objText[i], (t+1)/10);
+				}
+			}
+			t++;
+			yield;
+		}
+		let base_alpha = 255*max(0.4, (1-absolute(before_index)*0.6));
+		ObjRender_SetColor(objText[1], baseColor, baseColor, baseColor);
+		descent(t in 0 .. 10)
+		{
+			let alpha = base_alpha*((t+1)/10);
+			ascent(i in 0 .. 2)
+			{
+				ObjRender_SetAlpha(objText[i], alpha);
+				ObjRender_SetX(objText[i], ObjRender_GetX(objText[i])+6);
+			}
+			yield;
+		}
+		ascent(i in 0 .. 2)
+		{
+			Obj_Delete(objText[i]);
+		}
+		Obj_Delete(objData);
+	}
+	// 解説文
+	task TMenuItemMusicRoom_Text(parent, index, objData)
+	{
+		let txtName = Obj_GetValueD(objData, "NAME", "");
+		let commentEx = Obj_GetValueD(objData, "COMMENT_EX", "");	// コメント変化ギミック用（多分3ボス専用）
+		if (Obj_GetValueD(objData, "COMMENT", "") == "") {
+			// 未開放時
+			commentEx = "";
+		} else {
+			// リスト部分と下画面の名前を違う奴にする時用
+			if (Obj_GetValueD(objData, "NAME_EX", "")) { txtName = Obj_GetValueD(objData, "NAME_EX", ""); }
+		}
+		
+		let objName = CreateMRoomText(64, 340, txtName, -1);
+		let compX = max(420, ObjText_GetTotalWidth(objName[0])+ObjRender_GetX(objName[0])+16);
+
+		let objComp = CreateMRoomText(compX, 340, Obj_GetValueD(objData, "COMP", ""), -1);
+		let objComment = CreateMRoomText(80, 370, Obj_GetValueD(objData, "COMMENT", ""), 24);
+		let objCommentEx = CreateMRoomText(80, 370, commentEx, 24);
+		ascent(i in 0 .. 2) { Obj_SetVisible(objCommentEx[i], false); }
+		ObjRender_SetColor(objCommentEx[1], 255, 255, 0);
+		
+
+		let t = 0;
+		let flgComment = false;
+		while(!Obj_IsDeleted(parent) && index == Obj_GetValueD(parent, "VALUE", -1))
+		{
+			// コメント変化ギミック用（多分3ボス専用）
+			if (length(commentEx) > 0)
+			{
+				if (GetVirtualKeyState(VK_OK) == KEY_PUSH)
+				{
+					ascent(i in 0 .. 2) { Obj_SetVisible(objComment[i], flgComment); }
+					ascent(i in 0 .. 2) { Obj_SetVisible(objCommentEx[i], !flgComment); }
+					flgComment = !flgComment;
+				}
+			}
+			
+			if (t < 10)
+			{
+				let alpha = 255*((t+1)/10);
+				ascent(i in 0 .. 2)
+				{
+					ObjRender_SetAlpha(objName[i], alpha);
+					ObjRender_SetAlpha(objComp[i], alpha);
+					ObjRender_SetAlpha(objComment[i], alpha);
+					ObjRender_SetAlpha(objCommentEx[i], alpha);
+				}
+			}
+			t++;
+			yield;
+		}
+		ascent(i in 0 .. 2)
+		{
+			Obj_Delete(objName[i]);
+			Obj_Delete(objComp[i]);
+			Obj_Delete(objComment[i]);
+			Obj_Delete(objCommentEx[i]);
+		}
+	}
+	
+	// ミュージックルーム用
+	function Menu_AddValueMusicRoom(obj, key, add_value, max_value)
+	{
+		if (max_value <= 0) { Obj_SetValue(obj, key, 0); }
+		else
+		{
+			let tmp = Obj_GetValueD(obj, key, 0);
+			if (tmp <= 0 && add_value < 0) { Obj_SetValue(obj, key, max_value-1); }
+			else if (tmp >= max_value-1 && add_value > 0) { Obj_SetValue(obj, key, 0); }
+			else
+			{
+				tmp += add_value;
+				tmp = max(0, tmp);
+				tmp = min(max_value-1, tmp);
+				Obj_SetValue(obj, key, tmp);
+			}
+		}
+	}
+	
+	function CreateMRoomText(x, y, text, font_size)
+	{
+		let objText = SetSystemText(x, y, text);
+		Obj_SetRenderPriorityI(objText, 20);
+		ObjRender_SetColor(objText, 128, 128, 128);
+		ObjText_SetFontColorBottom(objText, 128, 128, 128);
+		let objText2 = SetSystemText(x, y, text);
+		ObjRender_SetBlendType(objText2, BLEND_ADD_ARGB);
+		Obj_SetRenderPriorityI(objText2, 20);
+		if (font_size > 0)
+		{
+			ObjText_SetFontSize(objText, font_size);
+			ObjText_SetFontSize(objText2, font_size);
+		}
+		return([objText, objText2]);
+	}
+}

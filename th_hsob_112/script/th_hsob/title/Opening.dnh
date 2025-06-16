@@ -1,0 +1,176 @@
+#include "./lib/lib_Common.dnh"
+#include "./lib/lib_LoadInit.dnh"
+
+// リザルト用
+#include "./../lib/lib_result.dnh"
+// ハイスコア用
+#include "./../lib/lib_HighScore.dnh"
+
+//----------------------------------------------------
+// 初期化
+//----------------------------------------------------
+task initLoad()
+{
+	initTitle();
+	InitializeCommonData();
+	LoadIniFile;
+	
+	//  Now Loading...
+	LoadScene();
+}
+
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//　以下ゲーム開始前のロード系処理
+task LoadScene()
+{
+	let id		= [ObjPrim_Create(OBJ_SPRITE_2D),ObjPrim_Create(OBJ_SPRITE_2D)];
+	
+	//　id[0] 東方project
+	//　id[1] ホワイトアウト用テクスチャ
+	ObjPrim_SetTexture(id[0], imgTtLoad );
+	ascent( i in 0 .. length(id) ){
+		Obj_SetRenderPriorityI(id[i], 21 );
+		ObjSprite2D_SetSourceRect(id[i], 0, 0, 1024, 512 );
+		ObjSprite2D_SetDestRect(id[i], 0, 0, 1024, 512 );
+	}
+	Obj_SetRenderPriorityI(id[1], 99 );
+	
+	ObjRender_SetAlpha(id[0], 255 );
+	ObjRender_SetAlpha(id[1], 0 );
+	
+	//　少女祈祷中...
+	let objLoading = LoadingDefault(520,430);
+	
+	//  BGM管理スクリプト起動
+	local
+	{
+		let pathScript = GetCurrentScriptDirectory() ~ "ControlMusic.dnh";
+		let idScript = LoadScript( pathScript );
+		StartScript( idScript );
+	}
+	//  効果音管理スクリプト起動
+	local
+	{
+		let pathScript = GetCurrentScriptDirectory() ~ "ControlTitleSound.dnh";
+		let idScript = LoadScript( pathScript );
+		StartScript( idScript );
+	}
+
+	//　0.5秒待機
+	loop(30){ yield; }
+	
+	// ---------------- コンフィグ未設定時、ゲームスピードを計測
+	
+	if (GetAreaCommonData(CAREA_CONFIG, "RoadSpeed", -77777) <= -77777)
+	{
+		// 一時的に加速禁止
+		SetSkipModeKey(KEY_INVALID);
+		loop(30){ yield; }
+		let beforeTime = GetPackageTime();
+		loop(60){ yield; }
+		// 測定誤差がある為、2段階のズレがあると過程して場合分け
+		let tmpTime = GetPackageTime() - beforeTime;
+		let spd = 0;
+		if (tmpTime >= 1100 || tmpTime <= 900) { spd = 0; }	// 誤差多すぎ
+		else if (tmpTime >= 1000) { spd = 0; }	// 基準
+		else { spd = -42; }	// めいすｻﾝ実測
+		SetAreaCommonData(CAREA_CONFIG, "RoadSpeed", spd);
+		// 加速キーを戻す
+		ConfigSkipKey();
+	}
+	
+	// ---------------- 
+
+	// 画像のロード
+	INIT_LOAD_ALL_TEXTURE();
+	
+	// 先に曲流す
+	PlayMusic(0, 60, 30);
+
+	//　0.5秒待機
+	loop(60){ yield; }
+
+	//  ハイスコア初期値セット
+	InitHighScore();
+	
+	// デバッグモードの時は色々解禁
+	if (DEBUG_MODE) { DEBUG_INIT(); }
+
+	// NowLoading表示を消す
+	Obj_Delete(objLoading);
+
+	ascent(i in 0 .. 15)
+	{
+		ObjRender_SetAlpha(id[1], sin((i+1)/15*90)*255 );
+		yield;
+	}
+	Obj_Delete(id[0]);
+	
+	
+	//　タイトルシーン開始
+	local
+	{
+		let pathScript = GetCurrentScriptDirectory() ~ "Title.dnh";
+		let idScript = LoadScript( pathScript );
+		StartScript( idScript );
+	}
+	
+	descent(i in 0 .. 45)
+	{
+		ObjRender_SetAlpha(id[1], sin((i+1)/45*90)*255 );
+		yield;
+	}
+	Obj_Delete(id[1]);
+}
+
+// デバッグ用
+function DEBUG_INIT()
+{
+	if (GetAreaCommonData(CAREA_SAVE, "DebugInit", false)) { return; }
+	SetAreaCommonData(CAREA_SAVE, "DebugInit", true);
+	
+	// musicroom解除
+	ascent(i in 0 .. 20)
+	{
+		CDM_SetMusicFlag(i);
+	}
+	// Ex全解除
+	ascent(i in 0 .. PLAYER_MAX)
+	{
+		CDM_SetExtraStageFlag(i);
+	}
+	// プラクティス全解除
+	ascent(i in 0 .. PLAYER_MAX)
+	{
+		ascent(j in 0 .. 6)
+		{
+			CDM_SetPracticeStageFlag(i, j, D_LUNA)
+		}
+	}
+	// スペプラ多分全解除
+	if (LoadResult(GetSpellCardIndex(GetSpellCardIDEx(0, 3)))[0] <= 0)
+	{
+		ascent(i in 0 .. 110)
+		{
+			AddResult(GetSpellCardIndex(GetSpellCardIDEx(i, 3)),
+				false, 0, 0);
+		}
+		ascent(i in 1000 .. 1010)
+		{
+			AddResult(GetSpellCardIndex(GetSpellCardIDEx(i, 3)),
+				false, 0, 0);
+		}
+	}
+	// スペプラ多分全解除
+	if (LoadResult(GetSpellCardIndex(GetSpellCardIDEx(10000, 0)))[0] <= 0)
+	{
+		ascent(i in 10000 .. 10100)
+		{
+			AddResult(GetSpellCardIndex(GetSpellCardIDEx(i, 3)),
+				false, 0, 0);
+		}
+	}
+}

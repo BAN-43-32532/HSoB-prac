@@ -1,0 +1,365 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["乱々ラスワ"]
+#Text["乱々ラスワ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ranran.dnh"
+
+let KANI_SPEED = 1;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 1001;
+	let SPELL_NAME = 7;
+
+	// アイテム数
+	bossDropItem = 0;
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_RANRAN);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NONE);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+	
+	// 弾ロード
+	LoadAnimalShotData();
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	SetEnemyVisible(objEnemy, true);
+	ObjMove_SetPosition(objEnemy, CenX, 170);
+	LWMotion(objEnemy, [255, 96, 96], -4);
+	waitObj(objEnemy, 60);
+	
+	TShot_sub();
+	
+	let wt = 180;
+	
+	waitObj(objEnemy, 180);
+	while(eAlive)
+	{
+		let to_x = min(MaxX-64, max(MinX+64, GetPlayerX));
+		let muki = [1, -1][ObjMove_GetX(objEnemy) < GetPlayerX];
+		MoveTo(objEnemy, to_x, ObjMove_GetY(objEnemy), 90);
+		CallSound(sndPower3);
+		SetAction(objEnemy, ACT_MOVE, 90);
+		wait(90);
+		if (!eAlive) { return; }
+		
+		let sx = ObjMove_GetX(objEnemy)+64*muki;
+		let sy = ObjMove_GetY(objEnemy);
+		let sa = atan2(GetPlayerY-sy, GetPlayerX-sx);
+		SetFamilier01(sx, sy, 8, sa, muki, 0);
+		SetAction(objEnemy, ACT_SHOT2, 120);
+		CallSound(sndBoon);
+		wait(wt);
+	}
+	
+	task TShot_sub()
+	{
+		let kani_span = [300, 240, 240, 240][Difficult];
+		let way = [12, 12, 12, 12][Difficult];
+		let muki = [1, 1, -1, -1][Difficult];
+		
+		CheckKaniSpeed();
+		
+		let st = 0;
+		while(eAlive)
+		{
+			if (st <= 0)
+			{
+				ascent(i in 0 .. way)
+				{
+					let tmp = (i+0.5)/way;
+					let sx = CenX + (GetClipWidth+64) * (tmp*2-1)/2;
+					let sy = MaxY+40;
+					KaniShot(sx, sy, tmp, muki);
+				}
+				CallSound(sndShot2);
+				if (Difficult >= D_LUNA) { muki = -muki; }
+				st += kani_span;
+			}
+			st -= KANI_SPEED;
+			yield;
+		}
+		
+		task CheckKaniSpeed()
+		{
+			let base_speed = [0.85, 1, 1.15, 1.25][Difficult];
+			
+			while(eAlive)
+			{
+				KANI_SPEED = base_speed * (1.75-GetBossLifeRate(objEnemy)*0.75);
+				yield;
+			}
+		}
+	}
+}
+
+// 筆ショット
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue)
+{
+	let eSize = ENEMY_SS;
+	let eColor = EFF_RED;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 999999, eSize);
+	SetEnemyVisible(objFamilier, false);
+	DrawRanranOption(objFamilier);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		Enemy_SetPatternA2(objFamilier, 0, -iniSpeed/2, iniAngle, iniSpeed/2/60, 0, iniSpeed);
+		Enemy_SetPatternA2(objFamilier, 60, NO_CHANGE, NO_CHANGE, iniSpeed/120, 0, iniSpeed);
+		waitObj(objFamilier, 180);
+		TCheckDispINOut(objFamilier, 64);
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, 60);
+		if (Obj_IsDeleted(objFamilier)) { return; }
+		
+		let speed = iniSpeed;
+		let way = [3, 5, 5, 5][Difficult];
+		let way_angle = 10;
+		let timer = 120;
+		
+		let t = 0;
+		
+		CallSound(sndShot4);
+		while(!Obj_IsDeleted(objFamilier))
+		{
+			if (t%3 == 0 && t < timer)
+			{
+				let ss = speed;
+				let wa = way_angle * (t/timer);
+				CreateShotWayA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					0, iniAngle, ss/180, ss, BGB_SCALE_GREEN, 15, way, wa, 0);
+			}
+			// 接敵チェック
+			if (CheckDispIN(objFamilier, 0))
+			{
+				let tmp_obj = GetShotIdInCircleA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 32, TARGET_ENEMY);
+				ascent(i in 0 .. length(tmp_obj))
+				{
+					if (Obj_GetValueD(tmp_obj[i], "KANI", false))
+					{
+						KillKani(tmp_obj[i]);
+					}
+				}
+			}
+			t++;
+			waitObj(objFamilier, 1);
+		}
+	}
+	
+	function KillKani(obj)
+	{
+		let speed = [1, 1, 1.5, 1.5][Difficult];
+		let way = [3, 6, 4, 4][Difficult];
+		let angle = rand(0, 360);
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + i*360/way;
+			let ss = speed;
+			let obj2 = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), ss/2, sa, BGB_SCALE_BLUE, 15);
+			ObjMove_AddPatternB2(obj2, 0, NO_CHANGE, NO_CHANGE, 0, -ss/180, 99, -ss);
+		}
+		if (Difficult >= D_HARD)
+		{
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + (i+0.5)*360/way;
+				let ss = speed*0.75;
+				let obj2 = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), ss/2, sa, BGB_SCALE_PURPLE, 15);
+				ObjMove_AddPatternB2(obj2, 0, NO_CHANGE, NO_CHANGE, 0, -ss/180, 99, -ss);
+			}
+		}
+		CallSound(sndShot4);
+		Obj_Delete(obj);
+	}
+}
+
+/*
+task KakiShot(x, y, speed, angle)
+{
+	let obj = My_CreateShotA2Ex(x, y, -speed/2, angle, speed/2/60, 0, BGW_BALL_M_GREEN, 30, DELAY_ADD);
+	ObjMove_AddPatternA2(obj, 60, NO_CHANGE, NO_CHANGE, speed/60, 0, speed);
+	wait(30);
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		// えへくと
+		KakiShotEffect(ObjMove_GetX(obj), ObjMove_GetY(obj), 1, rand(0,360));
+		// チェック
+		let tmp_obj = GetShotIdInCircleA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 32, TARGET_ENEMY);
+		ascent(i in 0 .. length(tmp_obj))
+		{
+			if (Obj_GetValueD(tmp_obj[i], "KANI", false))
+			{
+				KillKani(tmp_obj[i]);
+			}
+		}
+		t++;
+		yield;
+	}
+	
+	
+	task KakiShotEffect(x, y, speed, angle)
+	{
+		let obj = CreateShotA2(x, y, speed, angle, -speed/30, 0, ADD_BGW_BALL_M_GREEN, 0);
+		SetShotDisabled(obj);
+		ObjRender_SetColor(obj, 16, 32, 16);
+		ObjRender_SetScaleXYZ(obj, 2, 2, 1);
+		ObjShot_FadeDelete(obj);
+	}
+	
+	function KillKani(obj)
+	{
+		let speed = 1;
+		let way = 4;
+		let angle = rand(0, 360);
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + i*360/way;
+			let obj2 = My_CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), speed/2, sa, BGW_SCALE_RED, 15);
+			ObjMove_AddPatternB2(obj2, 0, NO_CHANGE, NO_CHANGE, 0, -speed/120, 99, -speed);
+		}
+		CallSound(sndShot4);
+		Obj_Delete(obj);
+	}
+}
+*/
+
+task KaniShot(x, y, delay_val, muki)
+{
+	let angle = 90 - 110*muki;
+	let vx = cos(angle)*128;
+	let vy = sin(angle)*128;
+	let timer = 180;
+
+	let obj = My_CreateShotA1(x, y, 0, 0, BGW_CRAB_RED, 0);
+	Obj_SetValue(obj, "KANI", true);
+	ObjShot_SetSpellResist(obj, true);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI-1);
+	
+	TShot();
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let tmp = GetCurve_d(GetCurve_ad(t/timer));
+		ObjMove_SetPosition(obj, x+vx*tmp, y+vy*tmp);
+		
+		if (ObjMove_GetX(obj) < MinX-32) { ObjMove_SetX(obj, ObjMove_GetX(obj)+(GetClipWidth+64)); }
+		if (ObjMove_GetX(obj) > MaxX+32) { ObjMove_SetX(obj, ObjMove_GetX(obj)-(GetClipWidth+64)); }
+		
+		t += KANI_SPEED;
+		if (t >= timer)
+		{
+			x += vx;
+			y += vy;
+			if (x < MinX-32) { x += (GetClipWidth+64); }
+			if (x > MaxX+32) { x -= (GetClipWidth+64); }
+			t -= timer;
+			CallSound(sndShot2);
+		}
+		yield;
+	}
+	
+	task TShot()
+	{
+		let wt = 240;
+		
+		wait(rand_int(0,wt));
+		while(!Obj_IsDeleted(obj))
+		{
+			if (ObjMove_GetY(obj) < CenY-64)
+			{
+				break;
+			}
+			if (ObjMove_GetY(obj) < CenY+32)
+			{
+				KuriShot(ObjMove_GetX(obj), ObjMove_GetY(obj));
+				CallSound(sndShot3);
+			}
+			wait(wt);
+		}
+	}
+	
+	task KuriShot(x, y)
+	{
+		let speed = 2;
+		let angle = atan2(ObjMove_GetY(objEnemy)-y, ObjMove_GetX(objEnemy)-x);
+		let graphic = BGW_NEEDLE_YELLOW;
+		let way = 12;
+		let r = 16;
+		ascent(i in 0 .. way)
+		{
+			KuriShotSingle(x, y, speed, angle, graphic, 30, i*360/way, r);
+		}
+	}
+	task KuriShotSingle(x, y, speed, angle, graphic, delay, offset_a, r)
+	{
+		let obj = My_CreateShotA1(x, y, 0, offset_a, graphic, delay);
+		
+		let ss = 0;
+		let sr = 0;
+		let sa = offset_a;
+		
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			if (t < 180)
+			{
+				let tmp = GetCurve_d((t+1)/180);
+				ss = speed*tmp;
+				sr = r*tmp;
+			}
+			ObjMove_SetPosition(obj, x+sr*cos(sa), y+sr*sin(sa));
+			ObjMove_SetAngle(obj, sa);
+			x += ss*cos(angle);
+			y += ss*sin(angle);
+			sa += 1;
+			t++;
+			yield;
+		}
+	}
+}
+

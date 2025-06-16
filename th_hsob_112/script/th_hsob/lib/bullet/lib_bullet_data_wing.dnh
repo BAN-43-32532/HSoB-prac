@@ -1,0 +1,136 @@
+#UserShotData
+
+//　テクスチャへのパス
+shot_image = "./../../img/bullet_wing.png"
+delay_color = (255,255,255)
+
+//--------------------------------------------------------------------------------------------------------------
+//　羽
+ShotData{
+	id = 545
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 0, 0, 16, 80 )
+		animation_data = (4, 0, 80, 16, 160 )
+		animation_data = (4, 0, 160, 16, 240 )
+		animation_data = (4, 0, 240, 16, 320 )
+		animation_data = (4, 16, 0, 32, 80 )
+		animation_data = (4, 16, 80, 32, 160 )
+		animation_data = (4, 16, 160, 32, 240 )
+		animation_data = (4, 16, 240, 32, 320 )
+	}
+}
+ShotData{
+	id = 546
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 32, 0, 48, 80 )
+		animation_data = (4, 32, 80, 48, 160 )
+		animation_data = (4, 32, 160, 48, 240 )
+		animation_data = (4, 32, 240, 48, 320 )
+		animation_data = (4, 48, 0, 64, 80 )
+		animation_data = (4, 48, 80, 64, 160 )
+		animation_data = (4, 48, 160, 64, 240 )
+		animation_data = (4, 48, 240, 64, 320 )
+	}
+}
+ShotData{
+	id = 547
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 64, 0, 80, 80 )
+		animation_data = (4, 64, 80, 80, 160 )
+		animation_data = (4, 64, 160, 80, 240 )
+		animation_data = (4, 64, 240, 80, 320 )
+		animation_data = (4, 80, 0, 96, 80 )
+		animation_data = (4, 80, 80, 96, 160 )
+		animation_data = (4, 80, 160, 96, 240 )
+		animation_data = (4, 80, 240, 96, 320 )
+	}
+}
+ShotData{
+	id = 548
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 96, 0, 112, 80 )
+		animation_data = (4, 96, 80, 112, 160 )
+		animation_data = (4, 96, 160, 112, 240 )
+		animation_data = (4, 96, 240, 112, 320 )
+		animation_data = (4, 112, 0, 128, 80 )
+		animation_data = (4, 112, 80, 128, 160 )
+		animation_data = (4, 112, 160, 128, 240 )
+		animation_data = (4, 112, 240, 128, 320 )
+	}
+}
+ShotData{
+	id = 549
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 128, 0, 144, 80 )
+		animation_data = (4, 128, 80, 144, 160 )
+		animation_data = (4, 128, 160, 144, 240 )
+		animation_data = (4, 128, 240, 144, 320 )
+		animation_data = (4, 144, 0, 160, 80 )
+		animation_data = (4, 144, 80, 160, 160 )
+		animation_data = (4, 144, 160, 160, 240 )
+		animation_data = (4, 144, 240, 160, 320 )
+	}
+}
+ShotData{
+	id = 550
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 160, 0, 176, 80 )
+		animation_data = (4, 160, 80, 176, 160 )
+		animation_data = (4, 160, 160, 176, 240 )
+		animation_data = (4, 160, 240, 176, 320 )
+		animation_data = (4, 176, 0, 192, 80 )
+		animation_data = (4, 176, 80, 192, 160 )
+		animation_data = (4, 176, 160, 192, 240 )
+		animation_data = (4, 176, 240, 192, 320 )
+	}
+}
+ShotData{
+	id = 551
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 192, 0, 208, 80 )
+		animation_data = (4, 192, 80, 208, 160 )
+		animation_data = (4, 192, 160, 208, 240 )
+		animation_data = (4, 192, 240, 208, 320 )
+		animation_data = (4, 208, 0, 224, 80 )
+		animation_data = (4, 208, 80, 224, 160 )
+		animation_data = (4, 208, 160, 224, 240 )
+		animation_data = (4, 208, 240, 224, 320 )
+	}
+}
+ShotData{
+	id = 552
+	delay_rect = (256, 256, 256, 256)
+	delay_render = ALPHA	render = ALPHA
+	collision = 2
+	AnimationData{
+		animation_data = (4, 224, 0, 240, 80 )
+		animation_data = (4, 224, 80, 240, 160 )
+		animation_data = (4, 224, 160, 240, 240 )
+		animation_data = (4, 224, 240, 240, 320 )
+		animation_data = (4, 240, 0, 256, 80 )
+		animation_data = (4, 240, 80, 256, 160 )
+		animation_data = (4, 240, 160, 256, 240 )
+		animation_data = (4, 240, 240, 256, 320 )
+	}
+}

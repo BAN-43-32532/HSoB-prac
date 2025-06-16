@@ -1,0 +1,220 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　会話前半"]
+#Text["3面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_HIKARIKO);
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_HIKARIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageVisible(cutinBoss1, false);
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "いつの間にか大蝦蟇の池か。[r]いったい上人さまとやらは何処だ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx2(cutinBoss1, "…………", -48, -280);
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			SetBossName(cutinBoss1, objEnemy);
+
+			SetTalkEx(cutinBoss1, "…私は上人さまではない");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "なら何故そこで出て来る");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "…言わなければそう聞かれていただろう");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "未来予知とは厄介な能力だ。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "だが人間には未来を変える[r]無限の可能性がある筈だぜ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "つまり私がそうだ。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "…………");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "…………");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET2);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx3(cutinBoss1, "…………", 0, 0);
+			ChangeImageFowardEx([cutinPlayer1, cutinBoss1]);
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "…質問を変えよう、[r]上人さまの正体と居場所を教えて貰うぜ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "…上人さまは…とても社交的で[r]口数の多い御方。私などとは違う…");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "だが…あそこでは私も…", -20, -120);
+			WaitNextEx(15);
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx3(cutinBoss1, "上人さまより賜った[r]この[ruby rb=\"　　　　SNS　　　　\" rt=\"サエズリ・ネットワーキング・システム\"] ", -80, -55);
+			WaitNextEx(15);
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx3(cutinBoss1, "『サエズッター』…[r]この中では私は…ふふふ…。", -100, 10);
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx3(cutinBoss1, "おっと失礼。", -50, 10);
+			WaitNextEx(15);
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx3(cutinBoss1, "サエズッターの中の才色兼備で妖艶な[r]私を想像したら、生きる意欲が湧いて来た。", 15, 50);
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetFukidashiPosition(cutinBoss1, FUKIDASHI_RIGHT);
+			SetTalkEx2(cutinBoss1, "ふふ…我は妖怪・青鷺火。", -40, -80);
+
+			PlayMusicWithName( 7, 30, 30 );
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx3(cutinBoss1, "この[ruby rb=\"白き世界\" rt=\"　　ザナドゥ\"]を、[ruby rb=\"創世\" rt=\"おわり\"]を告げる[ruby rb=\"原初の炎\" rt=\"コスモフレイム\"]で[r][ruby rb=\" 浄化 \" rt=\"ピュリファイ\"]してくれよう！", 0, 10);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 10, 1, 0.05, 5);
+	wait(90);
+	MOVE_END = true;
+}

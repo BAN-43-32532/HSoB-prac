@@ -1,0 +1,158 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EX　会話後半"]
+#Text["EX　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MUMEI);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+	ChapterReset();	//チャプターリセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MUMEI, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SAKUYA, false);
+	
+	let talkID = -1;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		else if (talkType == 1) { talkID = max(0, talkID+WaitNext()); }
+		else { talkID++; }
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(-1)
+		{
+			// 初期設定
+			SetImageFoward(cutinPlayer1, true);
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			
+			wait(15);	// 表示しきるまでウェイト
+			talk_type = 2;	// キー入力待ちしない
+		}
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY2);
+			SetTalkEx(cutinPlayer1, "勝負は私は勝ちだけど、貴方より先に、[r]カノプスの壺が壊れてしまったわね");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "やはり世界は私を愛さなかった。私は罪を背[r]負い一人生き続ける宿命なのか");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "好き放題やって旗色が悪くなってから、自分[r]は周りに分かって貰えないかわいそうな奴だ[r]って言うのやめません？");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "ならば『愚かな言い訳』は無用。");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "『妹様の[ruby rb=\"道化師\" rt=\"クラウン\"]』でも何でも好きにするが良[r]い。それが私の運命だったのだ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "捨て鉢な奴を素直に死なせても、そいつに[r]とってはある種の勝ちなのよね。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA2);
+			SetFukidashiPosition(cutinPlayer1, FUKIDASHI_LEFT);
+			SetTalkEx3(cutinPlayer1, "ではこうしましょう。", 108, -96);
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "紅魔館の花瓶や食器類を新調したいの。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL2);
+			SetTalkEx(cutinPlayer1, "貴方のつてで、こちらの希望通りの[r]品を集めて納品して頂戴");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "くっ、悪魔のメイドは私以上に狂っている。");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "私に集められるのは捨てられた古い瀬戸物[r]ばかりだ。新品や美品など…");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx2(cutinPlayer1, "それを頑張って探すうちに貴方の[r]狂気ごときは多分除かれるのよね", -16, -32);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

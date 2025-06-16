@@ -1,0 +1,852 @@
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+//　自機ショット関連
+//------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------
+
+//　ショット制御
+task PlayerShotManager( v_playerNo, v_optionObjArray, v_exOptionObjArray, v_color ){
+	let i;
+	let frame = 0;
+	let count = 0;
+	let shtflag = false;
+	let shotObj = [];
+	let laserObj = [];
+	let nshot = -1;
+	let RAINBOW_SHOT = GetRainbowColor();	// 虹装備時のカラー
+	
+	//　属性付与はここね
+	let attribute = GetAttribute( v_color );
+	
+	
+	while(v_color == GetPlayerWeapon())
+	{
+		let pos = [ GetPlayerX(), GetPlayerY() ];
+		let key = GetVirtualKeyState(VK_SHOT);
+		
+		//　フラグ初期化
+		if( count > 30 ){ shtflag = false; }
+		
+		if( key == KEY_HOLD ){
+			count = 0;
+			shtflag = true;
+		}
+		else{
+			count++;
+		}
+		
+		//　ショット発射フラグ真のとき
+		if( shtflag && GetPlayerState() == STATE_NORMAL && IsPermitPlayerShot() )
+		{
+			let pang = GetPlayerAngle();
+			
+			alternative( v_playerNo )
+			case( 0 ){
+				//　針
+				if (nshot > 0)
+				{
+					ascent( i in 0..2 ){
+						let obj = CreateShotPL( pos[0] - 8 + i*16, pos[1] - 24*cos(pang), 24, 270+pang, PL01_SP_01*MainShotAmount, 1, [ "HARI", "" ] );
+						SetAttribute( obj, attribute );
+					}
+					ObjSound_Play( Player_SE[0] );
+					nshot -= NormalShotFrame;
+				}
+				//　ホーミング札
+				if( frame%12 == 0 ){
+					let lcol = "PURPLE";
+					if (IsRainbow()) { lcol = RAINBOW_SHOT; }
+					ascent( i in 0..length( v_optionObjArray ) ){
+						let ang = 270+pang;
+						let gpos = [
+							ObjRender_GetX(v_optionObjArray[i]) + 8 * cos( ang ),
+							ObjRender_GetY(v_optionObjArray[i]) + 8 * sin( ang ),
+						];
+						let obj = CreateShotPL( gpos[0], gpos[1], 12, ang, PL01_SP_02, 1, [ "VISION_HUDA", lcol ] );
+						HomingMove( obj, 4 );
+						SetAttribute( obj, attribute );
+					}
+				}
+			}
+			case( 1 ){
+				//　ぐるぐるレーザー
+				//　レーザー配列に何も入ってなければ生成
+				if( length(laserObj) <= 0 ){
+					let lcol = "PURPLE";
+					if (IsRainbow()) { lcol = RAINBOW_SHOT; }
+					ascent( i in 0..length( v_exOptionObjArray ) ){
+						laserObj = laserObj ~ [ CreateLaserPL( v_exOptionObjArray[i], 270+pang, 16, 512, PL02_SP_01, [ "LASER01", lcol ], true, false ) ];
+					}
+				}
+				//　レーザSE
+				if( frame%4 == 0 ){ ObjSound_Play( Player_SE[7] ); }
+				//　エネルギー弾
+				if (nshot > 0)
+				{
+					ascent( i in 0..2 ){
+						let obj = CreateShotPL( pos[0] - 8 + i*16, pos[1] - 24*cos(pang), 24, 270+pang, PL02_SP_02*MainShotAmount, 1, [ "ENERGY", "YELLOW" ] );
+						SetAttribute( obj, attribute );
+					}
+					ObjSound_Play( Player_SE[0] );
+					nshot -= NormalShotFrame;
+				}
+				if( frame%6 == 0 ){
+					let lcol = "PURPLE";
+					if (IsRainbow()) { lcol = RAINBOW_SHOT; }
+					ascent( i in 0..length( v_optionObjArray ) ){
+						let ang = [ 270, 270 ];
+						let gpos = [
+							ObjRender_GetX(v_optionObjArray[i]) + 8 * cos( ang[i] ),
+							ObjRender_GetY(v_optionObjArray[i]) + 8 * sin( ang[i] ),
+						];
+						let obj = CreateShotPL( gpos[0], gpos[1], 24, ang[i]+pang, PL02_SP_03, 32, [ "ENERGY", lcol ] );
+						SetAttribute( obj, attribute );
+					}
+				}
+			}
+			case( 2 ){
+				if (nshot > 0)
+				{
+					ascent( i in 0..2 ){
+						let obj = CreateShotPL( pos[0] - 8 + i*16, pos[1] - 24*cos(pang), 24, 270+pang, PL03_SP_01*MainShotAmount, 1, [ "KNIFE", "BLUE" ] );
+						SetAttribute( obj, attribute );
+					}
+					ObjSound_Play( Player_SE[0] );
+					nshot -= NormalShotFrame;
+				}
+				if( frame%6 == 0 ){
+					let attFlg = (frame%12 == 0);
+					let lcol = "PURPLE";
+					if (IsRainbow()) { lcol = RAINBOW_SHOT; }
+					//　ナイフ
+					ascent( i in 0..length( v_optionObjArray ) ){
+						let ang = [ 270+8, 270-8, 270+4, 270-4 ][i] + pang;
+						let gpos = [
+							ObjRender_GetX(v_optionObjArray[i]) + 8 * cos( ang ),
+							ObjRender_GetY(v_optionObjArray[i]) + 8 * sin( ang ),
+						];
+						let obj = CreateShotPL( gpos[0], gpos[1], 24, ang, PL03_SP_02, 32, [ "KNIFE", lcol ] );
+					//	SetAttribute( obj, attribute );
+					}
+					ascent( i in 0..length( v_optionObjArray ) ){
+						let ang = 270+pang;
+						let gpos = [
+							ObjRender_GetX(v_optionObjArray[i]) + 8 * cos( ang ),
+							ObjRender_GetY(v_optionObjArray[i]) + 8 * sin( ang ),
+						];
+						let obj = CreateShotPL( gpos[0], gpos[1], 24, ang, PL03_SP_03, 32, [ "KNIFE", "WHITE" ] );
+						if (attFlg) { SetAttribute( obj, attribute ); }
+					}
+				}
+			}
+			case( 3 ){
+				//　貫通しないレーザー
+				//　レーザー配列に何も入ってなければ生成
+				if( length(laserObj) <= 0 ){
+					ascent( i in 0..length( v_optionObjArray ) ){
+						let ang = [ 270, 270+16, 270+32, 270-32, 270-16 ][i] + pang;
+						let col = [ "RED", "PURPLE", "BLUE", "GREEN", "YELLOW" ][i];
+						if (IsRainbow()) { col = RAINBOW_SHOT; }
+						laserObj = laserObj ~ [ CreateLaserPL( v_optionObjArray[i], ang, 12, 512, PL04_SP_01, [ "LASER02", col ], false, true ) ];
+					}
+				}
+				if (nshot > 0)
+				{
+					ascent( i in 0..2 ){
+						let obj = CreateShotPL( pos[0] - 8 + i*16, pos[1] - 24*cos(pang), 24, 270+pang, PL04_SP_02*MainShotAmount, 1, [ "DRAGON", "WHITE" ] );
+						SetAttribute( obj, attribute );
+					}
+					ObjSound_Play( Player_SE[0] );
+					nshot -= NormalShotFrame;
+				}
+				if( frame%6 == 0 ){
+					//　龍の顎の弾
+					ascent( i in 0..length( v_optionObjArray ) ){
+						let ang = [ 270, 270+8, 270+24, 270-24, 270-8 ][i] + pang;
+						let gpos = [
+							ObjRender_GetX(v_optionObjArray[i]) + 8 * cos( ang ),
+							ObjRender_GetY(v_optionObjArray[i]) + 8 * sin( ang ),
+						];
+						let col = [ "RED", "PURPLE", "BLUE", "GREEN", "YELLOW" ][i];
+						if (IsRainbow()) { col = RAINBOW_SHOT; }
+						let obj = CreateShotPL( gpos[0], gpos[1], 32, ang, PL04_SP_03, 1, [ "DRAGON", col ] );
+						SetAttribute( obj, attribute );
+					}
+				}
+			}
+			if (NormalShotFrame > 0) { nshot++; }
+			else { nshot = 0; }
+			
+			// 朱は効果音だけ
+			if (NormalShotFrame < 0 && frame%6 == 0)
+			{
+				ObjSound_Play( Player_SE[0] );
+			}
+
+			frame++;
+		}
+		else{
+			nshot = 0;
+			frame = 0;
+			//　レーザー配列に詰まってるやつらを削除
+			ascent( i in 0..length( laserObj ) ){
+				Obj_Delete( laserObj[i] );
+			}
+			laserObj = [];
+		}
+		yield;
+	}
+	//　レーザー配列に詰まってるやつらを削除
+	ascent( i in 0..length( laserObj ) ){
+		Obj_Delete( laserObj[i] );
+	}
+}
+
+
+
+
+//　自機ショット作成
+function CreateShotPL( v_x, v_y, v_speed, v_angle, v_damage, v_penet, v_imgArray ){
+	let obj = CreateShotA1( v_x, v_y, v_speed, v_angle, 0, 0 );
+	
+	ObjShot_SetDamage( obj, v_damage );
+	ObjShot_SetPenetration( obj, v_penet );
+	
+	//　自機弾の当たり判定
+	//　特にこだわりはないので一律です
+	PLShotIntersection( obj, 16 );
+	
+	//　弾のa値
+	let v_alpha = 160;
+	alternative( v_imgArray[0] )
+	case( "VISION_HUDA" ){ PLShotTextureVisionHuda( obj, v_imgArray[1], v_alpha ); }
+	case( "HARI" ){ PLShotTextureHari( obj, v_alpha ); }
+	case( "ENERGY" ){ PLShotTextureEnergy( obj, v_imgArray[1], v_alpha ); }
+	case( "KNIFE" ){ PLShotTextureKnife( obj, v_imgArray[1], v_alpha ); }
+	case( "SHARP" ){ PLShotTextureSharp( obj, v_imgArray[1], v_alpha ); }
+	case( "DRAGON" ){ PLShotTextureDragon( obj, 8, v_imgArray[1], v_alpha ); }
+	
+	// 弾削除判定用
+	CheckMotion(obj);
+	// 貫通弾チェック
+	if (v_penet > 0) { CheckShotPenetration(obj, v_damage, 2); }
+	
+	return obj;
+
+	task CheckMotion(obj)
+	{
+		let BORDER = 64;
+		while(!Obj_IsDeleted(obj) && IsPermitPlayerShot())
+		{
+			// 画面外削除（自動削除だとフレーム部分では削除されない為）
+			if (ObjMove_GetX(obj) < MinX-BORDER || ObjMove_GetX(obj) > MaxX+BORDER || ObjMove_GetY(obj) < MinY-BORDER || ObjMove_GetY(obj) > MaxY+BORDER)
+			{
+				break;
+			}
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+//　自機レーザー作成
+function CreateLaserPL( v_obj, v_angle, v_width, v_length, v_damage, v_imgArray, v_IsPenet, v_IsDistDmg ){
+	let obj = ObjShot_Create( OBJ_STRAIGHT_LASER );
+	
+	//　光源描画なし
+	ObjStLaser_SetSource( obj, false );
+	ObjStLaser_SetAngle( obj, v_angle );
+	//　太さと長さ　長さは0から伸びるので初期値は0
+	ObjLaser_SetIntersectionWidth( obj, v_width );
+	ObjLaser_SetLength( obj, 0 );
+	ObjShot_SetAutoDelete( obj, false );
+	//　どうせダミーは使わないので適当に表示
+	ObjShot_SetGraphic( obj, 1 );
+	ObjRender_SetColor( obj, 255, 255, 255 );
+	//　ダメージ設定と有効化
+	ObjShot_SetDamage( obj, v_damage );
+	ObjShot_Regist( obj );
+	
+	//　レーザー更新系処理
+	if( v_IsPenet ){
+		//　貫通あり
+		PLLaserPosition( v_obj, obj, v_width, v_length );
+	}
+	else{
+		//　貫通なし
+		PLLaserPositionNotPenet( v_obj, obj, v_width, v_length, v_damage, v_IsDistDmg );
+	}
+	
+	//　レーザーa値
+	let v_alpha = 96;
+	alternative( v_imgArray[0] )
+	case( "LASER01" ){ PLLaserTexture01( obj, v_width, v_imgArray[1], v_alpha ); }
+	case( "LASER02" ){ PLLaserTexture02( obj, v_width, v_imgArray[1], v_alpha ); }
+	
+	return obj;
+}
+
+//　当たり判定付与
+task PLShotIntersection( v_obj, v_col ){
+	while( !Obj_IsDeleted(v_obj) ){
+		ObjShot_SetIntersectionCircleA1( v_obj, v_col );
+		yield;
+	}
+}
+
+//　残像札弾
+task PLShotTextureVisionHuda( v_obj, v_color, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjPrim_SetTexture( obj, imgPlShot01a );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+//	ObjSprite2D_SetSourceRect( obj, 32, 0, 64, 64 );
+
+	alternative( v_color )
+	case( "RED" ){ ObjSprite2D_SetSourceRect( obj, 128, 224, 160, 288 ); }
+	case( "GREEN" ){ ObjSprite2D_SetSourceRect( obj, 160, 224, 192, 288 ); }
+	case( "BLUE" ){ ObjSprite2D_SetSourceRect( obj, 192, 224, 224, 288 ); }
+	case( "YELLOW" ){ ObjSprite2D_SetSourceRect( obj, 224, 224, 256, 288 ); }
+	case( "PURPLE" ){ ObjSprite2D_SetSourceRect( obj, 128, 288, 160, 352 ); }
+	case( "AQUA" ){ ObjSprite2D_SetSourceRect( obj, 160, 288, 192, 352 ); }
+	case( "ORANGE" ){ ObjSprite2D_SetSourceRect( obj, 192, 288, 224, 352 ); }
+	case( "WHITE" ){ ObjSprite2D_SetSourceRect( obj, 224, 288, 256, 352 ); }
+	others{ ObjSprite2D_SetSourceRect( v_obj, 128, 288, 160, 352 ); }
+
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetAlpha( obj, v_alpha );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetAngleZ( obj, ObjMove_GetAngle(v_obj)+90 );
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ( obj, 1-move1, 1+move1, 0 );
+		moveA += 10;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　針弾
+task PLShotTextureHari( v_obj, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjPrim_SetTexture( obj, imgPlShot01a );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjSprite2D_SetSourceRect( obj, 0, 64, 32, 128 );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetAlpha( obj, v_alpha );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetAngleZ( obj, ObjMove_GetAngle(v_obj)+90 );
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ( obj, 1-move1, 1+move1, 0 );
+		moveA += 10;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　エネルギー弾
+task PLShotTextureEnergy( v_obj, v_color, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjPrim_SetTexture( obj, imgPlShot01a );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	
+	alternative( v_color )
+	case( "RED" ){ ObjSprite2D_SetSourceRect( obj, 128, 32, 160, 64 ); }
+	case( "GREEN" ){ ObjSprite2D_SetSourceRect( obj, 160, 32, 192, 64 ); }
+	case( "BLUE" ){ ObjSprite2D_SetSourceRect( obj, 192, 32, 224, 64 ); }
+	case( "YELLOW" ){ ObjSprite2D_SetSourceRect( obj, 224, 32, 256, 64 ); }
+	case( "PURPLE" ){ ObjSprite2D_SetSourceRect( obj, 128, 64, 160, 96 ); }
+	case( "AQUA" ){ ObjSprite2D_SetSourceRect( obj, 160, 64, 192, 96 ); }
+	case( "ORANGE" ){ ObjSprite2D_SetSourceRect( obj, 192, 64, 224, 96 ); }
+	case( "WHITE" ){ ObjSprite2D_SetSourceRect( obj, 224, 64, 256, 96 ); }
+	others{ ObjSprite2D_SetSourceRect( v_obj, 128, 32, 160, 64 ); }
+	
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetAlpha( obj, v_alpha );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetAngleZ( obj, ObjMove_GetAngle(v_obj)+90 );
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ( obj, 1-move1, 1+move1, 0 );
+		moveA += 10;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　ナイフ弾
+task PLShotTextureKnife( v_obj, v_color, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjPrim_SetTexture( obj, imgPlShot01a );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	
+	alternative( v_color )
+	case( "RED" ){ ObjSprite2D_SetSourceRect( obj, 128, 160, 160, 192 ); }
+	case( "GREEN" ){ ObjSprite2D_SetSourceRect( obj, 160, 160, 192, 192 ); }
+	case( "BLUE" ){ ObjSprite2D_SetSourceRect( obj, 192, 160, 224, 192 ); }
+	case( "YELLOW" ){ ObjSprite2D_SetSourceRect( obj, 224, 160, 256, 192 ); }
+	case( "PURPLE" ){ ObjSprite2D_SetSourceRect( obj, 128, 192, 160, 224 ); }
+	case( "AQUA" ){ ObjSprite2D_SetSourceRect( obj, 160, 192, 192, 224 ); }
+	case( "ORANGE" ){ ObjSprite2D_SetSourceRect( obj, 192, 192, 224, 224 ); }
+	case( "WHITE" ){ ObjSprite2D_SetSourceRect( obj, 224, 192, 256, 224 ); }
+	others{ ObjSprite2D_SetSourceRect( v_obj, 0, 0, 32, 32 ); }
+	
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetAlpha( obj, v_alpha );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetAngleZ( obj, ObjMove_GetAngle(v_obj)+90 );
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ( obj, 1-move1, 1+move1, 0 );
+		moveA += 10;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　ホーミング弾化
+task HomingMove( v_obj, v_homing ){
+	let frame = 0;
+	while( !Obj_IsDeleted(v_obj) && frame < 90 ){
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		let GetEnemy = GetEnemyIntersectionPosition( pos[0], pos[1], 8 );
+		if( length(GetEnemy) > 0 ){
+			let GetAngleToEnemy = GetGapAngle( pos, [ GetEnemy[0][0], GetEnemy[0][1] ] );
+			
+			if( sin( GetAngleToEnemy - ObjMove_GetAngle(v_obj) ) > 0 ){
+				ObjMove_SetAngle( v_obj, ObjMove_GetAngle(v_obj) + v_homing );
+			}
+			else{
+				ObjMove_SetAngle( v_obj, ObjMove_GetAngle(v_obj) - v_homing );
+			}
+		}
+		frame++;
+		yield;
+	}
+}
+
+//　自機レーザー定位置追従
+//　オプションからの照射を想定　この関数ではMove系objには追従しません
+task PLLaserPosition( v_obj, v_objLas, v_width, v_length ){
+	let lLen = 0;
+	while( !Obj_IsDeleted(v_objLas) && !Obj_IsDeleted(v_obj) ){
+		//　なぜかx軸が+1pxlはみ出るので-1で修正
+		let pos = [ ObjRender_GetX(v_obj) - 1, ObjRender_GetY(v_obj) ];
+		let gLen = ObjLaser_GetLength(v_objLas);
+		ObjMove_SetPosition( v_objLas, pos[0], pos[1] );
+		ObjLaser_SetLength( v_objLas, lLen );
+		if( gLen < v_length ){ lLen = gLen + 30; }
+		yield;
+	}
+	Obj_Delete(v_objLas);
+}
+
+//　自機レーザー定位置追従　貫通しない属性つき
+//　レーザー長設定が競合したので注意
+//　敵との距離を詰めるほど攻撃力が上がるおまけつき（v_flag=trueで）
+task PLLaserPositionNotPenet( v_obj, v_objLas, v_width, v_length, v_damage, v_flag ){
+	let lLen = 0;
+	while( !Obj_IsDeleted(v_objLas) && !Obj_IsDeleted(v_obj) ){
+		//　なぜかx軸が+1pxlはみ出るので-1で修正
+		let pos = [ ObjRender_GetX(v_obj) - 1, ObjRender_GetY(v_obj) ];
+		let gLen = ObjLaser_GetLength(v_objLas);
+		let colArray = ObjCol_GetListOfIntersectedEnemyID( v_objLas );
+		let dmg = v_damage;
+		
+		ObjMove_SetPosition( v_objLas, pos[0], pos[1] );
+		
+		if( v_flag ){ dmg = v_damage * 64 / (gLen+16); }
+		
+		//　接触している敵がいるとき（一番近い敵を探す）
+		if( length(colArray) > 0 ){
+			ascent(i in 0 .. length(colArray))
+			{
+				let pos1 = [ ObjMove_GetX(v_objLas), ObjMove_GetY(v_objLas) ];
+				let pos2 = [ ObjMove_GetX(colArray[0]), ObjMove_GetY(colArray[0]) ];
+				let dist = GetDistance( pos1, pos2 );
+				gLen = min(gLen, dist);
+			}
+			ObjLaser_SetLength( v_objLas, gLen );
+			ObjShot_SetDamage( v_objLas, dmg );
+		}
+		else{
+			ObjLaser_SetLength( v_objLas, lLen );
+			if( gLen < v_length ){ lLen = gLen + 30; }
+		}
+		yield;
+	}
+	Obj_Delete(v_objLas);
+}
+
+//　魔理沙用レーザー（テクスチャのみ
+task PLLaserTexture01( v_obj, v_width, v_color, v_alpha ){
+	let obj		= [
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+	];
+	let path	= [
+		imgPlLaser01a,
+		imgPlLaser01b,
+	];
+	let gpos	= [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+	let blend	= [ BLEND_ALPHA, BLEND_ADD_ARGB ];
+	let rect	= 0;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	alternative( v_color )
+	case( "RED" ){ rect = 0; }
+	case( "GREEN" ){ rect = 1; }
+	case( "BLUE" ){ rect = 2; }
+	case( "YELLOW" ){ rect = 3; }
+	case( "PURPLE" ){ rect = 4; }
+	case( "AQUA" ){ rect = 5; }
+	case( "ORANGE" ){ rect = 6; }
+	case( "WHITE" ){ rect = 7; }
+	others{ rect = 0; }
+	
+	ascent( let i in 0..length(obj) ){
+		ObjPrim_SetTexture( obj[i], path[i] );
+		Obj_SetRenderPriorityI( obj[i], 32 );
+		ObjRender_SetBlendType( obj[i], blend[i] );
+		ObjRender_SetAlpha( obj[i], v_alpha );
+	}
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		gpos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		
+		ascent( i in 0..length(obj) ){
+			ObjRender_SetPosition( obj[i], gpos[0], gpos[1], 0 );
+			ObjSprite2D_SetSourceRect( obj[i], 0 + rect*32, 0 - frame*16, 32 + rect*32, ObjLaser_GetLength(v_obj) - frame*16 );
+			ObjSprite2D_SetDestRect( obj[i], -v_width/2, 0, v_width/2, ObjLaser_GetLength(v_obj) );
+			ObjRender_SetAngleZ( obj[i], ObjStLaser_GetAngle(v_obj) - 90 );
+		}
+		
+		frame++;
+		
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		
+		ascent( i in 0..length(obj) ){
+			ObjRender_SetScaleX( obj[i], 1 - move1 );
+		}
+		
+		frame++;
+		
+		moveA += 15;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){ Obj_Delete( obj[i] ); }
+}
+
+//　輝夜レーザー（テクスチャのみ
+task PLLaserTexture02( v_obj, v_width, v_color, v_alpha ){
+	let obj		= [
+		ObjPrim_Create(OBJ_PRIMITIVE_2D),
+		ObjPrim_Create(OBJ_PRIMITIVE_2D),
+	];
+	let path	= [
+		imgPlLaser01b,
+		imgPlLaser01b,
+	];
+	let gpos	= [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+	let blend	= [ BLEND_ALPHA, BLEND_ADD_ARGB ];
+	let rect	= 0;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let v_type	= 0;
+	
+	alternative( v_color )
+	case( "RED" ){ rect = 0; }
+	case( "GREEN" ){ rect = 1; }
+	case( "BLUE" ){ rect = 2; }
+	case( "YELLOW" ){ rect = 3; }
+	case( "PURPLE" ){ rect = 4; }
+	case( "AQUA" ){ rect = 5; }
+	case( "ORANGE" ){ rect = 6; }
+	case( "WHITE" ){ rect = 7; }
+	others{ rect = 0; }
+	
+	let col_delay = GetEffectColor(rect);
+	
+	ascent( let i in 0..length(obj) ){
+		ObjPrim_SetTexture( obj[i], path[i] );
+		Obj_SetRenderPriorityI( obj[i], 32 );
+		ObjPrim_SetPrimitiveType( obj[i], PRIMITIVE_TRIANGLESTRIP );
+		ObjPrim_SetVertexCount( obj[i], 4 );
+		ObjRender_SetBlendType( obj[i], blend[i] );
+		ObjRender_SetAlpha( obj[i], v_alpha );
+	}
+	ObjRender_SetScaleX( obj[1], 2 );
+	ObjRender_SetAlpha( obj[1], v_alpha / 2 );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		gpos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		
+		ascent( i in 0..length(obj) ){
+			ObjRender_SetPosition( obj[i], gpos[0], gpos[1], 0 );
+			//　UV
+			ObjPrim_SetVertexUVT( obj[i], 0, 0 + rect*32, 0 - frame*8 );
+			ObjPrim_SetVertexUVT( obj[i], 1, 0 + rect*32, ObjLaser_GetLength(v_obj) - frame*8 );
+			ObjPrim_SetVertexUVT( obj[i], 2, 32 + rect*32, 0 - frame*8 );
+			ObjPrim_SetVertexUVT( obj[i], 3, 32 + rect*32, ObjLaser_GetLength(v_obj) - frame*8 );
+			//　Vertex
+			ObjPrim_SetVertexPosition( obj[i], 0, -v_width/2, 0, 0 );
+			ObjPrim_SetVertexPosition( obj[i], 1, -v_width/8, ObjLaser_GetLength(v_obj), 0 );
+			ObjPrim_SetVertexPosition( obj[i], 2, v_width/2, 0, 0 );
+			ObjPrim_SetVertexPosition( obj[i], 3, v_width/8, ObjLaser_GetLength(v_obj), 0 );
+			//　テクスチャ角度矯正
+			ObjRender_SetAngleZ( obj[i], ObjStLaser_GetAngle(v_obj) - 90 );
+		}
+		
+		// パーティクル
+		if (ObjCol_IsIntersected(v_obj))
+			{ PLLaserTexture02_Particle( v_obj, col_delay, 64, 15, v_type ); v_type++; }
+		
+		frame++;
+		
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		
+		ascent( i in 0..length(obj) ){
+			ObjRender_SetScaleX( obj[i], 1 - move1 );
+		}
+		
+		frame++;
+		
+		moveA += 15;
+		
+		yield;
+	}
+	ascent( i in 0..length(obj) ){ Obj_Delete( obj[i] ); }
+
+	// パーティクル
+	task PLLaserTexture02_Particle( v_obj, v_color, v_alpha, v_timer, v_type )
+	{
+		if (IsDrawEffect() < 3) { return; }
+
+		let len = ObjLaser_GetLength(v_obj);
+		let a = ObjStLaser_GetAngle(v_obj);
+		let x = ObjMove_GetX(v_obj) + len*cos(a);
+		let y = ObjMove_GetY(v_obj) + len*sin(a);
+		let va = a + randEffect(-15, 15);
+		let vr = randEffect(12, 24);
+		let vx = cos(va)*vr;
+		let vy = sin(va)*vr;
+		let scale = min(0.5, 0.5 * (64/(len+16)));
+		let eang = randEffect(0, 360);
+		let eaddang = randEffect(-3, 3);
+		
+		let obj		= [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		ascent(i in 0 .. length(obj))
+		{
+			ObjPrim_SetTexture( obj[i], imgPlParticle01a );
+			Obj_SetRenderPriorityI( obj[i], 49+i );
+			ObjRender_SetAlpha( obj[i], v_alpha );
+		}
+		ObjRender_SetBlendType( obj[0], BLEND_SUBTRACT );
+		ObjRender_SetBlendType( obj[1], BLEND_ADD_ARGB );
+		ObjRender_SetColor( obj[0], 255-v_color[0], 255-v_color[1], 255-v_color[2] );
+		ObjRender_SetColor( obj[1], v_color[0]+128, v_color[1]+128, v_color[2]+128 );
+		
+		let v_anim = ceil(v_timer/4);
+		ascent(t in 0 .. v_timer)
+		{
+			if (t%v_anim == 0)
+			{
+				let anim = trunc(t/v_anim);
+				ascent(i in 0 .. length(obj))
+				{
+					ObjSprite2D_SetSourceRect( obj[i], 0+128*anim, 0, 128+128*anim, 128 );
+					ObjSprite2D_SetDestCenter( obj[i] );
+				}
+			}
+			let tmp = 1 - t/v_timer;
+			let tmp_s = scale * tmp;
+			ascent(i in 0 .. length(obj))
+			{
+				ObjRender_SetAngleZ( obj[i], eang );
+				ObjRender_SetPosition( obj[i], x, y, 0 );
+				ObjRender_SetScaleXYZ( obj[i], tmp_s, tmp_s, tmp_s );
+			}
+			eang += eaddang;
+			x += vx*(1-tmp); y += vy*(1-tmp);
+			yield;
+		}
+		ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+	}
+
+	//カラー取得
+	function GetEffectColor(color_type)
+	{
+		alternative(color_type)
+		case(0)	{ return([255, 0, 0]); }
+		case(1)	{ return([0, 255, 0]); }
+		case(2)	{ return([0, 0, 255]); }
+		case(3)	{ return([255, 255, 0]); }
+		case(4)	{ return([255, 0, 255]); }
+		case(5)	{ return([0, 255, 255]); }
+		case(6)	{ return([255, 64, 0]); }
+		others	{ return([255, 255, 255]); }
+	}
+}
+
+//　鋭弾
+task PLShotTextureSharp( v_obj, v_color, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjPrim_SetTexture( obj, imgPlShot01a );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	
+	alternative( v_color )
+	case( "RED" ){ ObjSprite2D_SetSourceRect( obj, 128, 224, 160, 256 ); }
+	case( "GREEN" ){ ObjSprite2D_SetSourceRect( obj, 160, 224, 192, 256 ); }
+	case( "BLUE" ){ ObjSprite2D_SetSourceRect( obj, 192, 224, 224, 256 ); }
+	others{ ObjSprite2D_SetSourceRect( v_obj, 128, 224, 160, 256 ); }
+	
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetAlpha( obj, v_alpha );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		let pos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetAngleZ( obj, ObjMove_GetAngle(v_obj)+90 );
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ( obj, 1-move1, 1+move1, 0 );
+		moveA += 10;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　龍の顎の弾
+task PLShotTextureDragon( v_obj, v_width, v_color, v_alpha ){
+	let obj		= ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	let path	= imgPlShot01a;
+	let gpos	= [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+	let blend	= BLEND_ADD_ARGB;
+	//let scale	= [ 0.4, 8 ];
+	let scale	= [ 1, 1 ];
+	let rect	= [ 0, 0 ];
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	let h = 64;
+	
+	alternative( v_color )
+	case( "RED" ){ rect = [ 0, 0 ]; }
+	case( "GREEN" ){ rect = [ 1, 0 ]; }
+	case( "BLUE" ){ rect = [ 2, 0 ]; }
+	case( "YELLOW" ){ rect = [ 3, 0 ]; }
+	case( "PURPLE" ){ rect = [ 0, 1 ]; }
+	case( "AQUA" ){ rect = [ 1, 1 ]; }
+	case( "ORANGE" ){ rect = [ 2, 1 ]; }
+	case( "WHITE" ){ rect = [ 3, 1 ]; }
+	others{ rect = [ 0, 0 ]; }
+	
+	ObjPrim_SetTexture( obj, path );
+	Obj_SetRenderPriorityI( obj, 32 );
+	ObjPrim_SetPrimitiveType( obj, PRIMITIVE_TRIANGLESTRIP );
+	ObjPrim_SetVertexCount( obj, 4 );
+	ObjRender_SetBlendType( obj, blend );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+	ObjRender_SetAlpha( obj, v_alpha*0.8 );
+	
+	//　UV
+	ObjPrim_SetVertexUVT( obj, 0, 128 + rect[0]*32, 96 + rect[1]*32 );
+	ObjPrim_SetVertexUVT( obj, 1, 128 + rect[0]*32, 128 + rect[1]*32 );
+	ObjPrim_SetVertexUVT( obj, 2, 160 + rect[0]*32, 96 + rect[1]*32 );
+	ObjPrim_SetVertexUVT( obj, 3, 160 + rect[0]*32, 128 + rect[1]*32 );
+	//　Vertex
+	ObjPrim_SetVertexPosition( obj, 0, -v_width, -h, 0 );
+	ObjPrim_SetVertexPosition( obj, 1, -v_width, h, 0 );
+	ObjPrim_SetVertexPosition( obj, 2, v_width, -h, 0 );
+	ObjPrim_SetVertexPosition( obj, 3, v_width, h, 0 );
+	
+	while( !Obj_IsDeleted(v_obj) ){
+		gpos = [ ObjMove_GetX(v_obj), ObjMove_GetY(v_obj) ];
+		ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+		ObjRender_SetAngleZ( obj, ObjMove_GetAngle(v_obj) + 90 );
+		yield;
+	}
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		ObjRender_SetScaleXYZ( obj, scale[0] - move1*scale[0], scale[1] + move1*scale[0], 0 );
+		moveA += 15;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+
+// 貫通弾用、ダメージ判定を数フレーム毎にまとめて与える
+task CheckShotPenetration(obj, v_damage, v_frame)
+{
+	ObjShot_SetDamage( obj, v_damage*v_frame );
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t <= 0)
+		{
+			ObjShot_SetDamage( obj, v_damage*v_frame );
+			if (ObjCol_GetIntersectedCount(obj) > 0)
+			{
+				ObjShot_SetDamage( obj, v_damage/v_frame );
+				t = v_frame;
+			}
+		}
+		t--;
+		yield;
+	}
+}

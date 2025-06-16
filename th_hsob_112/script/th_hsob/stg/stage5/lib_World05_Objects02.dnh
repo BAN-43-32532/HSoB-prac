@@ -1,0 +1,249 @@
+
+
+//　遺跡めいた
+task World05Object04( m_pos, add_pos, m_kill, scale ){
+	let frame = 0;
+	let offset_pos = 0;
+	
+	//　モデル初期化
+	let obj		= ObjMesh_Create();
+	ObjMesh_Load( obj, world05_path[5] );
+	Obj_SetRenderPriorityI( obj, world_layer );
+	ObjRender_SetBlendType( obj, BLEND_ALPHA );
+	ObjRender_SetAngleY( obj, 90 );
+	ObjRender_SetScaleXYZ( obj, -scale, scale, scale );
+	
+	while( true && frame < m_kill ){
+		ObjRender_SetPosition( obj, m_pos[0], m_pos[1], m_pos[2] );
+		
+		frame++;
+		m_pos[0] = m_pos[0] + add_pos[0];
+		m_pos[1] = m_pos[1] + add_pos[1];
+		m_pos[2] = m_pos[2] + add_pos[2];
+		
+		// 画面遷移時
+		if (GetStageScene() >= 2)
+		{
+			offset_pos = max(-2, offset_pos-0.005);
+			m_pos[1] = m_pos[1] + offset_pos;
+		}
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+
+//　光
+task World05Object05( pos, spd, angle, long, scale, rgba, layer, blend ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let _rect	= [ 64, 64 ];
+	let ac		= randEffect( 32, 64 );
+	let def		= randEffect( 0, 360 );
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+	ObjPrim_SetTexture( obj, imgEffectSpark );
+	ObjRender_SetBlendType( obj, blend );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, _rect[0], _rect[1] );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+	
+	let sLayer	= [ 20, 28 ];
+	
+	let shd	= CreateShaderObject( obj, 4 );
+	ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), 0 );
+	
+	while( !Obj_IsDeleted(obj) && frame < long ){
+		let angc = ac * sin( def+frame*(spd*4) );
+		let spos = [
+			ObjRender_GetX(obj) + spd * cos( angle + angc ),
+			ObjRender_GetY(obj) + spd * sin( angle + angc ),
+		];
+		move1 = 1 * sin( moveA );
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, move1*scale[0], move1*scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		let sAlpha = rgba[3]*(1/255);
+		if( frame > 0 && frame%4 == 0 ){ sAlpha = rgba[3] * (1/255) / 2; }
+		
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetFloat( shd, "m_alpha", sAlpha );
+		
+		frame++;
+		if( move1 < 1 ){ moveA += 2; }
+		yield;
+	}
+	while( move1 > 0 ){
+		let angc = ac * sin( def+frame*(spd*4) );
+		let spos = [
+			ObjRender_GetX(obj) + spd * cos( angle + angc ),
+			ObjRender_GetY(obj) + spd * sin( angle + angc ),
+		];
+		move1 = 1 * sin( moveA );
+		ObjRender_SetPosition( obj, spos[0], spos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, move1*scale[0], move1*scale[1], 0 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		let sAlpha = rgba[3]*(1/255);
+		if( frame > 0 && frame%4 == 0 ){ sAlpha = rgba[3] * (1/255) / 2; }
+		
+		ObjShader_SetFloat( shd, "m_frame", frame );
+		ObjShader_SetFloat( shd, "m_alpha", sAlpha );
+		
+		frame++;
+		moveA += 5;
+		yield;
+	}
+	Obj_Delete( shd );
+	Obj_Delete( obj );
+}
+
+
+//　塔
+task World05Object102( pos, move_y, delay, long, layer ){
+	let obj		= [
+		ObjPrim_Create(OBJ_PRIMITIVE_3D),
+		ObjPrim_Create(OBJ_SPRITE_3D),
+		];
+	let move1	= 0;
+	let moveA	= 0;
+	let frame	= 0;
+	
+	//　塔
+	ObjPrim_SetTexture( obj[0], world05_path[9] );
+	ObjPrim_SetVertexCount( obj[0], 6 );
+	ObjPrim_SetPrimitiveType( obj[0], PRIMITIVE_TRIANGLESTRIP );
+	// 座標の配置＆alpha値をグラデーションにする
+	ascent(i in 0 .. 3)
+	{
+		let tmp = i/2;
+		let tmp_a = min(255, tmp*360);
+		ObjPrim_SetVertexUVT( obj[0], i*2+0, 0, tmp*1536 );
+		ObjPrim_SetVertexUVT( obj[0], i*2+1, 1536, tmp*1536 );
+		ObjPrim_SetVertexPosition( obj[0], i*2+0, -2048/2, (tmp-0.5)*2048, 0 );
+		ObjPrim_SetVertexPosition( obj[0], i*2+1,  2048/2, (tmp-0.5)*2048, 0 );
+		ObjPrim_SetVertexAlpha( obj[0], i*2+0, tmp_a );
+		ObjPrim_SetVertexAlpha( obj[0], i*2+1, tmp_a );
+	}
+	
+	// 紋章
+	ObjPrim_SetTexture( obj[1], world05_path[10] );
+	ObjSprite3D_SetSourceDestRect( obj[1], 0, 0, 512, 512 );
+	ObjRender_SetBlendType( obj[1], BLEND_ADD_ARGB );
+
+	ascent(i in 0 .. length(obj))
+	{
+		ObjRender_SetPosition( obj[i], pos[0], pos[1], pos[2] );
+		ObjRender_SetAngleXYZ( obj[i], 0, 90, 0 );
+		ObjRender_SetFogEnable(obj[i], false);
+		Obj_SetRenderPriorityI( obj[i], layer );
+	}
+
+	while( frame < long ){
+		move1 = sin( moveA );
+
+		ObjRender_SetY( obj[0], pos[1] - move_y*move1 );
+		ObjRender_SetY( obj[1], pos[1]+512+64 - move_y*move1 );
+		if( moveA < 90 ){ moveA += 90/delay; }
+		frame++;
+		yield;
+	}
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}
+
+// もやんもやん
+task World05Object103( pos, spd, angle, long, scale, rgba, delay, layer, blend )
+{
+	if( !CfgIsUseShader() ){ return; }
+
+	waitEx(delay);
+	
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let _rect	= [ 512, 512 ];
+	let ac		= randEffect( 32, 64 );
+	let def		= randEffect( 0, 360 );
+	let rwidth	= 4;
+	let frame	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	
+	ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+	ObjPrim_SetTexture( obj, imgEffectSpark3 );
+	ObjRender_SetBlendType( obj, blend );
+	Obj_SetRenderPriorityI( obj, layer+1 );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, _rect[0], _rect[1] );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetScaleXYZ( obj, scale[0], scale[1], 0 );
+	
+	let sLayer	= [ world_layer, layer ];
+	
+	let rt	= CreateRenderTexture( "rtTest", sLayer[0], sLayer[1], true );
+	let shd	= ObjShader_Create();
+	ObjShader_SetShaderF( shd, hlslBubble);
+	ObjShader_SetTechnique( shd, "TecBubble" );
+	ObjShader_SetShaderO( obj, shd );
+
+	ObjShader_SetVector( shd, "m_rtSize", 1024, 512, 0, 0 );
+	ObjShader_SetVector( shd, "m_texSize", _rect[0], _rect[1], 0, 0 );
+	
+	while( !Obj_IsDeleted(obj) && frame < long ){
+		move1 = 1 * sin( frame/long*90 );
+		ObjRender_SetAlpha( obj, move1*rgba[3] );
+		
+		RenderToTextureA1( rt, sLayer[0], sLayer[1], true );
+		
+		ObjShader_SetFloat( shd, "m_frame", frame/rwidth );
+		ObjShader_SetFloat( shd, "m_pow", move1^3*4 );
+		ObjShader_SetFloat( shd, "m_wave", 30-move1*20 );
+		ObjShader_SetVector( shd, "m_pos", pos[0], pos[1], 0, 0 );
+		ObjShader_SetVector( shd, "m_color", rgba[0]*(1/255), rgba[1]*(1/255), rgba[2]*(1/255), move1*(rgba[3]*(1/255)) );
+		ObjShader_SetTexture( shd, "g_Texture", rt );
+		
+		frame++;
+		yield;
+	}
+	Obj_Delete( shd );
+	Obj_Delete( obj );
+}
+
+//　遷移えへくと
+task World05Object104( pos, angle, delay, long, layer ){
+
+	let frame = 0;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture( obj, imgEffectExplode2 );
+	ObjRender_SetBlendType( obj, BLEND_SUBTRACT );
+	ObjSprite2D_SetSourceRect( obj, 0, 0, 128, 128 );
+	ObjSprite2D_SetDestCenter( obj );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjRender_SetPosition( obj, pos[0], pos[1], pos[2] );
+	ObjRender_SetAngleZ( obj, angle );
+	
+	while( !Obj_IsDeleted(obj) && frame < long ){
+		
+		let tmp = max(0, (frame-delay)/(long-delay));
+		let scale = min(1, tmp*12) * 12;
+		let alpha = min(1, tmp*2) * 255;
+		ObjRender_SetScaleXYZ(obj, scale, scale, scale );
+		ObjRender_SetAlpha(obj, alpha );
+		
+		frame++;
+		yield;
+	}
+	descent( t in 0 .. 30 ){
+		
+		let tmp = t/30;
+		ObjRender_SetScaleXYZ(obj, tmp*12, tmp*12, tmp*12 );
+		ObjRender_SetAlpha(obj, tmp*255 );
+		yield;
+	}
+	Obj_Delete( obj );
+}

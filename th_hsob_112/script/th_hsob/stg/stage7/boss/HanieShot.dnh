@@ -1,0 +1,117 @@
+let HANIE_TYPE_1	= 0;
+let HANIE_TYPE_2	= 1;
+let HANIE_TYPE_3	= 2;
+
+// はにわ弾
+function HanieShot(x, y, stype, size, delay)
+{
+	let obj = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	SetShotDisabled(obj);
+	Obj_SetVisible(obj, false);
+	Obj_SetValue(obj, "COLOR", stype);
+	Obj_SetValue(obj, "SIZE", size);
+	
+	alternative(stype)
+	case(HANIE_TYPE_1) { _HanieShot(obj, delay, imgEffectHanie, 8, 4); }
+	case(HANIE_TYPE_2) { _HanieShot(obj, delay, imgEffectHanie, 8, 4); }
+	case(HANIE_TYPE_3) { _HanieShot(obj, delay, imgEffectHanie, 8, 4); }
+	return(obj);
+}
+// 当たり判定付けるよ
+function HanieEnemy(x, y, stype, size, delay, e_life, link_rate)
+{
+	let objFamilier = MakeEnemyFamilier(x, y, e_life, ENEMY_S);
+	let objS = HanieShot(x, y, stype, size, delay);
+	Obj_SetValue(objS, "E_OBJ", objFamilier);
+	SetEffectResist(objFamilier, -1);	// 凍結ダメージは通りやすい
+	SetTimeResist(objFamilier, 1);	// 停止耐性（主にバグ防止用）
+	Obj_SetValue(objFamilier, "DISH_RESIST", true);	// 皿用特殊耐性
+
+	// あいてむさん落とすよ！
+	if (1) { SetEnemyDropItem(objFamilier, [MY_ITEM_TIME_3], [MY_ITEM_TIME_1, 0]); }
+	else { SetEnemyDropItem(objFamilier, [MY_ITEM_TIME_1], [MY_ITEM_TIME_1, 0]); }
+
+	// ボスと体力連動
+	if (link_rate > 0) { CheckLinkLife_Familier(objEnemy, objFamilier, link_rate); }
+	
+	TCheckHit();
+	TCheckLife();
+	
+	return(objS);
+	
+	task TCheckLife()
+	{
+		let t = 0;
+		while(!Obj_IsDeleted(objFamilier) && !Obj_IsDeleted(objS))
+		{
+			if (t > delay)
+			{
+				// 当たり判定連動
+				let sz = Obj_GetValueD(objS, "SIZE", 0) * 12;
+				Obj_SetValue(objFamilier, "TO_SHT", sz);
+			}
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objS), ObjMove_GetY(objS));
+			t++;
+			yield;
+		}
+		if (!Obj_IsDeleted(objS)) { Obj_Delete(objS); }
+		if (!Obj_IsDeleted(objFamilier)) { Obj_Delete(objFamilier); }
+	}
+	task TCheckHit()
+	{
+		WaitForKilledFamilier(objFamilier, 0, 0);
+		// ショット撃破なら破壊音
+		if (!Obj_IsDeleted(objFamilier) && CheckKillType(objFamilier) == 2)
+		{
+			// アイテムドロップ
+			DropItems(objFamilier);
+		}
+		Obj_Delete(objFamilier);
+	}
+}
+
+// コマ送りオブジェクト
+task _HanieShot(parent, delay, imgFile, anim_frame, anim_count)
+{
+	let stype = Obj_GetValueD(parent, "COLOR", 0);
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D)];
+	Obj_SetValue(parent, "IMAGE_ID", obj[0]);
+	Obj_SetValue(parent, "IMAGE_ID_ALL", obj);
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgFile);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()+1);
+	ObjSprite2D_SetDestRect(obj[0], -24, -24, 24, 24);
+	ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+	
+	let t = 0;
+	let sc = 0;
+	let anime = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		let tmp = 1;
+		if (t < delay) { tmp = sin((t+1)/delay*90); }
+		
+		sc = Obj_GetValueD(parent, "SIZE", 0) * tmp;
+		let sz = sc * 8;
+		
+		ObjShot_SetIntersectionCircleA1(parent, sz);
+		
+		ObjRender_SetPosition(obj[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		ObjRender_SetScaleXYZ(obj[0], sc, sc, 1);
+		if (t%anim_frame == 0)
+		{
+			let ix = anime * 48;
+			let iy = stype * 48;
+			ObjSprite2D_SetSourceRect(obj[0], ix, iy, ix+48, iy+48);
+			anime = (anime+1)%anim_count;
+		}
+
+		ObjRender_SetAngleZ(obj[0], ObjMove_GetAngle(parent)+90);
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+}

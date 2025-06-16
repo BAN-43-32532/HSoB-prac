@@ -1,0 +1,303 @@
+// ---------------- キャラごとの画像
+
+let charaDir = imgDir ~ "character/";
+
+// カットインに使用しているファイルを返す
+function LoadingImageFile_Cutin()
+{
+	return(
+		[
+		/*
+			imgCharaSetujo[2],
+			imgCharaAnza[2],
+			imgCharaKoukai[2],
+			imgCharaKoukai[7],
+			imgCharaSasha[2],
+			imgCharaUka[2],
+			imgCharaRaku[2],
+			imgCharaMinayu[3],
+			imgCharaRinne[2],
+			imgCharaTokubi[3],
+			imgCharaVinka[9],
+			imgCharaMint[9],
+			imgCharaAzuma[2],
+			imgCharaKayano[2],
+			imgCharaTenyu[1],
+			*/
+		]
+	);
+}
+
+// キャラクター立ち絵のロード
+task LoadCharacterAllTexture(bossID)
+{
+	let tmpPath = _CharacterAllTexture(bossID);
+	ascent(i in 0 .. length(tmpPath))
+	{
+		LoadTextureInLoadThread(tmpPath[i]);
+		yield;
+	}
+}
+// アンロード
+// カットイン用もアンロードされるけどキニシナイ！
+task UnloadCharacterAllTexture(bossID)
+{
+	let tmpPath = _CharacterAllTexture(bossID);
+	ascent(i in 0 .. length(tmpPath))
+	{
+		RemoveTexture(tmpPath[i]);
+		yield;
+	}
+}
+function _CharacterAllTexture(bossID)
+{
+	let tmpPath;
+	alternative(bossID)
+	/*
+	case (BOSS_ID_REIMU)	{ tmpPath = imgCharaReimu; }
+	*/
+	others { tmpPath = []; }
+	return(tmpPath);
+}
+
+
+let imgCharaReimu = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム
+	"",	// チャプター用スペカ名（↑使うかもしれないので取っておく）
+	charaDir ~ "Reimu/reimu1.png",		// ↓以降立ち絵
+	charaDir ~ "Reimu/reimu2.png",
+	charaDir ~ "Reimu/reimu3.png",
+	charaDir ~ "Reimu/reimu4.png",
+	charaDir ~ "Reimu/reimu5.png",
+	charaDir ~ "Reimu/reimu6.png",
+	charaDir ~ "Reimu/reimu7.png",
+	charaDir ~ "Reimu/reimu8.png",
+	charaDir ~ "Reimu/reimu9.png",
+	charaDir ~ "Reimu/reimu10.png",
+	charaDir ~ "Reimu/reimu11.png",
+	charaDir ~ "Reimu/reimu12.png",
+	charaDir ~ "Reimu/reimu13.png",
+	charaDir ~ "Reimu/reimu14.png",
+	charaDir ~ "Reimu/reimu15.png",
+	charaDir ~ "Reimu/reimu16.png",
+	charaDir ~ "Reimu/reimu17.png",
+	charaDir ~ "Reimu/reimu18.png",
+	charaDir ~ "Reimu/reimu19.png",
+	charaDir ~ "Reimu/reimu20.png",
+	charaDir ~ "Reimu/reimu21.png",
+	charaDir ~ "Reimu/reimu22.png",
+	charaDir ~ "Reimu/reimu_ct.png",
+	charaDir ~ "Reimu/reimu_ct2.png",
+];
+let imgCharaMarisa = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム
+	"",	// チャプター用スペカ名（↑使うかもしれないので取っておく）
+	charaDir ~ "Marisa/marisa1.png",		// ↓以降立ち絵
+	charaDir ~ "Marisa/marisa2.png",
+	charaDir ~ "Marisa/marisa3.png",
+	charaDir ~ "Marisa/marisa4.png",
+	charaDir ~ "Marisa/marisa5.png",
+	charaDir ~ "Marisa/marisa6.png",
+	charaDir ~ "Marisa/marisa7.png",
+	charaDir ~ "Marisa/marisa8.png",
+	charaDir ~ "Marisa/marisa9.png",
+	charaDir ~ "Marisa/marisa10.png",
+	charaDir ~ "Marisa/marisa11.png",
+	charaDir ~ "Marisa/marisa12.png",
+	charaDir ~ "Marisa/marisa13.png",
+	charaDir ~ "Marisa/marisa14.png",
+	charaDir ~ "Marisa/marisa15.png",
+	charaDir ~ "Marisa/marisa16.png",
+	charaDir ~ "Marisa/marisa_ct.png",
+	charaDir ~ "Marisa/marisa_ct2.png",
+];
+let imgCharaSakuya = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム
+	"",	// チャプター用スペカ名（↑使うかもしれないので取っておく）
+	charaDir ~ "Sakuya/sakuya1.png",		// ↓以降立ち絵
+	charaDir ~ "Sakuya/sakuya2.png",
+	charaDir ~ "Sakuya/sakuya3.png",
+	charaDir ~ "Sakuya/sakuya4.png",
+	charaDir ~ "Sakuya/sakuya5.png",
+	charaDir ~ "Sakuya/sakuya6.png",
+	charaDir ~ "Sakuya/sakuya7.png",
+	charaDir ~ "Sakuya/sakuya8.png",
+	charaDir ~ "Sakuya/sakuya9.png",
+	charaDir ~ "Sakuya/sakuya10.png",
+	charaDir ~ "Sakuya/sakuya11.png",
+	charaDir ~ "Sakuya/sakuya12.png",
+	charaDir ~ "Sakuya/sakuya13.png",
+	charaDir ~ "Sakuya/sakuya14.png",
+	charaDir ~ "Sakuya/sakuya15.png",
+	charaDir ~ "Sakuya/sakuya16.png",
+	charaDir ~ "Sakuya/sakuya17.png",
+	charaDir ~ "Sakuya/sakuya18.png",
+	charaDir ~ "Sakuya/sakuya19.png",
+	charaDir ~ "Sakuya/sakuya20.png",
+	charaDir ~ "Sakuya/sakuya21.png",
+];
+let imgCharaKaguya = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム
+	"",	// チャプター用スペカ名（↑使うかもしれないので取っておく）
+	charaDir ~ "Kaguya/kaguya1.png",		// ↓以降立ち絵
+	charaDir ~ "Kaguya/kaguya2.png",
+	charaDir ~ "Kaguya/kaguya3.png",
+	charaDir ~ "Kaguya/kaguya4.png",
+	charaDir ~ "Kaguya/kaguya5.png",
+	charaDir ~ "Kaguya/kaguya6.png",
+	charaDir ~ "Kaguya/kaguya7.png",
+	charaDir ~ "Kaguya/kaguya8.png",
+	charaDir ~ "Kaguya/kaguya9.png",
+	charaDir ~ "Kaguya/kaguya10.png",
+	charaDir ~ "Kaguya/kaguya11.png",
+	charaDir ~ "Kaguya/kaguya12.png",
+	charaDir ~ "Kaguya/kaguya13.png",
+	charaDir ~ "Kaguya/kaguya14.png",
+	charaDir ~ "Kaguya/kaguya15.png",
+	charaDir ~ "Kaguya/kaguya16.png",
+	charaDir ~ "Kaguya/kaguya17.png",
+	charaDir ~ "Kaguya/kaguya18.png",
+	charaDir ~ "Kaguya/kaguya19.png",
+	charaDir ~ "Kaguya/kaguya20.png",
+	charaDir ~ "Kaguya/kaguya21.png",
+	charaDir ~ "Kaguya/kaguya22.png",
+	charaDir ~ "Kaguya/kaguya23.png",
+	charaDir ~ "Kaguya/kaguya24.png",
+	charaDir ~ "Kaguya/kaguya25.png",
+	charaDir ~ "Kaguya/kaguya26.png",
+	charaDir ~ "Kaguya/kaguya27.png",
+	charaDir ~ "Kaguya/kaguya28.png",
+	charaDir ~ "Kaguya/kaguya29.png",
+	charaDir ~ "Kaguya/kaguya30.png",
+	charaDir ~ "Kaguya/kaguya31.png",
+	charaDir ~ "Kaguya/kaguya32.png",
+	charaDir ~ "Kaguya/kaguya33.png",
+	charaDir ~ "Kaguya/kaguya34.png",
+];
+
+let imgCharaRanran = [
+	charaDir ~ "Ranran/dotRanran.png",	// ドット
+	charaDir ~ "Ranran/sname.png",	// スペカ名
+	charaDir ~ "Ranran/ename.png",	// ネーム
+	charaDir ~ "Ranran/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Ranran/ranran1.png",		// ↓以降立ち絵
+	charaDir ~ "Ranran/ranran2.png",
+	charaDir ~ "Ranran/ranran3.png",
+	charaDir ~ "Ranran/ranran4.png",
+	charaDir ~ "Ranran/ranran5.png",
+	charaDir ~ "Ranran/ranran6.png",
+	charaDir ~ "Ranran/ranran1s.png",
+	charaDir ~ "Ranran/ranran2s.png",
+	charaDir ~ "Ranran/ranran3s.png",
+	charaDir ~ "Ranran/ranran4s.png",
+];
+let imgCharaChii = [
+	charaDir ~ "Chii/dotChii.png",	// ドット
+	charaDir ~ "Chii/sname.png",	// スペカ名
+	charaDir ~ "Chii/ename.png",	// ネーム
+	charaDir ~ "Chii/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Chii/chii1.png",		// ↓以降立ち絵
+	charaDir ~ "Chii/chii2.png",
+	charaDir ~ "Chii/chii3.png",
+	charaDir ~ "Chii/chii4.png",
+	charaDir ~ "Chii/chii1b.png",
+];
+let imgCharaHikariko = [
+	charaDir ~ "Hikariko/dotHikariko.png",	// ドット
+	charaDir ~ "Hikariko/sname.png",	// スペカ名
+	charaDir ~ "Hikariko/ename.png",	// ネーム
+	charaDir ~ "Hikariko/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Hikariko/hikariko1.png",		// ↓以降立ち絵
+	charaDir ~ "Hikariko/hikariko2.png",
+	charaDir ~ "Hikariko/hikariko3.png",
+	charaDir ~ "Hikariko/hikariko4.png",
+	charaDir ~ "Hikariko/hikariko5.png",
+];
+let imgCharaSiran = [
+	charaDir ~ "Siran/dotSiran.png",	// ドット
+	charaDir ~ "Siran/sname.png",	// スペカ名
+	charaDir ~ "Siran/ename.png",	// ネーム
+	charaDir ~ "Siran/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Siran/siran1.png",		// ↓以降立ち絵
+	charaDir ~ "Siran/siran2.png",
+	charaDir ~ "Siran/siran3.png",
+	charaDir ~ "Siran/siran4.png",
+	charaDir ~ "Siran/siran5.png",
+	charaDir ~ "Siran/siran6.png",
+	charaDir ~ "Siran/siran7.png",
+	charaDir ~ "Siran/siran8.png",
+	charaDir ~ "Siran/siran9.png",
+	charaDir ~ "Siran/siran10.png",
+	charaDir ~ "Siran/siran11.png",
+];
+let imgCharaMystia = [
+	charaDir ~ "Mystia/dotMystia.png",	// ドット
+	charaDir ~ "Mystia/sname.png",	// スペカ名
+	charaDir ~ "Mystia/ename.png",	// ネーム
+	charaDir ~ "Mystia/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Mystia/mystia1.png",		// ↓以降立ち絵
+];
+let imgCharaNebet = [
+	charaDir ~ "Nebet/dotNebet.png",	// ドット
+	charaDir ~ "Nebet/sname.png",	// スペカ名
+	charaDir ~ "Nebet/ename.png",	// ネーム
+	charaDir ~ "Nebet/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Nebet/nebet1.png",		// ↓以降立ち絵
+];
+let imgCharaSet = [
+	charaDir ~ "Set/dotSet.png",	// ドット
+	charaDir ~ "Set/sname.png",	// スペカ名
+	charaDir ~ "Set/ename.png",	// ネーム
+	charaDir ~ "Set/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Set/set1.png",		// ↓以降立ち絵
+	charaDir ~ "Set/set2.png",
+	charaDir ~ "Set/set3.png",
+	charaDir ~ "Set/set4.png",
+	charaDir ~ "Set/set5.png",
+	charaDir ~ "Set/set6.png",
+	charaDir ~ "Set/set7.png",
+	charaDir ~ "Set/set8.png",
+	charaDir ~ "Set/set9.png",
+];
+let imgCharaHorou = [
+	charaDir ~ "Horou/dotHorou.png",	// ドット
+	charaDir ~ "Horou/sname.png",	// スペカ名
+	charaDir ~ "Horou/ename.png",	// ネーム
+	charaDir ~ "Horou/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Horou/horou1.png",		// ↓以降立ち絵
+	charaDir ~ "Horou/horou2.png",
+	charaDir ~ "Horou/horou3.png",
+	charaDir ~ "Horou/horou4.png",
+	charaDir ~ "Horou/horou5.png",
+	charaDir ~ "Horou/horou6.png",
+	charaDir ~ "Horou/horou7.png",
+	charaDir ~ "Horou/horou8.png",
+	charaDir ~ "Horou/horou9.png",
+	charaDir ~ "Horou/horou10.png",
+	charaDir ~ "Horou/horou11.png",
+	charaDir ~ "Horou/reigekich.png",
+];
+let imgCharaMumei = [
+	charaDir ~ "Mumei/dotMumei.png",	// ドット
+	charaDir ~ "Mumei/sname.png",	// スペカ名
+	charaDir ~ "Mumei/ename.png",	// ネーム
+	charaDir ~ "Mumei/SName_Chapter.png",	// チャプター用スペカ名
+	charaDir ~ "Mumei/m1.png",		// ↓以降立ち絵
+	charaDir ~ "Mumei/m2.png",
+	charaDir ~ "Mumei/m3.png",
+	charaDir ~ "Mumei/m4.png",
+	charaDir ~ "Mumei/m5.png",
+	charaDir ~ "Mumei/m6.png",
+	charaDir ~ "Mumei/m7.png",
+	charaDir ~ "Mumei/m8.png",
+	charaDir ~ "Mumei/mumei_spear.png",
+	charaDir ~ "Mumei/dotMumei2.png",	// ドット
+];

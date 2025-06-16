@@ -1,0 +1,228 @@
+//----------------------------------------------------
+//　オーラの泉
+//----------------------------------------------------
+//　減算は歪みシェーダで足りるため不要
+task InitAura( v_color ){
+	//　敵出現まで待機
+	while( length(GetEnemyBossObjectID()) <= 0 ){ yield; }
+	
+	let objEnm	= GetEnemyBossObjectID();
+	let m_ctr	= 8;	//　生成頻度f
+	//let color	= [ [ 128, 64, 64 ], [ 32, 32, 16 ] ];
+	SetAura( objEnm[0], m_ctr, v_color );
+}
+
+//　rgb1,2は要素数3配列
+task SetAura( v_enmID, v_control, v_color ){
+	let count	= 0;
+	let layer	= 0.31;
+	
+	while( !Obj_IsDeleted(v_enmID) ){
+
+		if (Obj_GetValueD(v_enmID, "MagicCircle", true))	// 魔法陣非表示の時はオーラもなし
+		{
+			if( count%v_control == 0 ){
+				//let gpos = [ ObjMove_GetX(v_enmID)+randEffect(-64,64), ObjMove_GetY(v_enmID)+randEffect(-64,64) ];
+				//let scale = [ randEffect(1,2), randEffect(1,2) ];
+				//let rgba = [ 32, 0, 255, 255 ];
+				Aura_Source01( v_enmID, layer, v_color[0] );
+				//SparkParticle( gpos, randEffect(0.1,1), 270 + randEffect(-32,32), randEffect(30,60), scale, rgba, layer, BLEND_ADD_ARGB );
+			}
+			Aura_Source02( v_enmID, layer, v_color[0] );
+			Aura_Source03( v_enmID, layer, v_color[1] );
+		}
+		count++;
+		
+		yield;
+	}
+}
+
+//　北斗の拳みたいなやつ
+task Aura_Source01( v_enmID, v_layer, v_rgb ){
+
+	if (IsDrawEffect() < 1) { return; }
+
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let gpos		= [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+	let cc			= 0;
+	let sca			= randEffect(0.8,1);
+	let sca1		= 0;
+	let scaA		= 0;
+	let alpha		= 128;
+	let alpha1		= 0;
+	let alphaA		= 0;
+	let ang			= randEffect(-4,4);
+	
+	ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+	ObjPrim_SetTexture( obj, imgSystemMCircle );
+	Obj_SetRenderPriority( obj, v_layer );
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjRender_SetAngleXYZ( obj, 0, 0, ang );
+	ObjRender_SetScaleXYZ( obj, sca*2 - sca1*sca, sca*2 - sca1*sca, 0 );
+	ObjSprite2D_SetSourceRect( obj, 0, 256, 64, 256+64 );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetColor( obj, v_rgb[0], v_rgb[1], v_rgb[2] );
+	ObjRender_SetAlpha( obj, alpha1*alpha );
+	
+	while( !Obj_IsDeleted(v_enmID) ){
+		gpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		alpha1 = 1 * sin( alphaA );
+		sca1 = 1 * sin( scaA );
+		
+		ObjRender_SetPosition( obj, gpos[0]+cc * cos(270+ang), gpos[1]+cc * sin(270+ang), 0 );
+		ObjRender_SetScaleXYZ( obj, sca*2 - sca1*sca, sca*2 - sca1*sca, 0 );
+		ObjRender_SetAlpha( obj, alpha1*alpha );
+		
+		cc += 4;
+		if( alpha1 < 1 ){ alphaA += 5; }
+		if( sca1 < 1 ){ scaA += 5; }
+		if( alpha1 >= 1 && sca1 >= 1 ){ break; }
+		
+		yield;
+	}
+	alphaA = 0;
+	scaA = 0;
+	while( !Obj_IsDeleted(v_enmID) ){
+		gpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		alpha1 = 1 * sin( alphaA );
+		sca1 = 1 * sin( scaA );
+		
+		ObjRender_SetPosition( obj, gpos[0]+cc * cos(270+ang), gpos[1]+cc * sin(270+ang), 0 );
+		ObjRender_SetScaleXYZ( obj, sca - sca1*sca, sca + sca1*sca, 0 );
+		ObjRender_SetAlpha( obj, alpha - alpha1*alpha );
+		
+		cc += 4;
+		if( alpha1 < 1 ){ alphaA += 5; }
+		if( sca1 < 1 ){ scaA += 5; }
+		if( alpha1 >= 1 && sca1 >= 1 ){ break; }
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　加算の霧っぽいやつ
+task Aura_Source02( v_enmID, v_layer, v_rgb ){
+
+	if (IsDrawEffect() < 1) { return; }
+
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let gpos		= [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+	let cc			= 0;
+	let sca			= randEffect(1.4,2);
+	let sca1		= 0;
+	let scaA		= 0;
+	let alpha		= 128;
+	let alpha1		= 0;
+	let alphaA		= 0;
+	let ang			= randEffect(0,360);
+	
+	ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+	ObjPrim_SetTexture( obj, imgSystemMCircle );
+	Obj_SetRenderPriority( obj, v_layer );
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjRender_SetAngleXYZ( obj, 0, 0, ang );
+	ObjRender_SetScaleXYZ( obj, sca*2 - sca1*sca, sca*2 - sca1*sca, 0 );
+	ObjSprite2D_SetSourceRect( obj, 64, 256, 128, 256+64 );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetColor( obj, v_rgb[0], v_rgb[1], v_rgb[2] );
+	ObjRender_SetAlpha( obj, alpha1*alpha );
+	
+	while( !Obj_IsDeleted(v_enmID) ){
+		gpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		alpha1 = 1 * sin( alphaA );
+		sca1 = 1 * sin( scaA );
+		
+		ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, sca*2 - sca1*sca, sca*2 - sca1*sca, 0 );
+		ObjRender_SetAlpha( obj, alpha1*alpha );
+		
+		cc++;
+		if( alpha1 < 1 ){ alphaA += 10; }
+		if( sca1 < 1 ){ scaA += 10; }
+		if( alpha1 >= 1 && sca1 >= 1 ){ break; }
+		
+		yield;
+	}
+	alphaA = 0;
+	scaA = 0;
+	while( !Obj_IsDeleted(v_enmID) ){
+		gpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		alpha1 = 1 * sin( alphaA );
+		sca1 = 1 * sin( scaA );
+		
+		ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, sca - sca1*sca, sca - sca1*sca, 0 );
+		ObjRender_SetAlpha( obj, alpha - alpha1*alpha );
+		
+		cc++;
+		if( alpha1 < 1 ){ alphaA += 10; }
+		if( sca1 < 1 ){ scaA += 10; }
+		if( alpha1 >= 1 && sca1 >= 1 ){ break; }
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　減算の霧っぽいやつ
+task Aura_Source03( v_enmID, v_layer, v_rgb ){
+
+	if (IsDrawEffect() < 1) { return; }
+
+	let obj			= ObjPrim_Create(OBJ_SPRITE_2D);
+	let gpos		= [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+	let cc			= 0;
+	let sca			= randEffect(1.6,2.2);
+	let alpha		= 255;
+	let move1		= 0;
+	let moveA		= 0;
+	let ang			= randEffect(0,360);
+	
+	ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+	ObjPrim_SetTexture( obj, imgSystemMCircle );
+	Obj_SetRenderPriority( obj, v_layer );
+	ObjRender_SetBlendType( obj, BLEND_SUBTRACT );
+	ObjRender_SetAngleXYZ( obj, 0, 0, ang );
+	ObjSprite2D_SetSourceRect( obj, 64, 256, 128, 256+64 );
+	ObjSprite2D_SetDestCenter( obj );
+	ObjRender_SetColor( obj, v_rgb[0], v_rgb[1], v_rgb[2] );
+	
+	while( !Obj_IsDeleted(v_enmID) ){
+		gpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, sca*2 - move1*sca, sca*2 - move1*sca, 0 );
+		ObjRender_SetAlpha( obj, move1*alpha );
+		
+		cc++;
+		if( move1 < 1 ){ moveA += 10; }
+		if( move1 >= 1 ){ break; }
+		
+		yield;
+	}
+	move1 = 0;
+	moveA = 0;
+	while( !Obj_IsDeleted(v_enmID) ){
+		gpos = [ ObjMove_GetX(v_enmID), ObjMove_GetY(v_enmID) ];
+		
+		move1 = 1 * sin( moveA );
+		
+		ObjRender_SetPosition( obj, gpos[0], gpos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, sca - move1*sca, sca - move1*sca, 0 );
+		ObjRender_SetAlpha( obj, alpha - move1*alpha );
+		
+		cc++;
+		if( move1 < 1 ){ moveA += 10; }
+		if( move1 >= 1 ){ break; }
+		
+		yield;
+	}
+	Obj_Delete( obj );
+}

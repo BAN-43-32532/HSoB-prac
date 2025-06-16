@@ -1,0 +1,162 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["輝夜エンディング-Bad"]
+#Text["輝夜エンディング-Bad"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdBad[3][0], 120);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 255, 108];
+	let COL2 = [108, 255, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「…という事で、我ら妖土真宗に新たな門徒が入信ぞい」", [192, 108, 255]);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "乱々[r]「ヒヒッ、これはめでたい。紅色の袈裟を作ってやろう」", [255, 108, 108]);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "ちい[r]「永遠亭につまようじを常備してもらうでちぃ！　ちいの初めてのお取引先になるでち！」", [130, 130, 220]);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "ひかり子[r]「お前にもサエズッター端末をやろう…これで私とお前は…引きこもり仲間（フレンズ・オブ・ハーミット）」", [108, 108, 255]);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "珠烏[r]「反省と入信と新入りの証に頭を丸めるのはどうかな！　私の錬金剣ラストアゾートに任せて！」", COL2);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "輝夜[r]「こいつら、絶対ぼっちが寂しかっただけだ！」", COL1);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "[r]戦いに敗れた輝夜。万事休すと思われたが、待っていたのは妖土真宗による生暖かい歓迎であった。", COL0);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "[r]どうやら異国の暴神セトと、彼が持ち込んだトトの書が無ければ、妖土真宗はまったく平和で仲の良い妖怪グループだったらしい。", COL0);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]そして、珠烏は幻想郷の結界を時間ごと停止させ、結界を超えて外の世界へ飛び立つ目的だったことも分かった。", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]セトは兎も角、彼女は危険な侵略行為を目的とはしていなかったのだ。", COL0);
+		}
+		case(10)
+		{
+			TEndingImage(imgEdBad[3][1], 30);
+			SetTalkEx(cutinDescri, "珠烏[r]「じゃ、私今度こそ行って来るから！」", COL2);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "輝夜[r]「あっちょっと待って、凄くて強い珠烏先輩ー。時間を操れるトトの書すごいなーあこがれちゃうなー。」", COL1);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "輝夜[r]「ところで時間を戻す術もある？　私、麗しくも可愛い珠烏先輩が時間を戻すの見てみたいなー」", COL1);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "珠烏[r]「なんだそんな事か！　よっし珠烏先輩に任せろー！」", COL2);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r]かくして無事異変発生直後の時間軸に帰還した我らが姫様。", COL0);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]敵が無害だったとか言われても知らん。ぶちのめさないと気が済むわけがないでしょう。", COL0);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "[r]次は頑張れ輝夜！[r]たまには自分の力で難題を解いて見せろ！", COL0);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.08　でも姫様の剃髪ならちょっと見てみたいかも", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

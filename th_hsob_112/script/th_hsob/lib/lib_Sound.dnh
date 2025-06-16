@@ -1,0 +1,82 @@
+//イベント呼び出し用定数
+let sndBossEndBigin = 0;
+let sndBossEnd = 1;
+let sndCallSpellCard = 2;
+let sndGetSpellCard = 3;
+let sndFailSpellCard = 4;
+let sndTimer1 = 5;
+let sndTimer2 = 6;
+let sndScore = 7;
+let sndScore2 = 8;
+let sndNoise = 9;
+let sndNoiseUP = 10;
+let sndVanish = 11;
+let sndBoon = 12;
+let sndPower1 = 13;
+let sndPower2 = 14;
+let sndPower3 = 15;
+let sndPower4 = 16;
+let sndPower5 = 17;
+let sndShot1 = 18;
+let sndShot2 = 19;
+let sndShot3 = 20;
+let sndShot4 = 21;
+let sndShot5 = 22;
+let sndShot6 = 23;
+let sndLaser1 = 24;
+let sndLaser2 = 25;
+let sndFlare = 26;
+let sndBulletBreak = 27;
+let sndFire = 28;
+let sndFreeze = 29;
+let sndCrash = 30;
+let sndItemSpecial = 31;
+let snd1UP = 32;
+let sndExtSpell = 33;
+let sndExtOther = 34;
+let sndShot7 = 35;
+let sndShutter = 36;
+let sndChapterScore = 37;
+let sndShuriken = 38;
+let sndExtMag = 39;
+let sndChapterCaution = 40;
+let sndChapterDanger = 41;
+let sndMasterSpark = 42;
+let sndMetal = 43;
+let sndExDown = 44;
+let sndNoiseEx = 45;
+
+
+//効果音
+function CallSound(soundID)
+{
+//	let idScript = GetAreaCommonData(CAREA_SYSTEM, "ScriptSound", -1);
+	NotifyEventAll(ev_CallSound, soundID);
+}
+function CallSoundEx(soundID, vol)
+{
+//	let idScript = GetAreaCommonData(CAREA_SYSTEM, "ScriptSound", -1);
+	let vol_rate = max(0, 1+0.1*log(vol+0.001)/log(2));
+	NotifyEventAll(ev_CallSoundEx, [soundID, vol_rate]);
+}
+
+//未ロードの効果音を再生
+function My_LoadPlaySE(soundFile)
+{
+	let obj = ObjSound_Create();
+	ObjSound_Load(obj, soundFile);
+	ObjSound_SetVolumeRate(obj, GetSoundVolume());
+	ObjSound_SetSoundDivision(obj, SOUND_SE);
+	ObjSound_Play(obj);
+}
+
+//時間を置いて再生
+task CallSoundDelay(soundID, delay, baseObj)
+{
+	wait(delay);
+	if (!Obj_IsDeleted(baseObj))
+	{
+		NotifyEventAll(ev_CallSound, soundID);
+	}
+}
+

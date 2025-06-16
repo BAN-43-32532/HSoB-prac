@@ -1,0 +1,140 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ひかり子通常3"]
+#Text["ひかり子通常3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Hikariko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2400);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	// アイテム数
+	bossDropItem = 50;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HIKARIKO);	//ボスセット
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 1, CHAPTER_BOSS);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 160, 60);
+	SetAction(objEnemy, ACT_SHOT2, 180);
+	BossCharge(objEnemy);
+	waitObj(objEnemy, 60);
+	
+	let way = [5, 6, 7, 8][Difficult];
+	let wt = [360, 360, 300, 270][Difficult];
+	
+	let t = 0;
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		SetAction(objEnemy, ACT_SHOT2, 120);
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let sa = -90 + (i-way+2.5)*30*muki;
+			let ss = 3;
+			let oa = 45 * muki;
+			SetFamilier01(ObjMove_GetX(objEnemy)+32*cos(sa), ObjMove_GetY(objEnemy)+32*sin(sa),
+				ss, sa, oa);
+			CallSound(sndShot2);
+			waitObj(objEnemy, 8);
+		}
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 160, 32);
+		waitObj(objEnemy, wt-8*way-120);
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT1, 90);
+		waitObj(objEnemy, 90);
+		muki = -muki;
+		t++;
+	}
+}
+
+
+// 人魂
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 120, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.8);	// ボスと体力連動
+	DrawBirdOption(objFamilier, EFF_BLUE, iniAngle, 1);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		Enemy_SetPatternA2(objFamilier, 0, iniSpeed, iniAngle, -iniSpeed/90, 0, 0);
+		waitObj(objFamilier, 45);
+		if (Obj_IsDeleted(objFamilier)) { return; }
+		MoveHormingEnemy(objFamilier, 4, 90);
+		waitObj(objFamilier, 45);
+		if (Obj_IsDeleted(objFamilier)) { return; }
+		Enemy_SetPatternA2(objFamilier, 0, NO_CHANGE, NO_CHANGE, iniSpeed/120, 0, iniSpeed*2);
+		TCheckDispINOut(objFamilier, 32);
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, 60);
+		
+		let speed = [1, 1.5, 1.75, 2.25][Difficult];
+		let graphic = BGW_SCALE_BLUE;
+		let wt = [30, 18, 14, 14][Difficult];
+		let timer = 300;
+		
+		let st = 0;
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+//			let sa = iniAngle + rand(-5,5);
+				let sa = Obj_GetValueD(objFamilier, "E_ANGLE", 0) + 180 + rand(-5,5);
+			CallSound(sndShot5);
+			loop(3)
+			{
+				if (!CanShotBullet(objFamilier)) { return; }
+				CreateShotWayA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					0, sa, speed/120, speed, graphic, 30, 2, 120, 0);
+				waitObj(objFamilier, 1);
+			}
+			waitObj(objFamilier, wt-3);
+			st++;
+			t += wt;
+		}
+	}
+}

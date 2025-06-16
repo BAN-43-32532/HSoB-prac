@@ -1,0 +1,251 @@
+
+
+//　主に共通データの処理
+//--------------------------------------------------------------------------------------------
+
+//コモンデータのエリア名
+let CAREA_TITLE = "Title";	//リプレイファイルに保存しないエリア
+let CAREA_CONFIG = "Config";	//コンフィグ関連（保存しない）
+let CAREA_SAVE = "SaveData";	//ゲーム全体のクリア状況
+let CAREA_SYSTEM = "System";	//保存するエリア（主にシステムスクリプトで使用）
+let CAREA_STAGE = "Stg";	//保存するエリア（ステージ処理）
+let CAREA_CHAPTER = "Chp";	//保存するエリア（チャプター履歴）
+let CAREA_REPLAY = "Replay";	//リプレイ再生時の為に値を保存するエリア
+let CAREA_SPELL = "Spell";	//スペカ用
+
+let CAREA_HIGHSCORE = "HighScore";	//ハイスコア
+let CAREA_RESULT = "Result";	//スペカ取得状況
+
+let saveCommonSAVE	= GetCurrentScriptDirectory() ~ "./../data/Package_common_SaveData.dat";
+let saveCommonCONFIG	= GetCurrentScriptDirectory() ~ "./../data/Package_common_Config.dat";
+let saveCommonSCORE	= GetCurrentScriptDirectory() ~ "./../data/Package_common_HighScore.dat";
+let saveCommonRESULT	= GetCurrentScriptDirectory() ~ "./../data/Package_common_Result.dat";
+let saveCommonCHAPTER	= GetCurrentScriptDirectory() ~ "./../data/Package_common_Chapter.dat";
+
+// 初期化
+task InitializeCommonData()
+{
+	//エリアを作る
+	CreateCommonDataArea(CAREA_SAVE);
+	CreateCommonDataArea(CAREA_CONFIG);
+	CreateCommonDataArea(CAREA_TITLE);
+	CreateCommonDataArea(CAREA_RESULT);
+	CreateCommonDataArea(CAREA_HIGHSCORE);
+	CreateCommonDataArea(CAREA_SYSTEM);
+	CreateCommonDataArea(CAREA_CHAPTER);
+	
+	//　ゲームのセーブデータ
+	LoadCommonDataAreaA2(CAREA_SAVE, saveCommonSAVE);
+	//　オプションロード
+	LoadConfig(0);
+	//　スペカ
+	LoadCommonDataAreaA2(CAREA_RESULT, saveCommonRESULT);
+	//　ハイスコア→都度読み込む
+//	LoadCommonDataAreaA2(CAREA_HIGHSCORE, saveCommonSCORE);
+	
+	CheckVersion();
+}
+
+// バージョンチェック
+function CheckVersion()
+{
+
+}
+
+function LoadConfig(isReset)
+{
+	let success_flag = LoadCommonDataAreaA2("SAVED_CONFIG", saveCommonCONFIG);
+	if (isReset != 0 && IsCommonDataAreaExists(CAREA_CONFIG)) { ClearAreaCommonData(CAREA_CONFIG); }
+	if (isReset < 0) { success_flag = false; }	//初期値にリセット
+	if (success_flag)
+	{
+		CreateCommonDataArea(CAREA_CONFIG);
+		CopyCommonDataArea(CAREA_CONFIG, "SAVED_CONFIG");
+		//バージョン情報のみ更新
+		SetAreaCommonData(CAREA_CONFIG, "VERSION", GAME_VERSION);
+	} else {
+		//データがない場合は初期値をセット
+		CreateCommonDataArea(CAREA_CONFIG);
+		SetAreaCommonData(CAREA_CONFIG, "BGM_Volume", 100);
+		SetAreaCommonData(CAREA_CONFIG, "SE_Volume", 100);
+		SetAreaCommonData(CAREA_CONFIG, "Player_Volume", 100);
+		SetAreaCommonData(CAREA_CONFIG, "Effect", 4);
+		SetAreaCommonData(CAREA_CONFIG, "Background", 2);
+		SetAreaCommonData(CAREA_CONFIG, "Rebirth", 0);
+		SetAreaCommonData(CAREA_CONFIG, "AccKey", 0);
+		SetAreaCommonData(CAREA_CONFIG, "Alert", 1);
+		SetAreaCommonData(CAREA_CONFIG, "Auto_Talk", 0);
+		SetAreaCommonData(CAREA_CONFIG, "QRestart", 0);
+//		SetAreaCommonData(CAREA_CONFIG, "RoadSpeed", 0);	// 別に設定するので例外的にセットしない
+		SetAreaCommonData(CAREA_CONFIG, "VERSION", GAME_VERSION);
+		CopyCommonDataArea("SAVED_CONFIG", CAREA_CONFIG);
+		SaveCommonDataAreaA2("SAVED_CONFIG", saveCommonCONFIG);
+
+		// プラクティス設定用
+		SetAreaCommonData(CAREA_CONFIG, "Prac_Player", 8);
+		SetAreaCommonData(CAREA_CONFIG, "Prac_Spell", 8);
+		SetAreaCommonData(CAREA_CONFIG, "Prac_ZSpell", 100);
+	}
+	// キー設定
+	ConfigSkipKey();
+}
+
+// プラクティス解禁フラグ
+function CDM_SetPracticeStageFlag(tmpPlayer, tmpStage, tmpDifficult)
+{
+	// プレイ難易度以下のフラグを全てONにする
+	ascent(tmpD in 0 .. tmpDifficult+1)
+	{
+		SetAreaCommonData(CAREA_SAVE,
+			"Practice" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpStage) ~ "_" ~ IntToString(tmpD),
+			true );
+		// 難易度解禁用
+		SetAreaCommonData(CAREA_SAVE, "PracticeRank" ~ IntToString(tmpD), true );
+		// ステージ解禁用
+		SetAreaCommonData(CAREA_SAVE, "PracticeStage" ~ IntToString(tmpStage) ~ IntToString(tmpD), true );
+	}
+//	if (tmpStage > 0)
+//	{
+		// 解禁されたらPracticeStandbyをONに
+		SetAreaCommonData(CAREA_SAVE, "PracticeStandby", true );
+//	}
+}
+function CDM_GetPracticeStageFlag(tmpPlayer, tmpStage, tmpDifficult)
+{
+	return(GetAreaCommonData(CAREA_SAVE,
+		"Practice" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpStage) ~ "_" ~ IntToString(tmpDifficult),
+		false ));
+}
+function CDM_GetPracticeStageFlag_Stage(tmpStage, tmpDifficult)
+{
+	return( GetAreaCommonData(CAREA_SAVE, "PracticeStage" ~ IntToString(tmpStage) ~ IntToString(tmpDifficult), false ) );
+}
+function CDM_GetPracticeStageFlag_Rank(tmpDifficult)
+{
+	return( GetAreaCommonData(CAREA_SAVE, "PracticeRank" ~ IntToString(tmpDifficult), false ) );
+}
+// Extra解禁フラグ
+function CDM_SetExtraStageFlag(tmpPlayer)
+{
+	SetAreaCommonData(CAREA_SAVE,
+		"EXTRA_" ~ IntToString(tmpPlayer), true );
+	// 1キャラでも解禁されたらExtraStandbyをONに
+	SetAreaCommonData(CAREA_SAVE, "ExtraStandby", true );
+}
+function CDM_GetExtraStageFlag(tmpPlayer)
+{
+	return(GetAreaCommonData(CAREA_SAVE,
+		"EXTRA_" ~ IntToString(tmpPlayer), false ));
+}
+function CDM_GetExtraStageFlagAll()
+{
+	return(CDM_GetExtraStageFlag(0) || CDM_GetExtraStageFlag(3) || CDM_GetExtraStageFlag(6));
+}
+// スペプラ解禁フラグ（メニューのフラグのみ）
+function CDM_SetSpellPracticeFlag()
+{
+	SetAreaCommonData(CAREA_SAVE, "SpellPracStandby", true );
+}
+// ミュージックルーム用フラグ
+function CDM_SetMusicFlag(tmpMusic)
+{
+	SetAreaCommonData(CAREA_SAVE,
+		"MUSIC_" ~ IntToString(tmpMusic), true );
+}
+function CDM_GetMusicFlag(tmpMusic)
+{
+	return(GetAreaCommonData(CAREA_SAVE,
+		"MUSIC_" ~ IntToString(tmpMusic), false ));
+}
+// オールクリアフラグ
+function CDM_SetAllClearFlag(tmpPlayer, tmpWeapon, tmpDifficult)
+{
+	SetAreaCommonData(CAREA_SAVE,
+		"ALL_" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpWeapon) ~ "_" ~ IntToString(tmpDifficult),
+		true );
+	// プレイヤー全体用フラグは別に記録
+	/*
+	let flg = true;
+	ascent(i in 0 .. WEAPON_MAX)
+	{
+		if (!CDM_GetAllClearFlag(tmpPlayer, i, tmpDifficult)) { flg = false; break; }
+	}
+	if (flg)
+	{
+		SetAreaCommonData(CAREA_SAVE,
+			"ALL_" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpDifficult),
+			true );
+	}
+	*/
+
+	// どれか1機体でもクリアしたらクリアマーク（やさしみ）
+	SetAreaCommonData(CAREA_SAVE,
+		"ALL_" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpDifficult),
+		true );
+}
+function CDM_GetAllClearFlag(tmpPlayer, tmpWeapon, tmpDifficult)
+{
+	return(GetAreaCommonData(CAREA_SAVE,
+		"ALL_" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpWeapon) ~ "_" ~ IntToString(tmpDifficult),
+		false ));
+}
+function CDM_GetAllClearFlagEx(tmpPlayer, tmpDifficult)
+{
+	return(GetAreaCommonData(CAREA_SAVE,
+		"ALL_" ~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpDifficult),
+		false ));
+	/*
+	let basePl = trunc(tmpPlayer/PLAYER_TYPE_MAX)*PLAYER_TYPE_MAX;
+	return(CDM_GetAllClearFlag(basePl, tmpDifficult) && CDM_GetAllClearFlag(basePl+1, tmpDifficult));
+	*/
+}
+function CDM_GetAllClearFlagRank(tmpDifficult)
+{
+	let allPl = [PLAYER_REIMU_A, PLAYER_MARISA_A, PLAYER_SAKUYA_A, PLAYER_KAGUYA_A];
+	let flg = true;
+	ascent(i in 0 .. length(allPl))
+	{
+		if (!CDM_GetAllClearFlagEx(allPl[i], tmpDifficult))
+		{
+			flg = false;
+			break
+		}
+	}
+	return(flg);
+}
+// Exクリアフラグ
+function CDM_SetExtraClearFlag(tmpPlayer, tmpWeapon, tmpDifficultEx)
+{
+	CDM_SetAllClearFlag(tmpPlayer, tmpWeapon, 10+tmpDifficultEx);
+}
+function CDM_GetExtraClearFlag(tmpPlayer, tmpWeapon, tmpDifficultEx)
+{
+	return(CDM_GetAllClearFlag(tmpPlayer, tmpWeapon, 10+tmpDifficultEx));
+}
+// キャラ設定解禁フラグ
+function CDM_SetCharacterDataFlag(tmpCharacter)
+{
+	SetAreaCommonData(CAREA_SAVE,
+		"HELP_CHARA_" ~ tmpCharacter, true );
+}
+function CDM_GetCharacterDataFlag(tmpCharacter)
+{
+	return(GetAreaCommonData(CAREA_SAVE,
+		"HELP_CHARA_" ~ tmpCharacter, false ));
+}
+// キャラ解禁フラグ
+function CDM_GetPlayerPlayFlag()
+{
+	if (DEBUG_FILMING_MODE) { return([0, 1, 2]); }
+	else if (DEBUG_MODE || GetAreaCommonData(CAREA_SAVE, "PLAYER_KAGUYA", false )) { return([0, 1, 2, 3]); }
+	else { return([0, 1, 2]); }
+}
+
+// キー設定
+function ConfigSkipKey()
+{
+	let tmp_key = GetAreaCommonData(CAREA_CONFIG, "AccKey", 0);
+	if (tmp_key == 2) { SetSkipModeKey(KEY_INVALID); }
+	else if (tmp_key == 1) { SetSkipModeKey(KEY_RCONTROL); }
+	else { SetSkipModeKey(KEY_LCONTROL); }
+}

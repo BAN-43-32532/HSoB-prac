@@ -1,0 +1,140 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ｾﾄｻﾝ退室"]
+#Text["ｾﾄｻﾝ退室"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+
+// ｾﾄｻﾝを動かしたい時はこっち、objEnemyは基本的に弄らない
+//（本体はこのオブジェクトに追従）
+let objEnemySet = -1;
+let objEnemyNebet = -1;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);		}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+
+	InitMumei();
+	// 終了後えへくと自壊
+	MumeiEffect_SetDeleteMotion(true);
+
+	objEnemy = CreateBossTalk(BOSS_ID_MUMEI);	//ボスセット
+//	ObjMove_SetPosition(objEnemy, CenX, 160);
+	// ｾﾄｻﾝ描画用
+	objEnemySet = SETSET(BOSS_ID_SET, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+	objEnemyNebet = SETSET(BOSS_ID_NEBET, MaxX+96, MinY+32);
+
+	ChapterReset();	//チャプターリセット
+	
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+// メインタスク
+task Task_Main
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	let objImg = GetBossImageID(objEnemy);
+	let objImgSet = GetBossImageID(objEnemySet);
+	ObjRender_SetAlpha(objImg, false);
+	
+	wait(60);
+	MoveToSlowdown(objEnemyNebet, ObjMove_GetX(objEnemySet)+32, ObjMove_GetY(objEnemySet)-16, 45);
+	SetAction(objEnemyNebet, ACT_SHOT1, 90);
+	wait(40);
+	MoveToSlowdown(objEnemySet, ObjMove_GetX(objEnemySet)-128, ObjMove_GetY(objEnemySet)+32, 45);
+	YutaiSet();
+	RaiseMumei();
+	BossFinalExplode_Ex2(objEnemySet, false);
+	wait(90);
+	MoveToSlowdown(objEnemyNebet, ObjMove_GetX(objEnemyNebet)-32, ObjMove_GetY(objEnemyNebet)+96, 45);
+	SetAction(objEnemyNebet, ACT_MOVE_L, 45);
+	wait(45);
+	MoveToSlowdown(objEnemyNebet, ObjMove_GetX(objEnemySet)+32, ObjMove_GetY(objEnemySet)+32, 60);
+	SetAction(objEnemyNebet, ACT_MOVE_L, 60);
+	wait(90);
+	MoveTo(objEnemySet, ObjMove_GetX(objEnemySet), ObjMove_GetY(objEnemySet)-320, 180);
+	MoveTo(objEnemyNebet, ObjMove_GetX(objEnemyNebet), ObjMove_GetY(objEnemyNebet)-320, 180);
+	SetAction(objEnemyNebet, ACT_SHOT3, 180);
+	CallSound(sndBoon);
+	CallSound(sndPower2);
+	wait(180);
+	Boss_Finalize(objEnemy, false, false);
+	
+	
+	task YutaiSet()
+	{
+		ObjRender_SetBlendType(objImgSet, BLEND_ADD_ARGB);
+		let t = 0;
+		while(!Obj_IsDeleted(objEnemySet))
+		{
+			let tmp = GetCurve_d(min(1, (t+1)/45));
+			let al = tmp * sin(t*3)*64;
+			ObjRender_SetAngleZ(objImgSet, 0-90*tmp + sin(t)*10);
+			ObjRender_SetColor(objImgSet, 255-tmp*160-al, 255-tmp*60-al, 255-al);
+			t++;
+			wait(1);
+		}
+	}
+	
+	task RaiseMumei()
+	{
+		ascent(t in 0 .. 45)
+		{
+			ObjRender_SetAlpha(objImg, (t+1)/45*255);
+			wait(1);
+		}
+	}
+}
+
+// -------------------------------------
+// 描画用
+// -------------------------------------
+function SETSET(BOSS_ID, x, y)
+{
+	let objSet = MakeEnemy(x, y, 9999999, ENEMY_S);
+	Boss_SetIDtoObj(objSet, BOSS_ID);
+	Boss_AnimeTimer(objSet);
+	BossAnime_Initialize(objSet);
+	SetEnemyVisible(objSet, false);	// ハイパームテキ
+	return(objSet);
+}
+//----------------------------------------
+// 撃破エフェクト
+//----------------------------------------
+function BossFinalExplode_Ex2(objTarget, bigEffect)
+{
+	DisplayShake(30, 36);
+	
+	let bx = ObjMove_GetX(objTarget);
+	let by = ObjMove_GetY(objTarget);
+	let timer = 45;
+	let size = 6;
+	CallSound(sndBossEnd);
+	ascent (i in 0 .. 15)
+	{
+		_BossFinalExplodeB(bx, by,
+			randEffect(0,360), timer, randEffect(0,size^2)^0.5, randEffect(192,255), randEffect(192,255), 192);
+		yield;
+	}
+}
+

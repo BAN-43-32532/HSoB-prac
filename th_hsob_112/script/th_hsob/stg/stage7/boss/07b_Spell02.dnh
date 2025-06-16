@@ -1,0 +1,313 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["スペカ2"]
+#Text["スペカ2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mumei.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 92;
+	let SPELL_NAME = 1;
+	
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 400; }
+	else			{ bossDropItem = 150; }
+
+	//ダメージ透過率
+	dIni_Shot = 10;
+	//防御率再計算
+	SetMumeiDefence();
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_MUMEI);	//ボスセット
+
+	InitMumei();
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"07b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.65, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+	
+	// バーリアーｗｗｗｗｗ
+	TBombBarrierEx(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, CenY-80, 240);
+	SetMumeiEffect(objEnemy, false);
+	waitObj(objEnemy, 60);
+
+	CallSpellCard(true);	//スペカ起動
+	
+	BiiiigDish(CenX, MinY-80, 90);
+	SetAction(objEnemy, ACT_SHOT1, 240);
+	BossCharge(objEnemy);
+	CallSound(sndBoon);
+	CallSound(sndPower1);
+	waitObjS02(objEnemy, 240);
+
+	let muki = 1;
+	
+	let t = 0;
+	while(eAlive)
+	{
+		ascent(i in 0 .. 5)
+		{
+			FlowerDish(CenX, MinY-32, 1, 90+(i-2)*20*muki, (180-i*15)*muki);
+		}
+		CallSound(sndPower2);
+		SetAction(objEnemy, ACT_SHOT3, 240);
+		waitObjS02(objEnemy, 240);
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT1, 120);
+		waitObjS02(objEnemy, 120);
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT2, 120);
+		waitObjS02(objEnemy, 120);
+		muki = -muki;
+		t++;
+	}
+	
+	// タイミングがズレると回避が破綻するのでほぼ凍結で遅延なし
+	function waitObjS02(obj, delay)
+	{
+		wait(delay-1);
+		waitObj(objEnemy, 1);
+	}
+}
+
+task FlowerDish(x, y, speed, angle, add_angle)
+{
+	let sara_angle = angle + add_angle;
+	let sara_r = 256;
+
+	let objS = PorcelainEnemy(x, y, PORCELAIN_DISH_W, 32, 30, 150, 0.8);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	Obj_SetValue(objS, "ANGLE", sara_angle);
+	ObjShot_SetAutoDelete(objS, false);
+	
+	TShot();
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objS))
+	{
+		if (t < 240)
+		{
+			let tmp = GetCurve_d((t+1)/240);
+			sara_angle = angle + (1-tmp)*add_angle;
+		}
+		if (t > 420)
+		{
+			if (t > 420+240) { break; }
+			let tmp = GetCurve_a((t+1-420)/240);
+			sara_angle = angle - tmp*add_angle;
+		}
+		ObjMove_SetPosition(objS, x+sara_r*cos(sara_angle), y+sara_r*sin(sara_angle));
+		Obj_SetValue(objS, "ANGLE", sara_angle);
+		ObjMove_SetAngle(objS, sara_angle);
+
+		if (t > 30)
+		{
+			let tmp_obj = GetShotIdInCircleA2(ObjMove_GetX(objS), ObjMove_GetY(objS), 46, TARGET_ENEMY);
+			ascent(i in 0 .. length(tmp_obj))
+			{
+				if (Obj_GetValueD(tmp_obj[i], "WT", false) &&
+					absolute(ObjMove_GetY(objS)-ObjMove_GetY(tmp_obj[i])) < 24)
+				{
+					ShotDeleteS02(ObjMove_GetX(tmp_obj[i]), ObjMove_GetY(tmp_obj[i]), rand(1,6), sara_angle+180+rand(-75,75), ObjShot_GetImageID(tmp_obj[i]));
+					Obj_Delete(tmp_obj[i]);
+				}
+			}
+		}
+		t++;
+		waitObj(objS, 1);
+	}
+	Obj_Delete(objS);
+	
+	task TShot()
+	{
+		waitObj(objS, 240);
+		if(!CanShotBullet(objS)){return;}
+		CallSound(sndPower1);
+		WarningLine(objS);
+		waitObj(objS, 120);
+		if(!CanShotBullet(objS)){return;}
+		
+		let shot_timer = [360, 120, 360][DifficultEx()];
+		let shot_speed = [6, 4, 6][DifficultEx()];
+		let graphic = BGW_WATER_BLUE;
+		
+		ascent(t in 0 .. shot_timer)
+		{
+			if(!CanShotBullet(objS)){return;}
+			let sa = sara_angle;
+			let rdx = rand(-1,1);
+			let sr = 40 * rdx;
+			let sr2 = 16 * rand(-1,1);
+			let sx = ObjMove_GetX(objS) + sr*cos(sa+90) + sr2*cos(sa);
+			let sy = ObjMove_GetY(objS) + sr*sin(sa+90) + sr2*sin(sa);
+			let ss = shot_speed * rand(0.5, 1);
+			if (CheckDispINEx(sx, sy, 8))
+			{
+				My_CreateShotA1(sx, sy, ss, sa, graphic, 3);
+				CallSound(sndShot5);
+			}
+			waitObj(objS, 1);
+		}
+	}
+
+	task WarningLine(objBase){
+		loop(3){
+			if(!CanShotBullet(objBase)){return;}
+			Effect_LaserWarning2(objBase, 15, 500, 30);
+			wait(30);
+		}
+		if(!CanShotBullet(objBase) || IsTimeStopObj(objBase)){return;}
+		Effect_LaserWarning(ObjMove_GetX(objBase), ObjMove_GetY(objBase), ObjMove_GetAngle(objBase), 50, 500, 45);
+		
+
+		task Effect_LaserWarning(x, y, angle, r, leng, time){
+			ascent(i in 1 .. time+1){
+				if(!CanShotBullet(objBase)){return;}
+				let r2 = r*sin(90*i/time);
+				Effect(x+r2*cos(angle+90), y+r2*sin(angle+90), angle, leng, 30);
+				Effect(x+r2*cos(angle-90), y+r2*sin(angle-90), angle, leng, 30);
+				wait(1);
+			}
+			
+			task Effect(x, y, angle, leng, time){
+				let objEffect = CreateStraightLaserA1(x, y, angle, leng, 6, 9999, BGW_BEAM_E_BLUE, 0);
+				ObjStLaser_SetSource(objEffect, false);
+				ObjShot_SetIntersectionEnable(objEffect, false);
+//					ObjRender_SetColor(objEffect, 0, 0, 0);
+				ObjShot_SetItemChange(objEffect, false);
+
+				descent(i in 1 .. time+1){
+					if(!CanShotBullet(objBase)){break;}
+					ObjRender_SetAlpha(objEffect, 47*i/time);
+					wait(1);
+				}
+				Obj_Delete(objEffect);
+			}
+		}
+		
+		task Effect_LaserWarning2(obj, r, leng, time){
+			ascent(i in 1 .. time+1){
+				if(!CanShotBullet(objBase)){return;}
+				let r2 = r*sin(90*i/time);
+				Effect(obj, r2,  90, leng, 20);
+				Effect(obj, r2, -90, leng, 20);
+				wait(1);
+			}
+			
+			task Effect(obj, r, angPlus, leng, time){
+				let objEffect = CreateStraightLaserA1(ObjMove_GetX(obj), ObjMove_GetY(obj), ObjMove_GetAngle(obj), leng, 6, 9999, BGW_BEAM_E_BLUE, 0);
+				ObjStLaser_SetSource(objEffect, false);
+				ObjShot_SetIntersectionEnable(objEffect, false);
+//					ObjRender_SetColor(objEffect, 0, 0, 0);
+				ObjShot_SetItemChange(objEffect, false);
+
+				descent(i in 1 .. time+1){
+					if(!CanShotBullet(obj)){break;}
+					let ang = ObjMove_GetAngle(obj);
+					ObjMove_SetPosition(objEffect, ObjMove_GetX(obj) + r * cos(ang + angPlus), ObjMove_GetY(obj) + r * sin(ang + angPlus));
+					ObjStLaser_SetAngle(objEffect, ang);
+					ObjRender_SetAlpha(objEffect, 47*i/time);
+					wait(1);
+				}
+				Obj_Delete(objEffect);
+			}
+		}
+	}
+}
+
+task ShotDeleteS02(x, y, speed, angle, graphic)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/15, 0, graphic, 0);
+	SetShotDisabled(obj);
+	descent(t in 0 .. 15)
+	{
+		let tmp = t/15;
+		ObjRender_SetScaleXYZ(obj, tmp, tmp, tmp);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task BiiiigDish(x, y, angle)
+{
+	let objS = PorcelainEnemy(x, y, PORCELAIN_DISH_W2, 128, 120, 999999, 0.8);
+	let objImgAll = Obj_GetValueD(objS, "IMAGE_ID_ALL", []);
+	Obj_SetValue(objS, "ANGLE", angle);
+	
+	let sara_angle = angle;
+	let shot_speed = [2.5, 2, 2.5][DifficultEx()];
+	let shot_count = [2, 1, 2][DifficultEx()];
+	let graphic = [ADD_BGW_BALL_L_BLUE, ADD_BGW_BALL_M_BLUE, ADD_BGW_BALL_M_BLUE, ADD_BGW_BALL_S_BLUE, ADD_BGW_BALL_S_BLUE, ADD_BGW_BALL_S_BLUE];
+	let wt = 2;
+	
+	let t = 0;
+	let anime_t = 0;
+	let st = 0;
+	while(!Obj_IsDeleted(objS))
+	{
+		sara_angle = angle + sin(anime_t)*24;
+		ObjMove_SetPosition(objS, x+96*cos(sara_angle), y+96*sin(sara_angle));
+		ObjMove_SetAngle(objS, sara_angle);
+		Obj_SetValue(objS, "ANGLE", sara_angle);
+		if (t > 180)
+		{
+			let tmp = min(1, (t-180)/360);
+			anime_t += tmp*1/3;
+		}
+		if ((t > 180 && t%(wt*2) == 0) || t > 360 && t%wt == 0)
+		{
+			let sa = sara_angle;
+			loop(shot_count)
+			{
+				let rdx = rand(-1,1);
+				let sr = 144 * rdx;
+				let sr2 = 32 * rand(-1,1);
+				let sx = ObjMove_GetX(objS) + sr*cos(sa+90) + sr2*cos(sa);
+				let sy = ObjMove_GetY(objS) + sr*sin(sa+90) + sr2*sin(sa);
+				let ss = shot_speed * rand(0.5, 1);
+				let objSs = My_CreateShotA1(sx, sy, ss, sa+rdx*15, graphic[st%length(graphic)], 15);
+				Obj_SetValue(objSs, "WT", true);
+			}
+			if (st%3 == 0) { CallSound(sndShot2); }
+			st++;
+		}
+		t++;
+		waitObj(objS, 1);
+	}
+	Obj_Delete(objS);
+}

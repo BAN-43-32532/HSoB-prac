@@ -1,0 +1,300 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["EN-気合「真昼の夜雀」　H-気合「デイライトコーラス」　L-渾身「煌く烈日の歌姫」"]
+#Text["EN-気合「真昼の夜雀」　H-気合「デイライトコーラス」　L-渾身「煌く烈日の歌姫」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3333);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(33);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 41;
+	let SPELL_NAME = [0, 0, 1, 2][Difficult];
+	// アイテム数
+	bossDropItem = 100;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MYSTIA);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+	GetCurrentScriptDirectory()~"05a_Background.dnh",
+	GetBossTexture(objEnemy, I_CUTIN), 0.75, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 160, 15);
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 60);
+	if(Difficult <= D_NORM){
+		Normal();
+	}else if(Difficult <= D_HARD){
+		Hard();
+	}else{
+		Lunatic();
+	}
+	
+	task Normal(){
+		while(eAlive)
+		{
+			let D = 1;
+			let grap = BGW_NOTE_GREEN;
+			let way = 24;
+			let wt = 1;
+			let arc = 180/way;
+			let spd2 = 3.0;
+			SetAction(objEnemy, ACT_SHOT2, 360);
+			ascent(j in 0 .. 3){
+				let ang = GetAngleToPlayer(objEnemy)+rand(-arc/2, arc/2)-15*D*j;
+				if(!eAlive){return;}
+				ascent(iQ in 0 .. 5){
+					let spd = 5.0-0.35*iQ;
+					TShotA(objEnemy, way, wt, spd, spd2, ang, 0, arc, D, grap);
+				}
+				waitObj(objEnemy, way*wt);
+				SetAction(objEnemy, ACT_MOVE, 120);
+				EnemyRandomMove(objEnemy, 160, 48);
+				ascent(iQ in 0 .. 5){
+					let spd = 5.0-0.35*iQ;
+					TShotA(objEnemy, way, wt, spd, spd2, ang+180, 0, arc, D, grap);
+				}
+				D = -D;
+				waitObj(objEnemy, 80-way*wt);
+			}
+			if(!eAlive){return;}
+			BossCharge(objEnemy);
+			CallSound(sndPower1);
+			if(!eAlive){return;}
+			TShotB(4.5, 12, 6, 5, GetAngleToPlayer(objEnemy), BGW_SCALE_PURPLE);
+			waitObj(objEnemy, 150);
+		}
+	}
+	
+	task Hard(){		
+		while(eAlive)
+		{
+			let D = 1;
+			let grap = BGW_NOTE_GREEN;
+			let way = 18;
+			let wt = 1;
+			let arc = 180/way;
+			let arc2 = arc/6; 
+			let spd2 = 3.0;
+			let ang = GetAngleToPlayer(objEnemy)+rand(-arc/2, arc/2);
+			SetAction(objEnemy, ACT_SHOT2, 360);
+			loop(4){
+				if(!eAlive){return;}
+				ascent(iQ in 0 .. 3){
+					let spd = 4.8-0.8*iQ;
+					ascent(iW in 0 .. 3){
+						TShotA(objEnemy, way, wt, spd, spd2,   ang, +arc2*(iW+0.5)*D, arc, D, grap);
+						TShotA(objEnemy, way, wt, spd, spd2/2, ang, -arc2*(iW+0.5)*D, arc, D, grap);
+					}
+				}
+				waitObj(objEnemy, way*wt);
+				ascent(iQ in 0 .. 3){
+					let spd = 4.8-0.8*iQ;
+					ascent(iW in 0 .. 3){
+						TShotA(objEnemy, way, wt, spd, spd2,   ang+180, +arc2*(iW+0.5)*D, arc, D, grap);
+						TShotA(objEnemy, way, wt, spd, spd2/2, ang+180, -arc2*(iW+0.5)*D, arc, D, grap);
+					}
+				}
+				D = -D;
+				waitObj(objEnemy, 60-way*wt);
+			}
+			D = -D;
+			if(!eAlive){return;}
+			BossCharge(objEnemy);
+			CallSound(sndPower1);
+			waitObj(objEnemy, 60);
+			if(!eAlive){return;}
+			TShotB(9, 10, 2, 5, GetAngleToPlayer(objEnemy), BGW_SCALE_PURPLE);
+			waitObj(objEnemy, 120);
+			EnemyRandomMove(objEnemy, 160, 64);
+			SetAction(objEnemy, ACT_MOVE, 120);
+			waitObj(objEnemy, 120);
+		}
+	}
+
+	task Lunatic(){
+		while(eAlive)
+		{
+			let D = 1;
+			let way = 20;
+			let wt = 1;
+			let arc = 180/way;
+			let spd2 = 3.0;
+			SetAction(objEnemy, ACT_SHOT2, 360);
+			ascent(j in 0 .. 4){
+				if(!eAlive){return;}
+				let ang = GetAngleToPlayer(objEnemy)+rand(-arc/2, arc/2)-10*D*j;
+				TShotLuna(objEnemy, way, wt, 6-0.5*j, spd2, ang, arc, D, BGW_NOTE_GREEN);
+				if(j%2 == 1){
+					EnemyRandomMove(objEnemy, 160, 48);
+				}
+				D = -D;
+				waitObj(objEnemy, 30);
+			}
+			D = -D;
+			way = 5;
+			let way2 = 4;
+			let ang = rand(0, 360);
+			ascent(j in 0 .. 12){
+				if(!eAlive){return;}
+				CallSound(sndShot5);
+				let spd = 2.0-0.075*j;
+				let r = 20;
+				ascent(iW in 0 .. way){
+					let iMinus2 = (way2-1)/2;
+					ascent(iW2 in 0 .. way2){
+						let a = ang + 360*iW/way + 2*(iW2-iMinus2);
+						My_CreateShotA1(ObjMove_GetX(objEnemy)+r*cos(a), ObjMove_GetY(objEnemy)+r*sin(a), spd*1.0, a, BGW_NOTE_YELLOW, 10);
+						My_CreateShotA1(ObjMove_GetX(objEnemy)+r*cos(a), ObjMove_GetY(objEnemy)+r*sin(a), spd*0.7, a, BGW_NOTE_YELLOW, 10);
+					}
+//					SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 5, ang+360*iW/way, BGW_SCALE_PURPLE);
+				}
+				if(j%3 == 2){
+					EnemyRandomMove(objEnemy, 160, 48);
+				}
+				ang += 120/way*1.1;
+				waitObj(objEnemy, 10);
+			}
+			if(!eAlive){return;}
+			BossCharge(objEnemy);
+			CallSound(sndPower1);
+			waitObj(objEnemy, 60);
+			if(!eAlive){return;}
+			ang = GetAngleToPlayer(objEnemy);
+			CallSound(sndShot4);
+			ascent(i in 0 .. 5){
+				if(!eAlive){return;}
+				let way = 120-12*i;
+				let spd = 4.5-0.45*i;
+				TShotC(objEnemy, way, spd, spd/5, ang, BGW_SCALE_RED);
+				waitObj(objEnemy, 3);
+			}
+			waitObj(objEnemy, 105);
+
+			task TShotLuna(objEnemy, way, wt, spd, spd2, ang, arc, D, grap){
+				ascent(iQ in 0 .. 4){
+					let s = spd*(1-0.08*iQ);
+					ascent(iW in 0 .. 3){
+						TShotA(objEnemy, way, wt, s, spd2, ang, arc/4*(iW-1), arc, D, grap);
+					}
+				}
+				waitObj(objEnemy, way*wt);
+				SetAction(objEnemy, ACT_MOVE, 120);
+				ascent(iQ in 0 .. 4){
+					let s = spd*(1-0.08*iQ);
+					ascent(iW in 0 .. 3){
+						TShotA(objEnemy, way, wt, s, spd2, ang+180, arc/5*(iW-1), arc, D, grap);
+					}
+				}
+			}
+		}
+	}
+}
+
+task TShotC(objEnemy, way, spdMax, spdMin, ang, grap){
+	let iMinus = (way-1)/2;
+	way = ceil(way/12)*12;
+	let w2 = way/12;
+	ascent(iW in 0 .. way){
+		if(!eAlive){return;}
+		let spd = spdMin+(spdMax-spdMin)*absolute((iW%(way/6))-w2)/w2;
+		let objS = My_CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 
+		0, ang+360*iW/way, spd/60, spd, grap, 10);
+	}
+}
+
+task TShotA(objEnemy, way, wt, spd, spd2, angBase, angPlus, arc, D, grap){
+	let iMinus = (way-1)/2;
+	ascent(i in 0 .. way){
+		if(!eAlive){return;}
+		CallSound(sndShot1);
+		let a = angPlus-arc*(i-iMinus)*D;
+		let bx = cos(a);
+		let by = 1.8*sin(a);
+		let bl = (by^2+bx^2)^0.5;
+		let ba = atan2(by, bx);
+		let sRate = bl;
+		let objS = My_CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 
+		spd*sRate, angBase+ba, -spd*sRate/60, 0, grap, 10);
+		ObjMove_AddPatternA2(objS, 60, 0, NO_CHANGE, spd2*sRate/60, 0, spd2*sRate);
+		waitObj(objEnemy, wt);
+		i++;
+	}
+}
+
+task TShotB(way, arc, wt, spd, ang, grap){
+	if(!eAlive){return;}
+	CallSound(sndShot4);
+	SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), spd, ang, grap);
+	waitObj(objEnemy, wt);
+	ascent(i in 1 .. way){
+		if(!eAlive){return;}
+		CallSound(sndShot4);
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), spd, ang+arc*i, grap);
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), spd, ang-arc*i, grap);
+		waitObj(objEnemy, wt);
+	}
+}
+
+task SetFamilier01(x, y, spd, ang, grap){
+	let eSize = ENEMY_M;
+	let eColor = EFF_PURPLE;
+	let objFamilier = MakeEnemyFamilier(x, y, 30, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 1.0);	// ボスと体力連動
+	Act();
+	DrawBirdOption2(objFamilier, eColor, ang, 1, 1.00, true);
+	WaitForKilledFamilier(objFamilier, 8, 0);
+	ZakoFinalize(objFamilier, eColor);
+
+	task Act(){
+		ObjMove_SetAngle(objFamilier, ang);
+		ascent(i in 0 .. 30){
+			SetEnemyVisible(objFamilier, true);
+			ObjMove_SetSpeed(objFamilier, spd*i/30);
+			waitObj(objFamilier, 1);
+		}
+		ObjMove_SetSpeed(objFamilier, spd);
+		let t = 0;
+		let interval = 24;
+		while(CheckDispIN(objFamilier, 32) && !Obj_IsDeleted(objFamilier)){
+			if(t%2 == 0 && t%interval < 6 && GetDistance( [ObjMove_GetX(objFamilier),ObjMove_GetY(objFamilier)], [GetPlayerX(), GetPlayerY()] ) > 80){
+				let spd = 0.8;
+				let way = 3;
+				let a = GetAngleToPlayer(objFamilier)+180/way*((1+trunc(t/interval))%2);
+				ascent(iW in 0 .. way){
+					My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 
+					0, a+360*iW/way, spd/60, spd, grap, 0);
+				}
+			}
+			t++;
+			waitObj(objFamilier, 1);
+		}
+		EraseEnemy(objFamilier);
+	}
+}

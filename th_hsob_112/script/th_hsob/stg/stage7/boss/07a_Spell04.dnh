@@ -1,0 +1,282 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["「阿弥陀如来の薬」"]
+#Text["「阿弥陀如来の薬」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../stage4/boss/lib_Siran.dnh"
+#include"./../Road07_lib.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2250);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(24);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 84;
+	let SPELL_NAME = 14;
+
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 300; }
+	else			{ bossDropItem = 150; }
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SIRAN);	//ボスセット
+	SetSiranRosary();	// 数珠配置
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"../stage4/boss/04a_Background.dnh",
+			GetBossTexture(objEnemy, I_NORMAL), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL)
+	{
+		standBy(objEnemy, CenX, 200, 60);
+	} else {
+		ObjMove_SetPosition(objEnemy, CenX, 200);
+		SetEnemyVisible(objEnemy, false);
+		waitObj(objEnemy, 15);
+	}
+
+	TShotA(10, 0.75, 0, 1);
+	TShotA(10, 0.66, 0.5, -1);
+	SetFamilier02(CenX, 100, 0, 90, 0, 0, 90, 1);
+	CallSound(sndBoon);
+	
+	waitObj(objEnemy, 45);
+	SetEnemyVisible(objEnemy, true);
+
+	CallSpellCard(true);	//スペカ起動
+
+}
+
+task TShotA(way, ang_spd, sht_delay, D){
+	let ang = 0;
+	ascent(i in 0 .. way){
+		if(!eAlive){return;}
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, ang+i*360/way, sht_delay+i/way/4, -ang_spd*D, 60, D);
+	}
+}
+
+
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue, ang_spd, Delay, Dirc)
+{
+	iniValue %= 2;
+	let eSize = ENEMY_M;
+	let eColor = EFF_PURPLE;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 999999, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 1);	// ボスと体力連動
+	SetEnemyVisible(objFamilier, false);
+	DrawRosaryFamilier( objFamilier, eColor );
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		waitObj(objFamilier, Delay);
+		TLaser;
+	}
+	
+	task TMove()
+	{
+		let R = 0;
+		let A = iniAngle;
+		let A2 = 0;
+		let A2_add = Dirc*0.22;
+		let objImgID = Obj_GetValueD(objFamilier, "IMAGE_ID_ALL", []);
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t < Delay+1)
+			{
+				let rate = sin(90*t/Delay);
+				Render(objImgID, 1+(1-rate)*0.5, 255*rate);
+				R = rate*96;
+				if (t >= Delay) { SetEnemyVisible(objFamilier, true); }
+			}
+			let R2 = R * (1+sin(t/2)/2);
+			let pos = Rotate2D_XY(cos(A)*R, sin(A)*R2, A2);
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objEnemy)+pos[0], ObjMove_GetY(objEnemy)+pos[1]);
+			A2 += A2_add;
+			A += ang_spd;
+			t++;
+			yield;
+		}
+
+		function Render(objImgID, scale, alpha){
+			ascent(i in 0 .. length(objImgID)){
+				ObjRender_SetScaleXYZ(objImgID[i], scale, scale, scale);
+				ObjRender_SetAlpha(objImgID[i], alpha);
+			}
+		}
+	}
+	task TLaser()
+	{
+		let wt = [phaseExEnemy(1), phaseExEnemy(2), phaseExEnemy(1)][DifficultEx()];
+		let fwt = trunc(wt*iniValue);
+		let shot_speed = [1, 0.75, 1][DifficultEx()];
+		let shot_way = [1, 1, 1][DifficultEx()];
+		let shot_graphic = BGW_FUGU_PURPLE;
+		if (Dirc < 0) { shot_speed *= 1.25; }
+		
+		let max_width = 16;
+		let lw = 0;
+		let ll = 0;
+		let objL = My_CreateSimpleLaserA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, 0, 12, 60*60, BGW_BEAM_PURPLE, 0);
+		Obj_SetRenderPriorityI(objL, GetShotRenderPriorityI+1);
+		let objEffect = [CreateDelayEffect(objL), CreateDelayEffect(objL)];	// 根元えへくと用
+		
+		let t = 0;
+		while(!Obj_IsDeleted(objL) && !Obj_IsDeleted(objFamilier))
+		{
+			let ra = atan2(ObjMove_GetY(objFamilier)-ObjMove_GetY(objEnemy), ObjMove_GetX(objFamilier)-ObjMove_GetX(objEnemy));
+			if (sin(ra) > 0.5) {
+				lw = max(0, lw-max_width/8);
+				if (lw <= 0) { ll = 0; }
+			} else {
+				lw = min(max_width, lw+max_width/8);
+				ll = min(320, ll+8);
+			}
+			
+			ObjShot_SetIntersectionEnable(objL, (lw >= max_width));
+			ObjStLaser_SetAngle(objL, ra);
+			ObjLaser_SetRenderWidth(objL, lw);
+			ObjLaser_SetIntersectionWidth(objL, lw/2);
+			ObjMove_SetPosition(objL, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier));
+			ObjLaser_SetLength(objL, ll);
+
+			// ディレイ用
+			let ls = (1 + (t%4)/8) * lw/20;
+			ObjRender_SetScaleXYZ(objEffect[0], ls, ls, 1);
+			ObjRender_SetAngleZ(objEffect[0], t*166);
+			ObjRender_SetPosition(objEffect[0], ObjMove_GetX(objL), ObjMove_GetY(objL), 0);
+			ObjRender_SetScaleXYZ(objEffect[1], ls, ls, 1);
+			ObjRender_SetAngleZ(objEffect[1], t*166);
+			ObjRender_SetPosition(objEffect[1],
+				ObjMove_GetX(objL)+ObjLaser_GetLength(objL)*cos(ObjStLaser_GetAngle(objL)), ObjMove_GetY(objL)+ObjLaser_GetLength(objL)*sin(ObjStLaser_GetAngle(objL)), 0);
+
+			// 追加ショット
+			if (t > 60 && (t+fwt)%wt == 0 && sin(ra) > 0)
+			{
+				CreateShotCircleA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), -shot_speed, ra, shot_speed/15, shot_speed, shot_graphic, 15, shot_way, 16);
+				CallSound(sndShot3);
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(objL);
+		ascent(i in 0 .. 2) { Obj_Delete(objEffect[i]); }
+	}
+}
+
+task SetFamilier02(iniX, iniY, iniSpeed, iniAngle, iniValue, ang_spd, Delay, Dirc)
+{
+	iniValue %= 2;
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	
+	let objFamilier = MakeEnemyFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 999999, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 1);	// ボスと体力連動
+	SetEnemyVisible(objFamilier, false);
+	DrawRosaryFamilier( objFamilier, eColor );
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		waitObj(objFamilier, Delay);
+		TShot;
+//		waitObj(objFamilier, 60);
+//		TShot2;
+	}
+	
+	task TMove()
+	{
+		MoveToSlowdown(objFamilier, iniX, iniY, Delay);
+		
+		let t = 0;
+		let objImgID = Obj_GetValueD(objFamilier, "IMAGE_ID_ALL", []);
+		while(CanShotBullet(objFamilier) && t < Delay+1)
+		{
+			let rate = sin(90*t/Delay);
+			Render(objImgID, 1+(1-rate)*0.5, 255*rate);
+			t++;
+			yield;
+		}
+		SetEnemyVisible(objFamilier, true);
+
+		function Render(objImgID, scale, alpha){
+			ascent(i in 0 .. length(objImgID)){
+				ObjRender_SetScaleXYZ(objImgID[i], scale, scale, scale);
+				ObjRender_SetAlpha(objImgID[i], alpha);
+			}
+		}
+	}
+	task TShot()
+	{
+		let speed = 1;
+		let way = [96, 60, 96][DifficultEx()];
+		let graphic = BGW_FUGU_WHITE;
+		
+		let st = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			let sa = GetAngleToPlayer(objFamilier);
+			CreateShotCircle(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphic, 0, way, 8);
+			CallSound(sndShot2);
+			
+			let wt_phase = 8;
+			if (st > 1) { wt_phase = 4; }
+			if (st > 8) { wt_phase = 2; }
+			if (st > 12) { wt_phase = 1; }
+			waitObj(objFamilier, phaseExEnemy(wt_phase));
+			st++;
+		}
+	}
+	task TShot2()
+	{
+		let speed = 1.25;
+		let way = 8;
+		let graphic = BGW_FUGU_PURPLE;
+		let wt = 60;
+		let wt_min = 5;
+		
+		while(CanShotBullet(objFamilier))
+		{
+			let sa = rand(0, 360);
+			CreateShotCircle(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphic, 0, way, 0);
+			waitObj(objFamilier, wt);
+			if (!CanShotBullet(objFamilier)) { return; }
+			CreateShotCircle(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed*1.5, sa+180/way, graphic, 0, way, 0);
+			waitObj(objFamilier, wt);
+			wt = wt_min + (wt-wt_min)*0.75;
+		}
+	}
+}

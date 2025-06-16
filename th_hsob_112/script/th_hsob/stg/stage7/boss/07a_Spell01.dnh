@@ -1,0 +1,281 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["「レッドマジックモンキー」"]
+#Text["「レッドマジックモンキー」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../stage1/boss/lib_Ranran.dnh"
+#include"./../Road07_lib.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(24);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 81;
+	let SPELL_NAME = 8;
+	
+	// アイテム数
+	if (IsRainbow())	{ bossDropItem = 300; }
+	else			{ bossDropItem = 150; }
+
+	//初期設定
+	Boss_Init();
+
+	objEnemy = CreateBoss(BOSS_ID_RANRAN);	//ボスセット
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+			GetCurrentScriptDirectory()~"../stage1/boss/01a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL)
+	{
+		standBy(objEnemy, CenX+80, 160, 60);
+	} else {
+		SetEnemyVisible(objEnemy, false);
+		waitObj(objEnemy, 15);
+		SetEnemyVisible(objEnemy, true);
+	}
+
+	CallSpellCard(true);	//スペカ起動
+	waitObj(objEnemy, 60);
+	
+	let t = 0;
+	while(eAlive)
+	{
+		let stype = [0, 1, 2, 0, 1, 5][t%3];
+		let epos = [1, -1, 0][(t+1)%3];
+		let muki = [1, -1][t%2];
+		let sx = ObjMove_GetX(objEnemy);
+		let sy = ObjMove_GetY(objEnemy);
+		let ss = 4.5;
+		let sa = GetAngleToPlayer(objEnemy);
+		let way = [
+			[14, 14, 4, 16, 16, 4][t%6],
+			[12, 12, 3, 14, 14, 3][t%6],
+			[14, 14, 4, 16, 16, 4][t%6],
+			][DifficultEx()];
+
+		if (t%3 == 2)
+		{
+			SetAction(objEnemy, ACT_SHOT1, 180+30);
+			CallSound(sndPower1);
+			waitObj(objEnemy, phaseExEnemy(1));
+			ascent(i in 0 .. 5)
+			{
+				if (!eAlive) { return; }
+				FSet01(sx, sy, ss*1.5, sa+[-2,2,-1,1,0][i]*360/5/way*muki, way, stype);
+				waitObj(objEnemy, phaseExEnemy(0.25));
+			}
+			waitObj(objEnemy, phaseExEnemy(4-1-0.25*5));
+		}
+		else
+		{
+			SetAction(objEnemy, ACT_SHOT1, 180);
+			FSet01(sx, sy, ss, sa, way, stype);
+		}
+		waitObj(objEnemy, phaseExEnemy(2));
+		if (t >= 5)
+		{
+			// 時間切れ
+			if (!eAlive) { return; }
+			SetAction(objEnemy, ACT_SHOT1, 180+30);
+			CallSound(sndPower1);
+			waitObj(objEnemy, phaseExEnemy(1));
+			ascent(i in 0 .. 5)
+			{
+				if (!eAlive) { return; }
+				FSet01(sx, sy, ss*1.5, sa+[-2,2,-1,1,0][i]*360/5/way*muki, way, stype);
+				waitObj(objEnemy, phaseExEnemy(0.25));
+			}
+			return;
+		}
+		waitObj(objEnemy, phaseExEnemy(2));
+		if (!eAlive) { return; }
+		MoveToSlowdown(objEnemy, CenX+80*epos, 160, phaseExEnemy(4));
+		SetAction(objEnemy, ACT_MOVE, phaseExEnemy(4));
+		waitObj(objEnemy, phaseExEnemy(4));
+		t++;
+	}
+}
+
+task FSet01(x, y, speed, angle, way, shot_type)
+{
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		SetFamilier01(x, y, speed, sa, shot_type);
+	}
+}
+
+
+// 筆ショット
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniValue)
+{
+	let iniSType = trunc(iniValue/2);
+	let iniMuki = [1, -1][iniValue%2];
+
+	let eSize = ENEMY_SS;
+	let eColor = EFF_RED;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 999999, eSize);
+	SetEnemyVisible(objFamilier, false);
+	DrawRanranOption(objFamilier);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove;
+		TShot;
+	}
+	
+	task TMove()
+	{
+		TCheckDispINOut(objFamilier, 32);
+		
+		if (iniSType == 0)
+		{
+			let timer = phaseExEnemy(4);
+			let speed = iniSpeed;
+			let add_a = 1.5*iniMuki;
+			Enemy_SetPatternA2(objFamilier, 0, speed, iniAngle, -speed/phaseExEnemy(1), add_a, 0);
+			Enemy_SetPatternA2(objFamilier, phaseExEnemy(1), speed, iniAngle+150*iniMuki, speed/timer, add_a, speed);
+			Enemy_SetPatternA2(objFamilier, phaseExEnemy(2), NO_CHANGE, NO_CHANGE, speed/timer, add_a/2, speed*2);
+			Enemy_SetPatternA2(objFamilier, phaseExEnemy(4), NO_CHANGE, NO_CHANGE, speed/timer, 0, speed*2);
+		}
+		else
+		{
+			let speed = iniSpeed;
+			Enemy_SetPatternA2(objFamilier, 0, speed, iniAngle, -speed/phaseExEnemy(1), 0, 0);
+			Enemy_SetPatternA2(objFamilier, phaseExEnemy(1), NO_CHANGE, iniAngle+0*iniMuki, speed, 0, speed);
+		}
+	}
+	
+	task TShot()
+	{
+		waitObj(objFamilier, phaseExEnemy(1));
+		
+		let st_max = phaseExEnemy(4);
+		
+		let t = 0;
+		let st = 0;
+		if (iniSType == 1)
+		{
+			let speed = 1.25;
+			let graphic = BGB_BALL_BS_RED;
+			let wt = [2, 3, 2][DifficultEx()];
+			let way_angle = [180, 0, 180][DifficultEx()];
+			let st_timer = [phaseExEnemy(4), phaseExEnemy(1), phaseExEnemy(4)][DifficultEx()];
+			
+			while(CanShotBullet(objFamilier) && t < st_timer)
+			{
+				let sx = ObjMove_GetX(objFamilier);
+				let sy = ObjMove_GetY(objFamilier);
+				if (CheckDispINEx(sx, sy, 0))
+				{
+					let ss = speed;
+					let sa = (st%2)*way_angle;
+					let stimer = st_max-t;
+					RedRedShot2(sx, sy, ss, sa, graphic, 15, stimer);
+					CallSound(sndShot2);
+				}
+				t += wt;
+				st++;
+				waitObj(objFamilier, wt);
+			}
+		}
+		else
+		{
+			let speed = 1.66;
+			let graphic = BGW_BALL_BS_RED;
+			let wt = [2, 3, 2][DifficultEx()];
+			let way_angle = [3, 4.5, 3][DifficultEx()];
+			let st_timer = [phaseExEnemy(4), phaseExEnemy(3), phaseExEnemy(4)][DifficultEx()];
+
+			while(CanShotBullet(objFamilier) && t < st_timer)
+			{
+				let sx = ObjMove_GetX(objFamilier);
+				let sy = ObjMove_GetY(objFamilier);
+				if (CheckDispINEx(sx, sy, 0))
+				{
+					let ss = speed;
+					let sa = iniAngle+180 - st*way_angle*iniMuki;
+					let stimer = st_max-t;
+					RedRedShot(sx, sy, ss, sa, graphic, 15, stimer);
+					CallSound(sndShot2);
+				}
+				t += wt;
+				st++;
+				waitObj(objFamilier, wt);
+			}
+		}
+
+		task RedRedShot(x, y, speed, angle, graphic, delay, timer)
+		{
+			let obj = My_CreateShotA1(x, y, 0, angle, BGW_BALL_BS_WHITE, 0);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+			ObjShot_SetIntersectionEnable(obj, false);
+			let alpha = 128;
+			loop(timer)
+			{
+				if (CheckInPlayer(x, y, 48)) { alpha = max(0, alpha-16); }
+				else { alpha = min(192, alpha+64); }
+				ObjRender_SetAlpha(obj, alpha);
+				ObjShot_SetIntersectionEnable(obj, false);
+				wait(1);
+			}
+			if (!Obj_IsDeleted(obj) && !CheckInPlayer(x, y, 48))
+			{
+				My_CreateShotA2Ex(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, angle, speed/120, speed, graphic, delay, DELAY_ADD);
+				CallSound(sndShot5);
+			}
+			Obj_Delete(obj);
+		}
+		task RedRedShot2(x, y, speed, angle, graphic, delay, timer)
+		{
+			let obj = My_CreateShotA1(x, y, 0, 0, BGW_BALL_BS_WHITE, 0);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+			ObjShot_SetIntersectionEnable(obj, false);
+			let alpha = 128;
+			loop(timer)
+			{
+				if (CheckInPlayer(x, y, 48)) { alpha = max(0, alpha-16); }
+				else { alpha = min(192, alpha+64); }
+				ObjRender_SetAlpha(obj, alpha);
+				ObjShot_SetIntersectionEnable(obj, false);
+				wait(1);
+			}
+			if (!Obj_IsDeleted(obj) && !CheckInPlayer(x, y, 48))
+			{
+				let sa = GetAngleToPlayer(obj) + angle;
+				My_CreateShotA2Ex(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, speed/120, speed, graphic, delay, DELAY_ADD);
+				CallSound(sndShot5);
+			}
+			Obj_Delete(obj);
+		}
+	}
+}

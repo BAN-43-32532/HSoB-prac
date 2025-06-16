@@ -1,0 +1,246 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ﾎﾛｳﾁｬﾝ通常1"]
+#Text["ﾎﾛｳﾁｬﾝ通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Horou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(5777);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(70);		}
+	BossEvent();
+}
+
+@Initialize {
+	// アイテム数
+	bossDropItem = 50;
+	//ダメージ透過率
+	dIni_Shot = 240;
+	// 停止無効
+	bossResistTime = 1;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_HOROU);	//ボスセット
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), 1, CHAPTER_BOSS);
+	
+	InitHorou();
+
+	// 使い魔と体力連動
+	CheckLinkLife_Boss(objEnemy);
+
+	Task_Main();
+	
+	SetBackGroundBase( objEnemy, 0 );
+}
+
+@MainLoop {
+	yield;
+}
+
+
+// メインタスク
+task Task_Main
+{
+	StandBy_TimeStop(objEnemy, CenX, 160, 300);
+	waitObj(objEnemy, 1);
+	
+	let wt = [150, 150, 120, 90][Difficult];
+	let wt_min = [120, 120, 105, 90][Difficult];
+	
+	// 本セット
+	SwitchHorouBook(90);
+	BossCharge(objEnemy);
+	waitObj(objEnemy, 150);
+	// 背景チェンジフラグ
+	SetAreaCommonData(CAREA_STAGE, "STG6B_ATK1", true);
+	TLaser01();
+	waitObj(objEnemy, 120);
+
+	let st = 0;
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		ascent(t in 0 .. 3)
+		{
+			if (!eAlive) { return; }
+			if (st%2 == 1) { EnemyRandomMove(objEnemy, 160, 48); }
+			TShot_sub(muki);
+			muki = -muki;
+			st++;
+			waitObj(objEnemy, wt);
+			if (GetPlayerY<ObjMove_GetY(objEnemy)+48) { break; }	// 上にいる時はレーザー連射
+		}
+		if (!eAlive) { return; }
+		CallSound(sndPower2);
+		TLaser01();
+		
+		wt = (wt-wt_min)*0.8 + wt_min;
+	}
+
+	task TShot_sub(muki)
+	{
+		let p_angle = GetAngleToPlayer(objEnemy);
+		
+		let speed = [2, 2, 2.25, 3.25][Difficult];
+		let angle = [90, 270][sin(p_angle)<0];
+		let way = [15, 15, 18, 18][Difficult];
+		let wt = [10, 10, 10, 7][Difficult];
+		let graphic = BGW_WING_RED;
+		
+		ascent(i in 0 .. 7)
+		{
+			if (!eAlive) { return; }
+			let sr = 160-i*10;
+			let way_angle = 135 - i*5;
+			let tmp_way = way-i;
+			let ss = speed;
+			let graphic = BGW_WING_RED + SHOT_COLOR[i];
+
+			let sa = angle + 45*muki;
+			let sx = ObjMove_GetX(objEnemy) + 64*cos(sa) - 16*cos(angle);
+			let sy = ObjMove_GetY(objEnemy) + 64*sin(sa) - 16*sin(angle);
+			WingShotWay(sx, sy, ss, sa, graphic, 30, 60+i*5, tmp_way, way_angle/tmp_way*muki, sr);
+			CallSound(sndShot2);
+			waitObj(objEnemy, wt);
+		}
+	}
+}
+
+task TLaser01()
+{
+	let ba = 180;
+	let way = 7;
+	let speed = 16;
+
+	let shot_speed = [1.5, 1.5, 2, 3][Difficult];
+	let shot_count = [0, 5, 5, 5][Difficult];
+
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sx = ObjMove_GetX(objHorouTablet);
+		let sy = ObjMove_GetY(objHorouTablet);
+		
+		let muki = 1;
+		let offset_angle = GetAngleToPlayer(objHorouTablet);
+		loop(2)
+		{
+			let angle = ba+(i+0.5)*180/way*muki;
+			let col = SHOT_COLOR[trunc(i/way*7)];
+			HorouLaserA01(sx, sy, speed, angle, 20, 24, BGW_LIGHT_L_RED+col, 60, offset_angle,
+				shot_speed, shot_count, BGW_CHRYSTAL_S_RED+col);
+			muki = -muki;
+
+		}
+		waitObj(objHorouTablet, 3);
+	}
+}
+task HorouLaserA01(x, y, speed, angle, l_len, l_wid, graphic, delay, offset_angle, speed2, count2, graphic2)
+{
+	CallSound(sndBulletBreak);
+	
+	let vpos = Rotate2D_XY(speed*cos(angle)/2, speed*sin(angle), offset_angle);
+	let vs = ((vpos[0])^2+(vpos[1])^2)^0.5;
+	let va = atan2(vpos[1], vpos[0]);
+	
+	let obj = CreateHorouLaser(x, y, vs, va, l_len, l_wid, graphic, delay);
+	ObjMove_AddPatternA2(obj, 0, vs/2, NO_CHANGE, -vs/60, 0, vs/4);
+	ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+	MoveHorming02(obj, 6, 60, 75);
+	
+	wait(45);
+	ascent(t in 0 .. count2)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let wa = 45+(count2-t+1)*8;
+		let ss = speed2 * (1-t*0.05);
+		DelayWay(ObjMove_GetX(obj), ObjMove_GetY(obj),
+			0, ObjMove_GetAngle(obj), ss/240, ss, graphic2, 30, 2, wa, 0, delay);
+		wait(1);
+	}
+
+	task DelayWay(x, y, speed, angle, add_speed, max_speed, graphic, delay, way, way_angle, r, timer)
+	{
+		wait(timer);
+		if (!eAlive) { return; }
+		
+		let w_cen = 0;
+		if (way > 1) { w_cen = (way-1)/2; }
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + (i-w_cen)*way_angle;
+			let sx = x + cos(sa)*r;
+			let sy = y + sin(sa)*r;
+			let obj = My_CreateShotA2(sx, sy, speed, sa, add_speed, max_speed, graphic, delay);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+		}
+	}
+}
+
+
+task WingShotWay(x, y, speed, angle, graphic, delay, timer, way, way_angle, r)
+{
+	ascent(i in 0 .. way)
+	{
+		let add_a = (i-(way-1)/2)*way_angle;
+		let to_r = (0.25 + 0.75*(i+1)/way) * r;
+		let to_offset = add_a*0.5;
+		WingShot(x, y, speed, angle, graphic, delay,
+			timer, add_a, to_r, to_offset);
+	}
+}
+
+task WingShot(x, y, speed, angle, graphic, delay, timer, add_a, to_r, to_offset)
+{
+	let obj = My_CreateShotA1(x, y, 0, angle, graphic, delay);
+	WingAddShot(obj);
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let tmpd = GetCurve_d((t+1)/timer);
+		let tmpa = GetCurve_ad((t+1)/timer);
+		let br = tmpd * to_r;
+		let ba = angle + add_a*tmpa;
+		let sx = x + br*cos(ba);
+		let sy = y + br*sin(ba);
+		let sa = ba + to_offset*tmpd;
+		ObjMove_SetPosition(obj, sx, sy);
+		ObjMove_SetAngle(obj, sa);
+		yield;
+	}
+	if (Obj_IsDeleted(obj)) { return; }
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+	CallSound(sndShot2);
+}
+
+task WingAddShot(objBase)
+{
+	let obj = My_CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, ADD_BGW_FUGU_WHITE, 0);
+	let col = GetEffectColor(BULLET_EFFECT[ObjShot_GetImageID(objBase)%8]);
+	ObjRender_SetColor(obj, col[0]*0.5+64, col[1]*0.5+64, col[2]*0.5+64);
+	SetShotDisabled(obj);
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		if (t < 60)
+		{
+			let tmp = GetCurve((t+1)/60);
+			ObjRender_SetAlpha(obj, tmp*255);
+		}
+		ObjMove_SetPosition(obj, ObjMove_GetX(objBase), ObjMove_GetY(objBase));
+		ObjMove_SetAngle(obj, ObjMove_GetAngle(objBase));
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+}

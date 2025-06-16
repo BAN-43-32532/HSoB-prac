@@ -1,0 +1,151 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["咲夜エンディング-Bad"]
+#Text["咲夜エンディング-Bad"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdBad[2][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 108, 255];
+	let COL2 = [255, 108, 108];
+	let COL3 = [192, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館。[r]周囲の湖の時間はまだ止まったままだが、悪魔たちの時は既に動き出していた。", COL0);
+		}
+		case(2)
+		{
+			TEndingImage(imgEdBad[2][1], 30);
+			SetTalkEx(cutinDescri, "咲夜[r]「ところでお嬢様。禁呪塔で不思議な幻を見たのですが」", COL1);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "レミリア[r]「なあに咲夜、禁呪塔では危なかったわね」", COL2);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「館の状態が無事回復しましたが、まだ黒幕退治をなさいます？」", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "レミリア[r]「私がなさってどうする。咲夜の戦いは咲夜が決着をつけないと」", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "パチュリー[r]「私たち闇の眷属には、砂漠の直射日光はあまりに眩しい。あと以前の冷気も辛かった」", COL3);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "咲夜[r]「パチュリー様は少し外で運動なさった方が宜しいのでは。私が死んでもまだ生き続けるお身体でしょう、なら健康な方が」", COL1);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "コリン[r]「へーぷし」", COL2);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館の永遠に幼い主は知っている。[r]咲夜が調子を取り戻して戦えば、この程度はまだまだ脅威ではない。", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館の名が周囲に舐められたら、幻想郷でも強者の部類として認知されている自分も、存在の危機に立たされるだろう。", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]故にわたs…レミリアは、あくまで自身は介入せず、従者に完全に異変解決を任せる形を取る事にした。", [190, 140, 140]);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "[r]紅魔館に対する畏敬の感情を維持する為に。け、決して太陽の下で自分が戦いたくないからではないのだ！", [210, 120, 120]);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "[r]咲夜！　今度こそ頑張って！[r]夜までに終わらせて来てごはん作ってね！", [255, 108, 108]);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.07　　だが帰るのは翌朝になります", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

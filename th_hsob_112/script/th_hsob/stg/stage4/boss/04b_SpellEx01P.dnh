@@ -1,0 +1,310 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["上人スペカex"]
+#Text["「絶対他力絶対本願」"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Siran.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	let SPELL_ID = 1004;
+	let SPELL_NAME = 13;
+
+
+	// アイテム数
+	bossDropItem = 0;
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SIRAN);	//ボスセット
+	SetSiranRosary();	// 数珠配置
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(SPELL_ID), SPELL_NAME, 
+	GetCurrentScriptDirectory()~"04a_Background.dnh",
+	GetBossTexture(objEnemy, I_CUTIN), 0.6, CUTMOTION_NORMAL);
+
+	// チャプター開始
+	ChapterStartBoss(GetBossID(objEnemy), SPELL_NAME, CHAPTER_SPELL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	let way = [20, 26, 30, 32][Difficult];
+//	let ang_acce = [1.37, 1.37, 1.37, 1.37][Difficult];
+	let ang_acce = 360/way/6*0.72;
+	let isLong = (GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE);
+	
+	SetEnemyVisible(objEnemy, true);
+	ObjMove_SetPosition(objEnemy, CenX, CenY-96);
+	TShotA(150, way, ang_acce, 1, 1, isLong);
+	LWMotion_Siran(objEnemy, [255, 96, 255], -7);
+	wait(480);
+	wait(480);
+	let Dirc = 1;
+	let way2Ini = [32, 32, 32, 32][Difficult];
+	let way2Max = [48, 56, 64, 80][Difficult];
+	let wt2 = [180, 150, 120, 90][Difficult];
+	while(eAlive){
+		TLaser(150, way2Ini, 60, Dirc);
+		Dirc = -Dirc;
+		way2Ini = min(way2Max, way2Ini+2);
+		wait(wt2);
+	}
+	
+}
+
+task TLaser(R, way, time, Dirc){
+	let BaseX = GetCenterX();
+	let BaseY = GetClipMinY()-75;
+	let ang = rand(0, 360/way) - 180/way -90+90*Dirc;
+	let c = 0;
+	let wt = time/way;
+	let angAdd = +180+90*Dirc;
+	let iW = 0;
+	ascent(it in 0 .. time){
+		c++;
+		if(!eAlive){return;}
+		while(c >= wt){
+			let rate = (c-wt);
+			let a = ang + 360 * iW / way * Dirc;
+			let x = BaseX + R * cos(a);
+			let y = BaseY + R * sin(a) / 3;
+			let s = 30;
+			Laser(x + rate*s*cos(a + angAdd), y + rate*s*sin(a + angAdd), s, a + angAdd);
+			c -= wt;
+			iW ++;
+		}
+		wait(1);
+	}
+
+	task Laser(x, y, spd, ang){
+		ang = AngleCenterAdjustment(ang, -180);
+		let a1 = AngleCenterAdjustment(atan2(GetClipMinY()-y, GetClipMinX()-x), -180);
+		let a2 = AngleCenterAdjustment(atan2(GetClipMinY()-y, GetClipMaxX()-x), -180);
+		let a = [a1,a2];
+		let minAng = a[0];
+		let maxAng = a[0];
+		ascent(i in 1 .. length(a)){
+			if(a[i] < minAng){minAng = a[i];}
+			if(a[i] > maxAng){maxAng = a[i];}
+		}
+		if(ang <= maxAng && ang >= minAng){
+			let objL = My_CreateStraightLaserA1Ex(x, y, ang, 0, 24, 0, ADD_BGW_BEAM_YELLOW, 120, [true,false]);
+			ObjShot_SetAutoDelete(objL, false);
+			CallSound(sndLaser1);
+			ascent(i in 1 .. 46){
+				if(!eAlive || Obj_IsDeleted(objL)){break;}
+				ObjLaser_SetLength(objL, 900*i/45);
+				wait(1);
+			}
+			wait(45);
+			if(!eAlive){return;}
+			CallSound(sndShot4);
+			let objL2 = My_CreateLooseLaserA1(x, y, spd, ang, spd*30, 20, ADD_BGW_BALL_M_YELLOW, 0);
+			ObjShot_SetAutoDelete(objL2, false);
+			let dy = GetClipMinY()-y;
+			let time = 1+trunc(dy / (spd*sin(ang)));
+			wait(time);
+			ObjShot_SetAutoDelete(objL2, true);
+			wait(30-time);
+			Obj_Delete(objL);
+		}
+	}
+	
+	function AngleCenterAdjustment(ang, CenterAng){
+		return ((ang + CenterAng)%360) - CenterAng;
+	}
+}
+
+task TShotA(R, way, ang_acce, D, wt, isLong){
+	
+	if (isLong) { wait(90); }
+	
+	let ang = rand(0, 360);
+	let ID = [];
+	ascent(i in 0 .. way){
+		ID = ID ~ [i];
+	}
+	let BaseX = ObjMove_GetX(objEnemy);
+	let BaseY = ObjMove_GetY(objEnemy);
+	let SpdRate = 0.75;
+	ascent(i in 0 .. way){
+		if(!eAlive){return;}
+		let j = trunc(rand(0, length(ID)*999)%length(ID));
+		SetFamilier01(R, ang-(360*ID[j]/way-ang_acce*wt*i)*D, 1, ang_acce, 150-wt*i, D);
+		wait(wt);
+		ID = erase(ID, j);
+	}
+	wait(150);
+	let iniY = ObjMove_GetY(objEnemy);
+	let finY = GetClipMinY()-75;
+	let DY = (finY - iniY);
+	ascent(i in 0 .. 300){
+		let rate = (1-cos(180*i/300))/2;
+		BaseY = iniY + DY * rate;
+		SpdRate = 0.75 + 0.25 * rate;
+		wait(1);
+	}
+
+	// 数珠オプション
+	task SetFamilier01(R, iniAngle, iniValue, ang_spd, Delay, Dirc)
+	{
+		iniValue =1;
+	//	iniValue %= 2;
+		let eSize = ENEMY_M;
+		let eColor = EFF_WHITE;
+		let baseAngle = iniAngle;
+		let D = 1;
+		
+		let objFamilier = MakeEnemyFamilier(BaseX, BaseY, 55, eSize);
+		CheckLinkLife_Familier(objEnemy, objFamilier, 0.8);	// ボスと体力連動
+		SetEnemyVisible(objFamilier, false);
+		if(iniValue){
+			eColor = EFF_YELLOW;
+		}
+		DrawRosaryFamilier( objFamilier, eColor );
+		TAct();
+		WaitForKilledFamilier(objFamilier, 24, 4);
+		ZakoFinalize(objFamilier, eColor);
+		
+		task TAct()
+		{
+			TMove;
+		}
+		
+		task TMove(){
+			let wt = [6, 6, 6, 6][Difficult];
+	//		let wt_rate = [0.99856, 0.99856, 0.99856, 0.99856][Difficult];
+			let wt_rate = [1, 1, 1, 1][Difficult];
+			let ang = iniAngle;
+			let objImgID = Obj_GetValueD(objFamilier, "IMAGE_ID_ALL", []);
+			let spd = 1.5;
+			let blt_interval = [15, 12, 12, 9][Difficult];
+			let blt_quant = [3, 3, 4, 4][Difficult];
+			let way = 2;
+			let grap = [BGW_FUGU_WHITE, BGW_FUGU_YELLOW][iniValue];
+			let grap2 = [ADD_BGB_BALL_BS_WHITE, ADD_BGB_BALL_BS_YELLOW][iniValue];
+
+			let iniTime = trunc(Delay*2/3);
+			ascent(t in 1 .. iniTime+1){
+				if(!CanShotBullet(objFamilier) || !eAlive){break;}
+				let rate = sin(90*t/iniTime);
+				let r = R*rate*2.0;
+				let x = r*cos(ang);
+				let y = r*sin(ang)/3;
+				Render(objImgID, rate*1.5, 85*t/iniTime);
+				ObjMove_SetPosition(objFamilier, BaseX+x, BaseY+y);
+				ang += ang_spd*Dirc;
+				yield;
+			}
+			let iniTime2 = Delay-iniTime;
+			ascent(t in 1 .. iniTime2+1){
+				if(!CanShotBullet(objFamilier) || !eAlive){break;}
+				let rate = t/iniTime2;
+				let rate2 = cos(90*rate);
+				let r = R*(1.0+1.0*rate2);
+				let x = r*cos(ang);
+				let y = r*sin(ang)/3;
+				Render(objImgID, 1.5-0.5*rate, 85+170*rate);
+				ObjMove_SetPosition(objFamilier, BaseX+x, BaseY+y);
+				ang += ang_spd*Dirc;
+				yield;
+			}
+			if(!iniValue){	SetEnemyVisible(objFamilier, true);}
+			let c = 0;
+			let t = 0;
+			while(CanShotBullet(objFamilier) && eAlive){
+				c++;
+				while(c >= wt){
+					CallSound(sndShot2);
+					let rate = (c-wt);
+					ang += ang_spd*(1-rate)*Dirc;
+					let x = R*cos(ang);
+					let y = R*sin(ang)/3;
+					ObjMove_SetPosition(objFamilier, BaseX + x , BaseY + y );
+					let s = spd;
+					let a = ang+180+45*D;
+					CreateShot_Siran(BaseX + x , BaseY + y , s*SpdRate, a, grap, 5, rate*s);
+					ang -= ang_spd*(1-rate)*Dirc;
+					D = -D;
+					c -= wt;
+				}
+				wt = wt*(wt_rate);
+				let x = R*cos(ang);
+				let y = R*sin(ang)/3;
+	//			let Pos = Rotate2D_XY(x, y, ang2+ang2_arc*t/time);
+				ObjMove_SetPosition(objFamilier, BaseX+x, BaseY+y);
+				ang += ang_spd*Dirc;
+				t++;
+				yield;
+			}
+			ZakoFinalize(objFamilier, eColor);
+
+			function Render(objImgID, scale, alpha){
+				ascent(i in 0 .. length(objImgID)){
+					ObjRender_SetScaleXYZ(objImgID[i], scale, scale, scale);
+					ObjRender_SetAlpha(objImgID[i], alpha);
+				}
+			}
+		}
+	}
+}
+
+function CreateShot_Siran(x, y, speed, angle, graphic, delay, r)
+{
+	let sa = angle;
+	let sx = x + cos(sa)*r;
+	let sy = y + sin(sa)*r;
+	if(!CheckDispINEx(sx, sy, 0)){
+		sa = AngleCenterAdjustment(sa, -180);
+		let a1 = AngleCenterAdjustment(atan2(GetClipMinY()-sy, GetClipMinX()-sx), -180);
+		let a2 = AngleCenterAdjustment(atan2(GetClipMinY()-sy, GetClipMaxX()-sx), -180);
+//		let a3 = AngleCenterAdjustment(atan2(GetClipMaxY()-sy, GetClipMaxX()-sx), -180);
+//		let a4 = AngleCenterAdjustment(atan2(GetClipMaxY()-sy, GetClipMinX()-sx), -180);
+//		let a = [a1,a2,a3,a4];
+		let a = [a1,a2];
+		let minAng = a[0];
+		let maxAng = a[0];
+		ascent(i in 1 .. length(a)){
+			if(a[i] < minAng){minAng = a[i];}
+			if(a[i] > maxAng){maxAng = a[i];}
+		}
+		if(sa <= maxAng && sa >= minAng){
+			Shot(sx, sy, speed, sa, graphic, delay);
+		}
+
+		task Shot(x, y, spd, ang, grap, delay){
+			let objS = My_CreateShotA1(x, y, spd, ang, grap, delay);
+			ObjShot_SetAutoDelete(objS, false);
+			let dy = GetClipMinY()-y;
+			let time = 1+trunc(dy / (spd*sin(ang)));
+			wait(time);
+			ObjShot_SetAutoDelete(objS, true);
+		}
+	}else{
+		My_CreateShotA1(sx, sy, speed, sa, graphic, delay);
+	}
+	
+	function AngleCenterAdjustment(ang, CenterAng){
+		return ((ang + CenterAng)%360) - CenterAng;
+	}
+}

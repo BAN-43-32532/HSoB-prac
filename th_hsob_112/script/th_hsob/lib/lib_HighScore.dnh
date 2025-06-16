@@ -1,0 +1,323 @@
+//ハイスコア最大保存数
+let MaxSaveScore = 10;
+
+//----------------------------------------------------
+//ハイスコア読み込み
+//----------------------------------------------------
+function LoadHighScore(tmpDifficulty, tmpPlayer, tmpEquip, tmpStage, playMode)
+{
+	let hi_scores = LoadHighScores(tmpDifficulty, tmpPlayer, tmpEquip, tmpStage, playMode);
+	let tmp = "";
+	if (length(hi_scores) > 0) { tmp = hi_scores[0]; }
+	let carea = GetHighScoreString(tmp);
+	let score = GetAreaCommonData(carea, "S", 0);
+	return (score);
+}
+
+function LoadHighScores(tmpDifficulty, tmpPlayer, tmpEquip, tmpStage, playMode)
+{
+	//おーるでりーと
+	if (IsCommonDataAreaExists(CAREA_HIGHSCORE)) { ClearAreaCommonData(CAREA_HIGHSCORE); }
+	CreateCommonDataArea(CAREA_HIGHSCORE);
+
+	// 読み込み
+	LoadCommonDataAreaA2(CAREA_HIGHSCORE, GetPathHighScore(tmpPlayer, tmpEquip));
+	let save_name = GetHighScoreSaveName(tmpDifficulty, tmpStage, playMode);
+	let hi_scores = GetAreaCommonData(CAREA_HIGHSCORE, save_name, []);
+
+	//空きを埋める
+	ascent(i in length(hi_scores) .. MaxSaveScore) { hi_scores = hi_scores ~ [""]; }
+	return (hi_scores);
+}
+
+// プレイヤー毎総合、mode=MAIN固定
+function LoadHighScoresPlayer(tmpDifficulty, tmpPlayer, allEquip)
+{
+	let hi_scores = [];
+	ascent(i in 0 .. length(allEquip))
+	{
+		hi_scores = hi_scores ~ LoadHighScores(tmpDifficulty, tmpPlayer, allEquip[i], 0, GAME_MAIN);
+	}
+	//数値を取り出す
+	let hi_scores_num = [];
+	ascent(i in 0 .. length(hi_scores))
+	{
+		let carea = GetHighScoreString(hi_scores[i]);
+		hi_scores_num = hi_scores_num ~ [GetAreaCommonData(carea, "S", 0)];
+	}
+
+	//上位を取り出す
+	let new_scores = [];
+	ascent(i in 0 .. MaxSaveScore)
+	{
+		let max_j = -1;
+		let max_score = -1;
+		descent(j in 0 .. length(hi_scores_num))
+		{
+			if (max_score <= hi_scores_num[j])
+			{
+				max_score = hi_scores_num[j];
+				max_j = j;
+			}
+		}
+		if (max_j < 0) { break; }
+		// 追加
+		new_scores = new_scores ~ [hi_scores[max_j]];
+		hi_scores_num = erase(hi_scores_num, max_j);
+		hi_scores = erase(hi_scores, max_j);
+	}
+	//空きを埋める
+	ascent(i in length(new_scores) .. MaxSaveScore) { new_scores = new_scores ~ [""]; }
+	
+	return(new_scores);
+}
+
+// 保存ファイルパス
+function GetPathHighScore(tmpPlayer, tmpEquip)
+{
+	let path = GetCurrentScriptDirectory() ~ "./../data/Package_common_HighScore"
+		~ IntToString(tmpPlayer) ~ "_" ~ IntToString(tmpEquip) ~ ".dat";
+	return(path);
+}
+
+//ハイスコアの保存名
+function GetHighScoreSaveName(tmpDifficulty, tmpStage, playMode)
+{
+	if (playMode == GAME_MAIN) { return("ALL_" ~ IntToString(tmpDifficulty)); }
+	else { return("STG_" ~ IntToString(tmpStage) ~ "_" ~ IntToString(tmpDifficulty)); }
+}
+
+
+//----------------------------------------------------
+//ハイスコア保存
+//----------------------------------------------------
+function AddHighScore(tmpDifficulty, tmpPlayer, tmpEquip, tmpStage, playMode, newScore, newComment)
+{
+	return(AddHighScoreEx(tmpDifficulty, tmpPlayer, tmpEquip, tmpStage, playMode, newScore, newComment, ""));
+}
+
+function AddHighScoreEx(tmpDifficulty, tmpPlayer, tmpEquip, tmpStage, playMode, newScore, newComment, newSubEquip)
+{
+	if (IsReplay) { return(-1); }	//リプレイ中！
+
+	//おーるでりーと
+	if (IsCommonDataAreaExists(CAREA_HIGHSCORE)) { ClearAreaCommonData(CAREA_HIGHSCORE); }
+	CreateCommonDataArea(CAREA_HIGHSCORE);
+
+	// 読み込み
+	let path = GetPathHighScore(tmpPlayer, tmpEquip);
+	LoadCommonDataAreaA2(CAREA_HIGHSCORE, path);
+	let save_name = GetHighScoreSaveName(tmpDifficulty, tmpStage, playMode);
+	let hi_scores = GetAreaCommonData(CAREA_HIGHSCORE, save_name, []);
+
+	//一旦読み込み
+	let tmp_new = SetHighScoreString(newScore, GetHighScoreDate(), tmpEquip, newComment, newSubEquip);
+
+	//数値を取り出す
+	let hi_scores_num = [];
+	ascent(i in 0 .. length(hi_scores))
+	{
+		let carea = GetHighScoreString(hi_scores[i]);
+		hi_scores_num = hi_scores_num ~ [GetAreaCommonData(carea, "S", 0)];
+	}
+	//末尾に追加
+	hi_scores = hi_scores ~ [tmp_new];
+	hi_scores_num = hi_scores_num ~ [newScore];
+	let newScoreRank = length(hi_scores)-1;
+	
+	//ソート
+	let lh = length(hi_scores);
+	ascent(i in 0 .. lh-1)
+	{
+		descent(j in i+1 .. lh)
+		{
+			if (hi_scores_num[j] > hi_scores_num[j-1] || (j == newScoreRank && hi_scores_num[j] == hi_scores_num[j-1]))
+			{
+				let tmp1 = hi_scores[j];
+				hi_scores[j] = hi_scores[j-1];
+				hi_scores[j-1] = tmp1;
+				let tmp2 = hi_scores_num[j];
+				hi_scores_num[j] = hi_scores_num[j-1];
+				hi_scores_num[j-1] = tmp2;
+				if (j == newScoreRank) { newScoreRank = j-1; }
+			}
+		}
+	}
+	if (length(hi_scores) > MaxSaveScore)
+	{
+		hi_scores = hi_scores[0 .. MaxSaveScore];
+	}
+	
+	//コモンデータに保存
+	SetAreaCommonData(CAREA_HIGHSCORE, save_name, hi_scores);
+	//ファイルに保存
+	let save_success = SaveCommonDataAreaA2(CAREA_HIGHSCORE, path);
+	
+	return(newScoreRank);
+}
+
+//----------------------------------------------------
+//保存時のデータ
+//----------------------------------------------------
+function SetHighScoreString(h_score, h_date, h_equip, h_comment, h_subequip)
+{
+	let tmp_sq = "";
+	ascent(i in 0 .. length(h_subequip))
+	{
+		if (length(tmp_sq) > 0) { tmp_sq = tmp_sq ~ "|"; }
+		tmp_sq = tmp_sq ~ IntToString(h_subequip[i]);
+	}
+	
+	let text = ToString(h_score) ~ "*" ~ h_date ~ "*" ~ IntToString(h_equip) ~ "*" ~ h_comment ~ "*"
+		~ GetAreaCommonData(CAREA_CONFIG, "Version", GAME_VERSION) ~  "*" ~ tmp_sq;
+	return(text);
+}
+function GetHighScoreString(text)
+{
+	let tmp = SplitString(text, "*");
+	let h_score = 0;
+	if (length(tmp) > 0) { h_score = ator(tmp[0]); }
+	let h_date = "";
+	if (length(tmp) > 1) { h_date = tmp[1]; }
+	let h_equip = 0;
+	if (length(tmp) > 2) { h_equip = atoi(tmp[2]); }
+	let h_comment = "";
+	if (length(tmp) > 3) { h_comment = tmp[3]; }
+	let h_version = "old";
+	if (length(tmp) > 4) { h_version = tmp[4]; }
+	else if (length(tmp) <= 0) { h_version = ""; }
+	let h_subequip = [];
+	if (length(tmp) > 5)
+	{
+		let tmp_sq = SplitString(tmp[5], "|");
+		ascent(i in 0 .. length(tmp_sq))
+		{
+			h_subequip = h_subequip ~ [atoi(tmp_sq[i])];
+		}
+	}
+	
+	let carea = "HString";
+	if (!IsCommonDataAreaExists(carea)) { CreateCommonDataArea(carea); }
+	SetAreaCommonData(carea, "S", h_score);
+	SetAreaCommonData(carea, "D", h_date);
+	SetAreaCommonData(carea, "C", h_comment);
+	SetAreaCommonData(carea, "E", h_equip);
+	SetAreaCommonData(carea, "V", h_version);
+	SetAreaCommonData(carea, "Esub", h_subequip);
+	return(carea)
+}
+function GetHighScoreDate()
+{
+	let tmp = GetCurrentDateTimeS();
+	return((tmp[4..6]) ~"/"~ (tmp[6..8]) ~" "~ (tmp[8..10]) ~":"~ (tmp[10..12]));
+}
+
+
+//----------------------------------------------------
+//ハイスコアリセット
+//----------------------------------------------------
+function ResetAllHighScore()
+{
+	if (IsReplay) { return(-1); }	//リプレイ中！
+
+	let PLAYERS = [PLAYER_REIMU_A, PLAYER_MARISA_A, PLAYER_SAKUYA_A, PLAYER_KAGUYA_A];
+	let EQUIP = [WEAPON_RED, WEAPON_PURPLE, WEAPON_BLUE, WEAPON_SKY, WEAPON_GREEN, WEAPON_YELLOW, WEAPON_ORANGE, WEAPON_WHITE, WEAPON_BLACK, WEAPON_RAINBOW];
+
+	ascent(i in 0 .. length(PLAYERS))
+	{
+		ascent(j in 0 .. length(EQUIP))
+		{
+			//おーるでりーと
+			if (IsCommonDataAreaExists(CAREA_HIGHSCORE)) { ClearAreaCommonData(CAREA_HIGHSCORE); }
+			CreateCommonDataArea(CAREA_HIGHSCORE);
+			//ファイルに保存
+			let save_success = SaveCommonDataAreaA2(CAREA_HIGHSCORE, GetPathHighScore(PLAYERS[i], EQUIP[j]));
+		}
+	}
+	return(1);
+}
+
+//----------------------------------------------------
+//ハイスコアの初期値セット
+//----------------------------------------------------
+function InitHighScore()
+{
+	let PLAYERS = [PLAYER_REIMU_A, PLAYER_MARISA_A, PLAYER_SAKUYA_A, PLAYER_KAGUYA_A];
+	let EQUIP = [WEAPON_RED, WEAPON_PURPLE, WEAPON_BLUE, WEAPON_SKY, WEAPON_GREEN, WEAPON_YELLOW, WEAPON_ORANGE, WEAPON_WHITE, WEAPON_BLACK];
+	let DIFF = [D_EASY, D_NORM, D_HARD, D_LUNA];
+
+	let EQUIP_EX = [WEAPON_RAINBOW, WEAPON_WHITE, WEAPON_BLACK];
+	let DIFF_EX = [D_EXTRA];
+	let SUB_EQ = [WEAPON_RED,WEAPON_PURPLE];
+	
+	ascent(i in 0 .. length(PLAYERS))
+	{
+		ascent(j in 0 .. length(EQUIP))
+		{
+			//おーるでりーと
+			if (IsCommonDataAreaExists(CAREA_HIGHSCORE)) { ClearAreaCommonData(CAREA_HIGHSCORE); }
+			CreateCommonDataArea(CAREA_HIGHSCORE);
+			// 読み込み
+			LoadCommonDataAreaA2(CAREA_HIGHSCORE, GetPathHighScore(PLAYERS[i], EQUIP[j]));
+			
+			ascent(k in 0 .. length(DIFF))
+			{
+				let save_name = GetHighScoreSaveName(DIFF[k], 0, GAME_MAIN);
+				let hi_scores = GetAreaCommonData(CAREA_HIGHSCORE, save_name, []);
+				//ハイスコアを埋める
+				ascent(i in length(hi_scores) .. MaxSaveScore)
+				{
+					let sc = 100000*(MaxSaveScore-i)-10000*j;
+					if (EQUIP[j] == WEAPON_WHITE || EQUIP[j] == WEAPON_BLACK) { sc = 10000*(MaxSaveScore-i)-1000*j; }
+					let tmpDat = SetHighScoreString(sc, " ", EQUIP[j], " ", []);
+					//末尾に追加
+					hi_scores = hi_scores ~ [tmpDat];
+				}
+				if (length(hi_scores) > MaxSaveScore)
+				{
+					hi_scores = hi_scores[0 .. MaxSaveScore];
+				}
+				//コモンデータに保存
+				SetAreaCommonData(CAREA_HIGHSCORE, save_name, hi_scores);
+			}
+			
+			//ファイルに保存
+			let save_success = SaveCommonDataAreaA2(CAREA_HIGHSCORE, GetPathHighScore(PLAYERS[i], EQUIP[j]));
+		}
+	}
+	ascent(i in 0 .. length(PLAYERS))
+	{
+		ascent(j in 0 .. length(EQUIP_EX))
+		{
+			//おーるでりーと
+			if (IsCommonDataAreaExists(CAREA_HIGHSCORE)) { ClearAreaCommonData(CAREA_HIGHSCORE); }
+			CreateCommonDataArea(CAREA_HIGHSCORE);
+			// 読み込み
+			LoadCommonDataAreaA2(CAREA_HIGHSCORE, GetPathHighScore(PLAYERS[i], EQUIP_EX[j]));
+			
+			ascent(k in 0 .. length(DIFF_EX))
+			{
+				let save_name = GetHighScoreSaveName(DIFF_EX[k], 0, GAME_MAIN);
+				let hi_scores = GetAreaCommonData(CAREA_HIGHSCORE, save_name, []);
+				//ハイスコアを埋める
+				ascent(i in length(hi_scores) .. MaxSaveScore)
+				{
+					let sc = 100000*(MaxSaveScore-i)-10000*j;
+					if (EQUIP_EX[j] == WEAPON_WHITE || EQUIP_EX[j] == WEAPON_BLACK) { sc = 10000*(MaxSaveScore-i)-1000*j; }
+					let tmpDat = SetHighScoreString(sc, " ", EQUIP_EX[j], " ", SUB_EQ);
+					//末尾に追加
+					hi_scores = hi_scores ~ [tmpDat];
+				}
+				if (length(hi_scores) > MaxSaveScore)
+				{
+					hi_scores = hi_scores[0 .. MaxSaveScore];
+				}
+				//コモンデータに保存
+				SetAreaCommonData(CAREA_HIGHSCORE, save_name, hi_scores);
+			}
+			
+			//ファイルに保存
+			let save_success = SaveCommonDataAreaA2(CAREA_HIGHSCORE, GetPathHighScore(PLAYERS[i], EQUIP_EX[j]));
+		}
+	}
+}

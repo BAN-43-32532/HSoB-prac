@@ -1,0 +1,189 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["輝夜エンディング-Good"]
+#Text["輝夜エンディング-Good"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(240);
+	TEndingImage(imgEdGood[3][0], 180);
+	//  BGM
+	PlayMusic( 16, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	TalkFlame();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 255, 108];
+	let COL2 = [192, 108, 255];
+	let COL3 = [192, 108, 255];
+	let COL4 = [255, 108, 108];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "輝夜[r]「…で、絶体絶命と思われたその時、私の神宝の秘められた力が全解放されてアルティメットカグヤに…」", COL1);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "永琳[r]「あーすみません姫様、今新薬開発がいい所ですので」", COL2);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "[r]史上初の輝夜による異変解決は、彼女の成長を促す八意永琳によって仕組まれたものだったらしい。", COL0);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "[r]永琳の思惑は概ね達成されたが、姫様の武勇伝自慢が延々と続くのは少々誤算だった。", COL0);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "永琳[r]「姫様、今この時も、同時に優曇華たちにも武勇伝を披露なさっているとの報告がありますが」", COL2);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "輝夜[r]「同時に武勇伝を披露する為に、竹林の忍者の所で分身の術も覚えたのよ！[r]今度天狗の取材が来たら披露してあげるの」", COL1);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "永琳[r]「うーん、やはり現代の難病・引きこもりの治療には自発的モチベーションをさりげなく喚起するのが第一なのですね。」", COL2);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "永琳[r]「では論文をしたためるので天狗に寄稿して記者を呼びつけましょう」", COL2);
+		}
+		case(8)
+		{
+			TEndingImage(imgEdGood[3][1], 30);
+			SetTalkEx(cutinDescri, "[r]一方その頃、永遠亭の屋根の上では。[r]輝夜がやんごとなき身分の姫君と見抜き、正体を知るべく尾行して来た面々の姿あり。", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "乱々[r]「ヒヒッ、聞いたか上人。我らももっと楽しい体験を与えれば門徒も増えるかも知れぬ」", [255, 108, 108]);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "ひかり子[r]「…私は前々から…上人さまにはそう申し上げておる」", [108, 108, 255]);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「ふふふ、楽しいか楽しくないかは本質ではないぞい。」", COL3);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「現代の若者が欲しているのは、他者との繋がり。それによって得られる、生きているという実感、生きる意味の実感ぞい。」", COL3);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「ゆえに適当に集まって楽しくやってるだけの妖土真宗は大人気。河童に大枚はたいてサエズッターを作らせた甲斐ありぞい。」", COL3);
+		}
+		case(14)
+		{
+			TEndingImage(imgEdGood[3][2], 30);
+			SetTalkEx(cutinDescri, "鈴仙[r]「不審者を発見！　灰も残すな！　撃てー！」", COL4);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "ちい[r]「チィーッ！[r]食卓にさりげなく我が社のつまようじを添えて何が悪いでっちぃぃぃー！」", [130, 130, 220]);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「見てみい、誰からも相手にされぬよりも、まだ誰かと繋がり嫌われる方が、その者にとって生きる意味となる。」", COL3);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「これを仏教用語で『どえむ』と言うぞい」", COL3);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "珠烏[r]「すごーい！　流石上人さまは物知りー！」", [255, 255, 108]);
+		}
+		case(19)
+		{
+			SetTalkEx(cutinDescri, "紫鸞[r]「これにて拙僧の承認欲求、すなわち上人欲求が満たされ目出度し目出度しぞい」", COL3);
+		}
+		case(20)
+		{
+			SetTalkEx(cutinDescri, "[r]「認めて欲しい、忘れられたくない」", COL0);
+		}
+		case(21)
+		{
+			SetTalkEx(cutinDescri, "[r]今まで多くの人妖が敗れ去って行った究極難題。果たして彼女達が答えに辿り着く日は来るものだろうか。", COL0);
+		}
+		case(22)
+		{
+			SetTalkEx(cutinDescri, "[r]今日も存在意義を求め、幻想郷の住人達の華麗なる戦いは続く。続くったら続く。", COL0);
+		}
+		case(23)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r]Ending.04　　フェルマーの最終定理より時間かかりそう", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
