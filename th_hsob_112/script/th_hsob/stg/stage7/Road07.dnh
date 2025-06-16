@@ -93,22 +93,6 @@ task TStage
 	SetAreaCommonData(CAREA_STAGE, "STG7R_BG7B", phaseEx(4*4));
 	SetAreaCommonData(CAREA_STAGE, "STG7R_BG7C", 0);
 	SetAreaCommonData(CAREA_STAGE, "STG7R_EXTEND", 0);
-
-	task Inv()
-	{
-		let invincible = false;
-        loop
-        {
-            if (invincible) {
-                ResetPlayerInvincibility(120);
-            }
-            if (GetKeyState(KEY_SPACE) == KEY_PUSH) {
-                invincible = !invincible;
-            }
-            yield;
-        }
-	}
-	Inv();
 	
 	// “Ë“üƒtƒ‰ƒOON
 	SetExEnterFlag(DifficultEx);

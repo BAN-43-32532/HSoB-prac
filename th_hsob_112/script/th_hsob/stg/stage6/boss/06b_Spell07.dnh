@@ -29,7 +29,7 @@ let HAKKYOU = 0;
 	//ダメージ透過率
 	dIni_Shot = 70.7;
 	// スペカ中はZボム使えないぶん少しやわらかくする
-	// if (GetPlayMode() == GAME_SPELL) { dIni_Shot = 100; }
+	if (GetPlayMode() == GAME_SPELL) { dIni_Shot = 100; }
 	// 停止無効
 	bossResistTime = 1;
 	// でっかい爆発

@@ -118,8 +118,7 @@ task ResistSceneScript
 	
 	// ラスワチェック
 	// ExEasyモードはラスワなし
-	if (true)
-	// if (GetPlayMode() != GAME_PRACTICE && (DEBUG_MODE || GetLastSpellEnable()))
+	if (GetPlayMode() != GAME_PRACTICE && (DEBUG_MODE || GetLastSpellEnable()))
 //	if (GetPlayMode() != GAME_PRACTICE && (DEBUG_MODE || GetLastSpellEnable()) && DifficultEx() != D_EX_EASY)
 	{
 		// ラスワ呼び出しフラグ

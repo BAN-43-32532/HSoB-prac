@@ -492,7 +492,7 @@ function ScenePlayerSelect(selectedDefault)
 			{
 				// 全色モードON！
 				let flgKey = true;
-				ascent(t in 0 .. 1)
+				ascent(t in 0 .. 120)
 				{
 					if (GetVirtualKeyState(VK_USER2) != KEY_HOLD) { flgKey = false; break; }
 					yield;
