@@ -1,0 +1,6 @@
+@Initialize
+{
+
+WriteLog("test123123123");
+
+}

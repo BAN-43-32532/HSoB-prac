@@ -1,31 +1,20 @@
-真珠岛练习器 by BAN_43_32532
-特别感谢 b站@qwerbmb 和他的 "真珠岛练习器 v1.2"（BV15yDZYdEkd）
+HSoBprac by BAN_43_32532
+特别感谢 b站@qwerbmb 的 "真珠岛练习器 v1.2"（BV15yDZYdEkd）
 
 ==================================================
 
 用法：
-将 dnh 文件夹移动到游戏文件夹 th_hsob_112 下
-覆盖重名文件（应该只有一个 th_dnh.def）
+合并 th_hsob 和 游戏目录/dnh/script/th_hsob 
+覆盖重名文件（应该只有 Main.dnh 一个文件）
+
+禁用 HSoBprac：
+将文件夹 dnh/script/th_hsob/prac 改名或移除
+（重新启用 HSoBprac 只需复原 prac 文件夹）
 
 注：
-如果游戏是中文版，可能游戏标题会变成乱码（不影响游戏本体）
-可以选择不覆盖，而是打开自带的 th_hsob_112/dnh/th_dnh.def
-在文件末尾手动添加一行 package.script.main = prac/Main.dnh
-
-==================================================
-
-禁用练习器：
-无需删除练习器附加代码，只需在最后一行
-package.script.main = prac/Main.dnh
-前面添加双斜杠 // 注释本行
-（即最后一行改为 //package.script.main = prac/Main.dnh）
-若要重新启用练习器，只需删除双斜杠取消注释
-
-注：
-练习器所有代码都在 dnh/prac 文件夹中
-若要彻底删除练习器，只需删除此文件夹
-并删除 th_dnh.def 最后一行
-（即 package.script.main = prac/Main.dnh）
+HSoBprac 的所有功能代码都在 prac 中
+修改后的 Main.dnh 会检测 prac 是否存在
+仅在存在时启用练习功能
 
 ==================================================
 

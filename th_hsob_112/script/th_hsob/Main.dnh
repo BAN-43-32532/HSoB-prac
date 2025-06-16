@@ -11,6 +11,9 @@
 	AddArchiveFile(GetCurrentScriptDirectory() ~ "se/se.dat");
 	AddArchiveFile(GetCurrentScriptDirectory() ~ "music/music.dat");
 	initLoad();
+	
+	let pracPath = GetCurrentScriptDirectory() ~ "prac/init.dnh";
+	if(GetDirectoryList(pracPath)) {StartScript(LoadScript(pracPath));}
 }
 
 
