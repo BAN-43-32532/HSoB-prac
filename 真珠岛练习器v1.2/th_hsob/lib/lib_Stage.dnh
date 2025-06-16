@@ -2,7 +2,6 @@
 #include "./lib_Chapter.dnh"
 #include "./lib_StageTitle.dnh"
 #include "./loadlib/file_LoadStgImg.dnh"
-#include "./lib_ChapterSkip.dnh"
 
 // ”wŒi‰æ‘œ
 let STAGE_ID = -1;

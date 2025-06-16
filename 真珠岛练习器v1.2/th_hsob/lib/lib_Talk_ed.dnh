@@ -8,8 +8,8 @@ let priorityTalk = 90;
 let objTalkObject = [];
 
 // ƒtƒHƒ“ƒgİ’è
-let baseFont = "Î¢ÈíÑÅºÚ";
-let baseFontSize = 28;
+let baseFont = "Meiryo";
+let baseFontSize = 26;
 let baseFontBold = true;
 let baseFontLinePitch = -1;
 

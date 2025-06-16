@@ -8,8 +8,8 @@ let DEBUG_DIFFICULT = 3;	// ƒeƒXƒg—p“ïˆÕ“x
 let DEBUG_AUTO_TALK = 0;	// ƒI[ƒg‘äŒ‘—‚è(‘—‚è‘¬“xA0ˆÈ‰º‚Å–³Œø)
 
 // ƒVƒXƒeƒ€ƒtƒHƒ“ƒg
-let sysBaseFont = "Î¢ÈíÑÅºÚ";
-let sysBaseFontJP = "Î¢ÈíÑÅºÚ";	//“ú–{Œê
+let sysBaseFont = "Verdana";
+let sysBaseFontJP = "Meiryo";	//“ú–{Œê
 
 // ------ ƒCƒxƒ“ƒg”Ô† ------ //
 //©‹@

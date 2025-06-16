@@ -2,7 +2,6 @@
 
 #include "./lib/MusicData.dnh"
 #include "./lib/lib_Common.dnh"
-#include "../lib/lib_ChapterSkip.dnh"
 
 let objMusic = -1;
 let objMusic2 = -1;
@@ -18,10 +17,6 @@ let objOldMusic = -1;
 @MainLoop { yield; }
 
 @Finalize { }
-
-function ResetMusicLoop(musicnum,musicid){
-
-}
 
 // ŠÄŽ‹ƒ^ƒXƒN
 task T_MainTask()
@@ -95,7 +90,6 @@ task Package_PlayMusic( int_play_num, int_fade_out, int_delay )
 	if (sample[0] >= 0)
 	{
 		ObjSound_SetLoopEnable(ID, true );
-		
 		ObjSound_SetLoopSampleCount(ID, sample[0], sample[1] );
 	}
 	ObjSound_SetRestartEnable(ID, true );

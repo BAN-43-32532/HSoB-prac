@@ -1,8 +1,8 @@
 // ƒtƒHƒ“ƒgİ’è
-let baseFont = "Î¢ÈíÑÅºÚ";
-let baseFontSize = 40;
+let baseFont = "MS Gothic";
+let baseFontSize = 36;
 let baseFontBold = true;
-let baseFontLinePitch = 14;
+let baseFontLinePitch = 18;
 let baseFontSidePitch = -2;
 let baseFontScale = 0.55;	// •¶šŠg‘å—¦
 

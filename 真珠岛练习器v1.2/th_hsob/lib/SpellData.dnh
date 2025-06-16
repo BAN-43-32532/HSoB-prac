@@ -58,342 +58,342 @@ function GetSpellCardList(idStage, idDifficult)
 function GetSpellCardName(id, diff)
 {
 	alternative(id)
-	/* ÂÒ¡© */
+	/* —X */
 	case(1)
 	{
-		return("Ô³·û¡¸Ğ¦¿Ú³£¿ªµ¯ÁÙÃÅ¡¹ ");
+		return("‰•„uÎ‚¤–å‚É‚Í’e—ˆ‚½‚év");
 	}
 	case(2)
 	{
 		alternative(diff)
-		case(0, 1) { return("Ç±º½¡¸³àÉ«·çÔÆ¡¹ "); }
-		case(2)    { return("Ç±ºì¡¸ÑªºìµÄÔ³Ë®Í§¡¹ "); }
-		case(3)    { return("ç³Éñ¡¸¾ÈÊÀÖ÷ç­ÁÙ¡¹ "); }
+		case(0, 1) { return("öqug‚Ì•—‰_v"); }
+		case(2)    { return("öguƒXƒJ[ƒŒƒbƒgƒTƒ‹ƒ}ƒŠƒ“v"); }
+		case(3)    { return("”ê_uƒTƒ‹ƒ”ƒ@ƒg[ƒŒg—Õv"); }
 	}
 	case(3)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÊŞ×¦¡¸É³Â³Òò×İÕ¶¡¹ "); }
-		case(2)    { return("Ó²×¦¡¸ºÚê×Ê¯×İÕ¶¡¹ "); }
-		case(3)    { return("Ä§×¦¡¸ÂÌÓñÉ«×İÕ¶¡¹ "); }
+		case(0, 1) { return("b’ÜuƒTƒ‹[ƒCƒ“ƒXƒ‰ƒbƒVƒ…v"); }
+		case(2)    { return("d’ÜuƒIƒuƒVƒ_ƒ“ƒXƒ‰ƒbƒVƒ…v"); }
+		case(3)    { return("–‚’Üu‚×ƒŠƒ‹ƒJƒ‰[ƒXƒ‰ƒbƒVƒ…v"); }
 	}
 	case(1001)
 	{
-		return("¡¸ĞÂÔ¼¡¤Ô³Ğ·ºÏÕ½´ó»æ¾í¡¹ ");
+		return("uV–ñE‰ŠI‡í‘åŠGŠªv");
 	}
-	/* çÛ */
+	/* ‚¿‚¢ */
 	case(11)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÑÀÇ©¡¸Í»»÷ÌŞÑÀ¡¹ "); }
-		case(2)    { return("ÔßÎï¡¸ĞÅÑöÖ®Õë¡¹ "); }
-		case(3)    { return("¶şµ¶¡¸½ğÕëÒøÕë¡¹ "); }
+		case(0, 1) { return("—k}uƒAƒTƒ‹ƒgƒsƒbƒNv"); }
+		case(2)    { return("“•iuƒpƒXƒEƒFƒCƒWƒ‡ƒ“ƒj[ƒhƒ‹v"); }
+		case(3)    { return("“ñ“u‹à‚Ìj‹â‚Ìjv"); }
 	}
 	case(12)
 	{
 		alternative(diff)
-		case(0, 1) { return("×ÔÀ×¡¸ÓÕÈËµÄÀ×¡¹ "); }
-		case(2)    { return("×ÔÀ×¡¸°ÙÍòĞ¡»ÆÈË¡¹ "); }
-		case(3)    { return("×ÔÀ×¡¸ÖØÉúÖ®ÎÒÊÇ°ÁÌìĞ¡Éñ¡¹ "); }
+		case(0, 1) { return("©—‹uƒz[ƒ~ƒ“ƒOƒCƒYƒ}ƒCƒ“v"); }
+		case(2)    { return("©—‹uƒ~ƒŠƒIƒ“ƒ~ƒjƒIƒ“ƒYv"); }
+		case(3)    { return("©—‹u–³ŒÀ“]¶ƒ`[ƒŒƒ€–³‘ov"); }
 	}
 	case(13)
 	{
 		alternative(diff)
-		case(0, 1) { return("¡¸çÛ´óÈËÓëÑÀÇ©ÓëÒ»´ÎĞÔ¿ê×Ó³§¡¹ "); }
-		case(2, 3)    { return("¡¸¹ıÓÚ»·¾³ÓÑºÃµÄ¼¤¹âÎÀÉú¿ê¡¹ "); }
+		case(0, 1) { return("u‚¿‚¢—l‚Æ‚Â‚Ü‚æ‚¤‚¶‚ÆŠ„‚è”¢Hêv"); }
+		case(2, 3)    { return("uŠÂ‹«‚É—D‚µ‚·‚¬‚éƒŒ[ƒU[Š„‚è”¢v"); }
 	}
 	case(1002)
 	{
-		return("¡¸°ÂÒå¡¤Ë¯Ë¯Æ½°²½£Îè¡¹ ");
+		return("u‰œ‹`Eƒlƒ“ƒlƒRƒƒŠŒ••‘v");
 	}
-	/* ¹â×Ó */
+	/* ‚Ğ‚©‚èq */
 	case(21)
 	{
-		return("¹í»ğ¡¸·ÉÔÚÕÓÔóÉÏµÄ¾»»¯Õß¡¹	");
+		return("‹S‰ÎuÀ‚ğ”ò‚Ôƒsƒ…ƒŠƒtƒ@ƒCƒAv");
 	}
 	case(22)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÆÙ·û¡¸ÄáÑÇ¼ÓÀ­±´Å¬Äñ¡¹ "); }
-		case(2)    { return("Á÷ĞÇ¡¸ĞÇ¹â±´Å¬Äñ¡¹ "); }
-		case(3)    { return("µçÄÔ¡¸ßúà±¾ßÏÖ¡¹ "); }
+		case(0, 1) { return("àe•„uƒiƒCƒAƒKƒ‰ƒxƒ“ƒkv"); }
+		case(2)    { return("—¬¯uƒXƒ^[ƒŠƒbƒgƒxƒ“ƒkv"); }
+		case(3)    { return("“d”]uƒcƒC[ƒgƒAƒsƒAƒ‰ƒ“ƒXv"); }
 	}
 	case(23)
 	{
 		alternative(diff)
-		case(0, 1) { return("½âÖä¡¸¹«Ö÷Ö®ÎÇ¡¹ "); }
-		case(2)    { return("±³ĞÅ¡¸ÓÌ´óÖ®ÎÇ¡¹ "); }
-		case(3)    { return("ÅäĞÅ¡¸²¥Ö÷Ö±²¥Ç×ÀÏÄ¸ÈË¡¹ "); }
+		case(0, 1) { return("‰ğôuƒvƒŠƒ“ƒZƒXƒLƒbƒXv"); }
+		case(2)    { return("”wMuƒWƒ…[ƒ_ƒXƒLƒbƒXv"); }
+		case(3)    { return("”zMulŠÔ‚ÉƒLƒX‚µ‚Ä‚İ‚½v"); }
 	}
 	case(24)
 	{
 		alternative(diff)
-		case(0, 1) { return("Àù·û¡¸ÓĞÏè»®¹ı¡¹ "); }
-		case(2)    { return("É§·û¡¸Â·¹ıÍì×ğ¡¹ "); }
-		case(3)    { return("±©·û¡¸»ğÇ¯Á÷Ã÷¡¹ "); }
+		case(0, 1) { return("âI•„uƒnƒCƒEƒFƒCƒtƒ‰ƒCƒ„[v"); }
+		case(2)    { return("‘›•„uƒEƒFƒCƒEƒFƒCƒtƒ‰ƒCƒ„[v"); }
+		case(3)    { return("–\•„uƒ‹ƒiƒEƒFƒCƒtƒ‰ƒCƒ„[v"); }
 	}
 	case(25)
 	{
 		alternative(diff)
-		case(0, 1) { return("¡¸³ØÕÓµÄÈËÔìÌ«Ñô¡¹	"); }
-		case(2, 3) { return("¡¸Primordial Sun¡¹ "); }
+		case(0, 1) { return("u’rÀ‚ÌlH‘¾—zv"); }
+		case(2, 3) { return("uƒvƒ‰ƒCƒ‚[ƒfƒBƒAƒ‹ƒTƒ“v"); }
 	}
 	case(1003)
 	{
-		return("¡¸Õæ¡¤´ó¸òó¡Ö®³ØÖ®Ö÷¡¹ ");
+		return("u^E‘å‰Úå¯‚Ì’r‚Ìåv");
 	}
-	/*  ÉÏÈË */
+	/* ãl */
 	case(31)
 	{
 		alternative(diff)
-		case(0, 1) { return("¡¸ÄÏÎŞ²»¿ÉË¼ÒéÈçÀ´¹â¡¹ "); }
-		case(2, 3) { return("¡¸¹éÃü¾¡Ê®·½ÎŞ°­ÈçÀ´¹â¡¹ "); }
+		case(0, 1) { return("u“ì–³•s‰Âv‹c”@—ˆŒõv"); }
+		case(2, 3) { return("u‹A–½s\•û–³ŠV”@—ˆŒõv"); }
 	}
 	case(32)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÏèÀ´¡¸ÄñÀàµÄ·ğ·¨É®¡¹ "); }
-		case(2)    { return("èÉ·û¡¸ÕæÕıµÄ·ğ·¨É®¡¹ "); }
-		case(3)    { return("×Ïğ½¡¸ÉíĞÄ¾¡ÕæÈç·ğ·¨É®¡¹ "); }
+		case(0, 1) { return("ãÄ—ˆu’¹‚Ì•§–@‘mv"); }
+		case(2)    { return("†•„u^‚Ì•§–@‘mv"); }
+		case(3)    { return("‡êaup‚àS‚àŠ®àø‚É•§–@‘mv"); }
 	}
 	case(33)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÉÃ×Ô×ªÔë¡¸»ÃÏë·çÃÒ¡¹ "); }
-		case(2)    { return("ÉÃ×Ô×ªÔë¡¸ÎŞË«·çÉñ¡¹ "); }
-		case(3)    { return("ÉÃ×Ô×ªÔçÃç¡¸Ä¦Î÷Ö®Ææ¼£¡¹ "); }
+		case(0, 1) { return("–³’f“]ƒTƒGuŒ¶‘z•—êrv"); }
+		case(2)    { return("–³’f“]ƒTƒGu–³‘o•—_v"); }
+		case(3)    { return("–³’f“]‘•cuƒ‚[ƒ[‚ÌŠïÕv"); }
 	}
 	case(34)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÉÃ×Ô×ªÔë¡¸¹ÂÒíµÄ°×ğØ¡¹ "); }
-		case(2)    { return("ÉÃ×Ô¸Ä±à¡¸¸Ä³ÉÁËË«ÒíµÄ°×ğØ¡¹ "); }
-		case(3)    { return("ÉÃ×ÔÄ§¸Ä¡¸Áù³áµÄÄ§Íõ¡¹ "); }
+		case(0, 1) { return("–³’f“]ƒTƒGu•Ğ—ƒ‚Ì”’ëv"); }
+		case(2)    { return("–³’f‰ü•Ïu—¼—ƒ‚Ì”’ë‚É‚µ‚Ä‚İ‚½v"); }
+		case(3)    { return("–³’f–‚‰ü‘¢u˜Z–‡‰H‚Ì–‚‰¤v"); }
 	}
 	case(35)
 	{
 		alternative(diff)
-		case(0, 1) { return("½û´Ê¡¸°ÍÂ³Ë¹¡¹ "); }
-		case(2, 3) { return("»ö·û¡¸»ÃÏëÏç´ºÌìµÄ°ÍÂ³Ë¹¼À¡¹ "); }
+		case(0, 1) { return("‹ÖŒuƒoƒ‹ƒXv"); }
+		case(2, 3) { return("‰Ğ•„uŒ¶‘z‹½t‚Ìƒoƒ‹ƒXÕ‚èv"); }
 	}
 	case(1004)
 	{
-		return("¡¸¾ø¶ÔËûÁ¦¾ø¶Ô±¾Ô¸¡¹ ");
+		return("uâ‘Î‘¼—Íâ‘Î–{Šèv");
 	}
 	/* ƒ~ƒXƒeƒBƒA */
 	case(41)
 	{
 		alternative(diff)
-		case(0, 1) { return("Ã­¾¢¡¸ÕıÎçµÄÒ¹È¸¡¹ "); }
-		case(2) { return("Ã­¾¢¡¸ÈÕ¹âÏÂµÄºÏ³ª¡¹ "); }
-		case(3) { return("Æ´Ãü¡¸»Í»ÍÁÒÈÕÏÂµÄ¸è¼§¡¹ "); }
+		case(0, 1) { return("‹C‡u^’‹‚Ì–év"); }
+		case(2) { return("‹C‡uƒfƒCƒ‰ƒCƒgƒR[ƒ‰ƒXv"); }
+		case(3) { return("ŸÓguàŠ‚­—ó“ú‚Ì‰Ì•Pv"); }
 	}
 	case(1005)
 	{
-		return("¡¸Äñµû³¬¼¿ÀÖ¡¹ ");
+		return("u’¹’±’´ŠêŠyv");
 	}
 	/* ƒlƒxƒgƒeƒtƒFƒg */
 	case(51)
 	{
 		alternative(diff)
-		case(0, 1) { return("Ú¤µû¡¸ºÚ°µ¿Ö¾åÁÛ·Û¡¹ "); }
-		case(2, 3) { return("Ú¤Ö÷¡¸ºÚ°µ¿Ö¾åÅ®Ö÷¡¹ "); }
+		case(0, 1) { return("–»’±uƒ_[ƒNƒeƒ‰[ƒXƒP[ƒ‹ƒXv"); }
+		case(2, 3) { return("–»åuƒ_[ƒNƒeƒ‰[ƒ~ƒXƒgƒŒƒXv"); }
 	}
 	/* ƒZƒg */
 	case(61)
 	{
 		alternative(diff)
-		case(0, 1) { return("·ÖÀë¡¸ËÄÖ«·ÜÑ¸¡¹ "); }
-		case(2)    { return("·ÖÀë¡¸ÑÛ¼²ÊÖ½Å¿ì¡¹ "); }
-		case(3)    { return("Ô®¾ü¡¸Ò»·½ÓĞÄÑ°ÅË¿ÌØÔ®ÊÖ¡¹ "); }
+		case(0, 1) { return("•ª—£ulˆ•±vv"); }
+		case(2)    { return("•ª—£uŒû”ª’šè‘«”ª’šv"); }
+		case(3)    { return("‰‡ŒRu¢‚Á‚½‚ÌƒoƒXƒeƒg‚Ìèv"); }
 	}
 	case(62)
 	{
 		alternative(diff)
-		case(0, 1) { return("Å©Ô°¡¸İ«ÜÄÀÏÅ©ÈüÌØ¡¹ "); }
-		case(2)    { return("²»»ó¡¸İ«ÜÄÊ¼ÖÕ¶ø²»»ó¡¹ "); }
-		case(3)    { return("ÌúĞÄ¡¸Ñ²ĞĞ´óµØ²¢Õ¨ÁÑµÄÑªÂö¡¹ "); }
+		case(0, 1) { return("”_‰€uƒŒƒ^ƒXƒtƒ@[ƒ}[ƒZƒgv"); }
+		case(2)    { return("•s˜fuäàä‚ÍnI‚É‚µ‚Ä˜f‚í‚¸v"); }
+		case(3)    { return("“SSu‘å’n‚ğ„‚è”š‚º‚éŒŒ–¬v"); }
 	}
 	case(63)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÉñÆ÷¡¸Ë¾ÕÆÎïÀíÓëÄ§·¨µÄ±¦ÕÈ¡¹ "); }
-		case(2)    { return("±¦ÕÈ¡¸±®ÎÄÖ®ÕÈÍßË¹&°²¿É¡¹ "); }
-		case(3)    { return("Ä§±¦ÕÈ¡¸Ğ´ÓĞÕæÃûµÄÍßË¹&°²¿É¡¹ "); }
+		case(0, 1) { return("_Šíu•¨—‚Æ–‚–@‚ği‚é•óñv"); }
+		case(2)    { return("•óñu”è•¶‚ÌñƒEƒAƒX•ƒAƒ“ƒNv"); }
+		case(3)    { return("–‚•óñu^–¼“ü‚èƒEƒAƒX•ƒAƒ“ƒNv"); }
 	}
 	case(64)
 	{
 		alternative(diff)
-		case(0, 1) { return("ùw·û¡¸µ¯Ä»°¢Ã×ÌØ¡¹ "); }
-		case(2)    { return("ùw·û¡¸Îä×°°¢Ã×ÌØ¡¹ "); }
-		case(3)    { return("ÒìÉñ¡¸ÀàËÆ°ÍÁ¦µÄÎÒ¡¹ "); }
+		case(0, 1) { return("êK•„u’e–‹ƒAƒƒ~ƒbƒgv"); }
+		case(2)    { return("êK•„uƒA[ƒ}[ƒhEƒA[ƒ}[ƒ“v"); }
+		case(3)    { return("ˆÙ_uƒoƒAƒ‹‚Ì‚æ‚¤‚È‰´v"); }
 	}
 	case(65)
 	{
 		alternative(diff)
-		case(0, 1) { return("¡¸·½¼â±®µÄ·ÛËéÉñÈ­¡¹ "); }
-		case(2, 3) { return("¡¸´äÓñÊ¯°åµÄ·ÛËéÈ­¡¹ "); }
+		case(0, 1) { return("uƒSƒbƒhƒIƒxƒŠƒXƒNƒNƒ‰ƒbƒVƒƒ[v"); }
+		case(2, 3) { return("uƒGƒƒ‰ƒ‹ƒhƒ^ƒuƒŒƒbƒgƒNƒ‰ƒbƒVƒƒ[v"); }
 	}
 	case(1006)
 	{
-		return("¡¸ÉñÖ®ÑÛ°¡£¡½«µĞÈËÈ¼¾¡°É£¡¡¹ ");
+		return("u_‚ÌŠá‚æI“G‚ğ”R‚â‚µs‚­‚¹Iv");
 	}
 	/* ì‰H */
 	case(71)
 	{
 		alternative(diff)
-		case(0, 1) { return("³È·û¡¸É³Ä®É«µÄÈÈ·ç¡¹ "); }
-		case(2)    { return("ÓÆ¾Ã¡¸Ãú¿ÌÊ±¼äµÄ¹Å´úÖ®·ç¡¹ "); }
-		case(3)    { return("ÏÖ´ú¡¸Particulate Matter 2.5¡¹ "); }
+		case(0, 1) { return("ò•„u»”™F‚Ì”M•—v"); }
+		case(2)    { return("—I‹vu‚ğ‚ŞŒÃ‘ã‚Ì•—v"); }
+		case(3)    { return("Œ»‘ãuƒp[ƒeƒBƒLƒ…ƒŒ[ƒgƒ}ƒ^[2.5v"); }
 	}
 	case(72)
 	{
 		alternative(diff)
-		case(0, 1) { return("³à·û¡¸ºìÉ«¼ıÓğÑ¡ÖĞÄãÁË£¡¡¹ "); }
-		case(2)    { return("¹âÒí¡¸ÓğÒíµØ´ø¡¹ "); }
-		case(3)    { return("È«Á¦¡¸ÕÚÌì±ÎÈÕĞéÓ°¼ı¡¹ "); }
+		case(0, 1) { return("Ô•„ué“h‚è‚Ì–î‰H‚Í‚¨‘O‚ğ‘I‚ñ‚¾Iv"); }
+		case(2)    { return("Œõ—ƒuƒ][ƒ“EƒIƒuEƒtƒFƒU[ƒYv"); }
+		case(3)    { return("‘S—ÍuƒzƒƒEƒAƒ[ƒYƒXƒgƒ‰ƒCƒNv"); }
 	}
 	case(73)
 	{
 		alternative(diff)
-		case(0, 1) { return("×Ï·û¡¸×ô¶ÉµÄ×ÏË®¾§Àù¡¹ "); }
-		case(2)    { return("»ÃÏë¡¸ÊÀ½çÒÅ²ú¡¤×ô¶É½ğÒøµ¯¡¹ "); }
-		case(3)    { return("½â·Å¡¸ÏÍÕßÖ®Ê¯Àù¡¹ "); }
+		case(0, 1) { return("‡•„u²“n‚Ì‡…»âIv"); }
+		case(2)    { return("Œ¶‘zu¢ŠEˆâYE²“n‹à‹â’ev"); }
+		case(3)    { return("‰ğ•úuŒ«Ò‚ÌÎâIv"); }
 	}
 	case(74)
 	{
 		alternative(diff)
-		case(0, 1) { return("À¶·û¡¸Ä¾ÄËÒÁÑı¾«¡¹ "); }
-		case(2)    { return("³¬Ñı¾«¡¸ÉîÀ¶¶ùÍ¯¡¹ "); }
-		case(3)    { return("³¬Ñı¾«¡¸²Êºç¶ùÍ¯¡¹ "); }
+		case(0, 1) { return("—••„uƒ~ƒCƒ‰ƒtƒFƒAƒŠ[v"); }
+		case(2)    { return("’´—d¸uƒCƒ“ƒfƒBƒSEƒ`ƒ‹ƒhƒŒƒ“v"); }
+		case(3)    { return("’´—d¸uƒŒƒCƒ“ƒ{[Eƒ`ƒ‹ƒhƒŒƒ“v"); }
 	}
 	case(75)
 	{
 		alternative(diff)
-		case(0, 1) { return("Çà·û¡¸Á¶½ğË®½£×îÖÕ°¢×ôÌØ¡¹ "); }
-		case(2)    { return("±¦¾ß¡¸Á¶½ğÒø½£³¬¼¶Ê±Á­¡¹ "); }
-		case(3)    { return("Éñ±¦½£¡¸ĞëºØÀûÉñ½£No.63¡¹ "); }
+		case(0, 1) { return("Â•„u˜B‹à…Œ•ƒ‰ƒXƒgƒAƒ][ƒgv"); }
+		case(2)    { return("•ó‹ïu˜B‹à‹âŒ•ƒnƒCƒp[ƒnƒ‹ƒy[v"); }
+		case(3)    { return("_•óŒ•uƒXƒKƒŠƒuƒŒ[ƒhNo.63v"); }
 	}
 	case(76)
 	{
 		alternative(diff)
-		case(0, 1) { return("ÂÌ·û¡¸ºô»½Í¬°éµÄ´äÓñÊ¯°å¡¹ "); }
-		case(2, 3) { return("½û¼É¡¸ÉúÃüÁ¶½ğ -Hollow Friends-¡¹ "); }
+		case(0, 1) { return("—Î•„u’‡ŠÔ‚ğŒÄ‚Ô‰‹Ê‚Ìƒ^ƒuƒŒƒbƒgv"); }
+		case(2, 3) { return("‹ÖŠõu¶–½˜B‹à-ƒzƒƒEƒtƒŒƒ“ƒY-v"); }
 	}
 	case(77)
 	{
 		alternative(diff)
-		case(0, 1) { return("¡¸Ïì³¹»Æ½ğµº°É£¬ÖìûqÖ®¸è¡¹ "); }
-		case(2, 3) { return("¡¸Song of Nipponia¡¹ "); }
+		case(0, 1) { return("u‰©‹à‚Ì“‡‚É‹¿‚¯éë‚Ì‰Ìv"); }
+		case(2, 3) { return("uƒ\ƒ“ƒOEƒIƒuEƒjƒbƒ|ƒjƒAv"); }
 	}
 	case(1007)
 	{
-		return("¡¸Over the Rainbow¡¹ ");
+		return("uƒI[ƒo[EƒUEƒŒƒCƒ“ƒ{[v");
 	}
 	/* Ex’†ƒ{ƒX */
 	case(81)
 	{
-		return("¡¸ºìÄ§ºï¡¹ ");
+		return("uƒŒƒbƒhƒ}ƒWƒbƒNƒ‚ƒ“ƒL[v");
 	}
 	case(82)
 	{
-		return("¡¸Æß¸öçÛçÛÎäÊ¿¡¹ ");
+		return("uµl‚Ì‚¿‚¢‚¿‚¢˜v");
 	}
 	case(83)
 	{
-		return("¡¸·ÉĞĞ»ğÇò¡¹ ");
+		return("uƒtƒ‰ƒCƒ“ƒOƒtƒ@ƒCƒAƒXƒtƒBƒAv");
 	}
 	case(84)
 	{
-		return("¡¸°¢ÃÖÍÓÈçÀ´Ö®Ò©¡¹ ");
+		return("uˆ¢–í‘É”@—ˆ‚Ì–òv");
 	}
 	case(85)
 	{
-		return("¡¸ÍêÈ«Ä«È¾µÄÓğÒí -ÄñÓğÓñ-¡¹ ");
+		return("uŠ®‘S‚È‚é–nõ‚Ì—ƒ -‰G‰H‹Ê-v");
 	}
-	/* ÑÒ²»?*/
+	/* ÑÒ²»İ */
 	case(91)
 	{
-		return("Í©ºø¡¸Çà´É°×Áú£¨Blue-Seiji White Dragon£©¡¹ ");
+		return("‹ËšâuÂ¥‚Ì”’—´iƒuƒ‹[ƒZƒCƒWƒzƒƒCƒgƒhƒ‰ƒSƒ“jv");
 	}
 	case(92)
 	{
-		return("ÖãÄ¾¡¸¸²Ë®ÄÑÊÕ¡¹ ");
+		return("›â–Øu•¢…–~‚É•Ô‚ç‚¸v");
 	}
 	case(93)
 	{
-		return("»¨Ñç¡¸»¨ÅÚ»ùµØ¡¹ ");
+		return("‰Ô‰ƒuƒtƒ‰ƒ[ƒJƒmƒ“ƒx[ƒXv");
 	}
 	case(94)
 	{
-		return("»æºÏ¡¸ÔÚÄÇ±ß¼ñµ½µÄÊ¥ÕßµÄ²£Á§¡¹ ");
+		return("ŠG‡u‚»‚Ì•Ó‚ÅE‚Á‚½¹Ò‚ÌÉqv");
 	}
 	case(95)
 	{
-		return("ËÉ·ç¡¸ÌÕÖÆÁñµ¯£¨Pineapple Bomber£©¡¹ ");
+		return("¼•—u“©»Ö’eiƒpƒCƒiƒbƒvƒ‹ƒ{ƒ}[jv");
 	}
 	case(96)
 	{
-		return("óô»ğ¡¸Ğ°ÂíÌ¨»ú¶¯¡¹ ");
+		return("â¾‰Îuƒ„ƒ}ƒ^ƒCƒbƒNƒ}ƒjƒ…[ƒo[v");
 	}
 	case(97)
 	{
-		return("Ò°·Ö¡¸Çà´ÉÙÈÔÂµ¶£¨Ceramic Blade£©¡¹ ");
+		return("–ì•ªuÂ¥˜îŒ“iƒZƒ‰ƒ~ƒbƒNEƒuƒŒ[ƒhjv");
 	}
 	case(98)
 	{
-		return("Ï¦Îí¡¸»Æ»èÙÈÔÂĞı·çÈĞ£¨Sunset Blast£©¡¹ ");
+		return("—[–¶u‰©¨˜îŒù•—niƒTƒ“ƒZƒbƒgEƒuƒ‰ƒXƒgjv");
 	}
 	case(99)
 	{
-		return("ËŞÄ¾¡¸ÔÙÁÙ£¡ÈüÌØ´ó½«Returns¡¹ ");
+		return("h–ØuÄ—ÕIƒZƒg‘å«ƒŠƒ^[ƒ“ƒYv");
 	}
 	case(100)
 	{
-		return("ÃÎ¸¡ÇÅ¡¸ÌÕ´ÉÆ÷´óÕ½ ¡« ¹ØÓğvs²Ü²Ù¡¹ ");
+		return("–²•‚‹´u“©¥Ší‘åí ` ŠÖ‰Hvs‘‚‘€v");
 	}
 	case(1008)
 	{
-		return("¡¸×î³õÓë×îºóµÄÎŞÃûÒìµÄµ¯Ä»¡¹ ");
+		return("uÅ‰‚ÅÅŒã‚Ì–³–¼ˆÙ‚Ì’e–‹v");
 	}
 	case(1009)
 	{
-		return("¡¸ÓÀ²»Íê½áµÄ´ó¼ÒµÄµ¯Ä»¡¹ ");
+		return("u‚¢‚Â‚Ü‚Å‚à‘±‚­‚İ‚ñ‚È‚Ì’e–‹v");
 	}
 	/* ’Êí’e–‹ */
-	case(10001) { return("·Ç·û1£¨µÀÖĞ£© "); }
-	case(10002) { return("·Ç·û1 "); }
-	case(10003) { return("·Ç·û2 "); }
-	case(10011) { return("·Ç·û1 "); }
-	case(10012) { return("·Ç·û2 "); }
-	case(10021) { return("·Ç·û1£¨µÀÖĞ£© "); }
-	case(10022) { return("·Ç·û1 "); }
-	case(10023) { return("·Ç·û2 "); }
-	case(10024) { return("·Ç·û3 "); }
-	case(10031) { return("·Ç·û1 "); }
-	case(10032) { return("·Ç·û2 "); }
-	case(10033) { return("·Ç·û3 "); }
-	case(10041) { return("·Ç·û1£¨Ã×Ë¹µÙæ«£© "); }
-	case(10051) { return("·Ç·û1£¨ÄÎ±´ÌØ£© "); }
-	case(10061) { return("·Ç·û1£¨ÈüÌØ£© "); }
-	case(10062) { return("·Ç·û2£¨ÈüÌØ£© "); }
-	case(10063) { return("·Ç·û3£¨ÈüÌØ£© "); }
-	case(10064) { return("·Ç·û4£¨ÈüÌØ£© "); }
-	case(10071) { return("·Ç·û1 "); }
-	case(10072) { return("·Ç·û2 "); }
-	case(10073) { return("·Ç·û3 "); }
-	case(10074) { return("·Ç·û4 "); }
-	case(10075) { return("·Ç·û5 "); }
-	case(10081) { return("·Ç·û1 "); }
-	case(10082) { return("·Ç·û2 "); }
-	case(10083) { return("·Ç·û3 "); }
-	case(10084) { return("·Ç·û4 "); }
-	case(10085) { return("·Ç·û5 "); }
-	case(10086) { return("·Ç·û6 "); }
-	case(10087) { return("·Ç·û7 "); }
-	case(10088) { return("·Ç·û8 "); }
+	case(10001) { return("’Êí’e–‹1i“¹’†j"); }
+	case(10002) { return("’Êí’e–‹1"); }
+	case(10003) { return("’Êí’e–‹2"); }
+	case(10011) { return("’Êí’e–‹1"); }
+	case(10012) { return("’Êí’e–‹2"); }
+	case(10021) { return("’Êí’e–‹1i“¹’†j"); }
+	case(10022) { return("’Êí’e–‹1"); }
+	case(10023) { return("’Êí’e–‹2"); }
+	case(10024) { return("’Êí’e–‹3"); }
+	case(10031) { return("’Êí’e–‹1"); }
+	case(10032) { return("’Êí’e–‹2"); }
+	case(10033) { return("’Êí’e–‹3"); }
+	case(10041) { return("’Êí’e–‹1iƒ~ƒXƒeƒBƒAj"); }
+	case(10051) { return("’Êí’e–‹1iƒlƒxƒgj"); }
+	case(10061) { return("’Êí’e–‹1iƒZƒgj"); }
+	case(10062) { return("’Êí’e–‹2iƒZƒgj"); }
+	case(10063) { return("’Êí’e–‹3iƒZƒgj"); }
+	case(10064) { return("’Êí’e–‹4iƒZƒgj"); }
+	case(10071) { return("’Êí’e–‹1"); }
+	case(10072) { return("’Êí’e–‹2"); }
+	case(10073) { return("’Êí’e–‹3"); }
+	case(10074) { return("’Êí’e–‹4"); }
+	case(10075) { return("’Êí’e–‹5"); }
+	case(10081) { return("’Êí’e–‹1"); }
+	case(10082) { return("’Êí’e–‹2"); }
+	case(10083) { return("’Êí’e–‹3"); }
+	case(10084) { return("’Êí’e–‹4"); }
+	case(10085) { return("’Êí’e–‹5"); }
+	case(10086) { return("’Êí’e–‹6"); }
+	case(10087) { return("’Êí’e–‹7"); }
+	case(10088) { return("’Êí’e–‹8"); }
 	
-	return("ÃÕÖ®·û¿¨ ");
+	return("“ä‚ÌƒXƒyƒ‹ƒJ[ƒh");
 }
 
 // ƒ{ƒX–¼‚ğ•Ô‚·
